@@ -1,0 +1,21 @@
+2024-03-20 22:52:42,342 torchfusion INFO: Starting torchfusion training script
+2024-03-20 22:52:42,363 torchfusion INFO: Running task: prepare_dataset
+2024-03-20 22:52:42,363 torchfusion INFO: Global seed set to 42
+2024-03-20 22:52:42,469 torchfusion INFO: Setting up datamodule...
+2024-03-20 22:52:42,469 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-20 22:52:42,469 torchfusion ERROR: Exception raised while loading the dataset [SroieDataset]: 'NoneType' object is not callable
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 320, in _load_dataset
+    dataset_class = ModuleLazyImporter.get_datasets().get(
+TypeError: 'NoneType' object is not callable
+2024-03-20 22:53:46,339 torchfusion INFO: Starting torchfusion training script
+2024-03-20 22:53:46,346 torchfusion INFO: Running task: prepare_dataset
+2024-03-20 22:53:46,346 torchfusion INFO: Global seed set to 42
+2024-03-20 22:53:46,355 torchfusion INFO: Setting up datamodule...
+2024-03-20 22:53:46,355 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-20 22:53:46,355 torchfusion WARNING: Dataset class for SroieDataset not found. Please make sure the dataset is added to registry. Available datasets: {'DueBenchmark': <function ModuleLazyImporter.get_module.<locals>.<lambda> at 0x7bdaa86d4af0>, 'DocBank': <function ModuleLazyImporter.get_module.<locals>.<lambda> at 0x7bdaa86d4b80>, 'SROIEDataset': <function ModuleLazyImporter.get_module.<locals>.<lambda> at 0x7bdaa86d4d30>}
+2024-03-20 22:53:46,355 torchfusion ERROR: Exception raised while loading the dataset [SroieDataset]: 'NoneType' object is not callable
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 331, in _load_dataset
+    dataset_class = dataset_class()
+TypeError: 'NoneType' object is not callable

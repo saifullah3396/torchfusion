@@ -1,0 +1,76 @@
+dataset_name: RvlCdip
+dataset_config_name: tobacco3482_excluded_with_ocr
+dataset_dir: ${oc.env:DATA_ROOT_DIR}/documents/rvlcdip
+dataset_cache_dir: ${args.data_args.dataset_dir}/huggingface/
+cache_file_name: 1024x1024
+use_auth_token: True
+compute_dataset_statistics: True
+stats_filename: 'stats_512'
+# this is total number of samples in training set which is used for computing fid
+dataset_statistics_n_samples: 2782 
+train_preprocess_augs:
+  - name: PreprocessAug
+    kwargs:
+      rescale_size:
+        - 1024
+        - 1024
+      key: image
+eval_preprocess_augs:
+  - name: PreprocessAug
+    kwargs:
+      rescale_size:
+        - 1024
+        - 1024
+      key: image
+train_realtime_augs:
+  - name: BasicImageAug
+    kwargs:
+      rgb_to_gray: True
+      normalize: True
+      mean:
+        - 0.5
+      std:
+        - 0.5
+      rescale_strategy:
+        name: Rescale
+        kwargs:
+          size:
+            - 512
+            - 512
+      key:
+        - image
+eval_realtime_augs:
+  - name: BasicImageAug
+    kwargs:
+      rgb_to_gray: True
+      normalize: True
+      mean:
+        - 0.5
+      std:
+        - 0.5
+      rescale_strategy:
+        name: Rescale
+        kwargs:
+          size:
+            - 512
+            - 512
+      key:
+        - image
+train_val_sampler: null
+data_loader_args:
+  per_device_train_batch_size: 32
+  per_device_eval_batch_size: 32
+  dataloader_drop_last: False
+  shuffle_data: True
+  pin_memory: True
+  dataloader_num_workers: 8
+  use_test_set_for_val: False
+  train_batch_sampler:
+    name: ""
+    kwargs: {}
+  eval_batch_sampler:
+    name: ""
+    kwargs: {}
+  max_test_samples: null
+  max_train_samples: null
+  max_val_samples: null

@@ -1,0 +1,3 @@
+- +run=prepare_ner_dataset
+- dataset_config_name=default
+- args/data_args=sroie

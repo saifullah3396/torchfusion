@@ -1,0 +1,40 @@
+# @package _global_
+defaults:
+  - /args/model_args: uncond_image_ddpm
+  - /args/data_args: tobacco3482/256
+  - override /args/training_args: default
+
+args:
+  general_args:
+    do_train: ${do_train}
+    do_val: ${do_val}
+    do_test: ${do_test}
+  training_args:
+    experiment_name: uncond_image_ddpm
+    max_epochs: 100
+    eval_on_start: False
+    eval_every_n_epochs: 10
+    visualize_every_n_epochs: 1
+    visualize_on_start: True
+    test_run: False
+    with_amp: True
+    with_amp_inference: False
+    stop_on_nan: False
+    eval_training: false # we don't want to evaluate on training set since this is generative task and fid is applied only to eval set
+    use_ema_for_val: True
+  data_args:
+    dataset_statistics_n_samples: 2782 
+    data_loader_args:
+      per_device_train_batch_size: 2
+      per_device_eval_batch_size: 2
+      max_val_samples: 2782
+  model_args:
+    config:
+      inference_diffusion_steps: 10
+      reverse_diff_hf_model_kwargs:
+        in_channels: 1
+        out_channels: 1
+
+do_train: True
+do_val: True
+do_test: False

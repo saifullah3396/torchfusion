@@ -1,0 +1,293 @@
+2024-03-20 22:53:59,013 torchfusion INFO: Starting torchfusion training script
+2024-03-20 22:53:59,019 torchfusion INFO: Running task: prepare_dataset
+2024-03-20 22:53:59,019 torchfusion INFO: Global seed set to 42
+2024-03-20 22:53:59,030 torchfusion INFO: Setting up datamodule...
+2024-03-20 22:53:59,030 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-20 22:53:59,051 torchfusion ERROR: Exception raised while loading the dataset [SROIEDataset]: FusionImageDatasetConfig.__init__() got an unexpected keyword argument 'ner_labels'
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 331, in _load_dataset
+    dataset_class = dataset_class()
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 22, in <lambda>
+    return lambda: getattr(importlib.import_module(name + "." + module_name), cls_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 90, in <module>
+    class SROIE(FusionImageDataset):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 96, in SROIE
+    SROIEConfig(
+TypeError: FusionImageDatasetConfig.__init__() got an unexpected keyword argument 'ner_labels'
+2024-03-20 22:54:33,765 torchfusion INFO: Starting torchfusion training script
+2024-03-20 22:54:33,770 torchfusion INFO: Running task: prepare_dataset
+2024-03-20 22:54:33,770 torchfusion INFO: Global seed set to 42
+2024-03-20 22:54:33,778 torchfusion INFO: Setting up datamodule...
+2024-03-20 22:54:33,778 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-20 22:54:33,782 torchfusion ERROR: Exception raised while loading the dataset [SROIEDataset]: name 'ImageDatasetBase' is not defined
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 331, in _load_dataset
+    dataset_class = dataset_class()
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 22, in <lambda>
+    return lambda: getattr(importlib.import_module(name + "." + module_name), cls_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 193, in <module>
+    class SROIEDataset(ImageDatasetBase):
+NameError: name 'ImageDatasetBase' is not defined
+2024-03-20 23:04:54,998 torchfusion INFO: Starting torchfusion training script
+2024-03-20 23:04:55,004 torchfusion INFO: Running task: prepare_dataset
+2024-03-20 23:04:55,004 torchfusion INFO: Global seed set to 42
+2024-03-20 23:04:55,013 torchfusion INFO: Setting up datamodule...
+2024-03-20 23:04:55,014 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-20 23:04:55,018 torchfusion ERROR: Exception raised while loading the dataset [SROIEDataset]: 'NoneType' object has no attribute 'name'
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 331, in _load_dataset
+    dataset_class = dataset_class()
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 22, in <lambda>
+    return lambda: getattr(importlib.import_module(name + "." + module_name), cls_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 102, in <module>
+    class SROIE(FusionImageDataset):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 108, in SROIE
+    SROIEConfig(
+  File "<string>", line 18, in __init__
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 98, in __post_init__
+    self.tokenizer_config.name, self.tokenizer_config.kwargs
+AttributeError: 'NoneType' object has no attribute 'name'
+2024-03-20 23:05:50,011 torchfusion INFO: Starting torchfusion training script
+2024-03-20 23:05:50,017 torchfusion INFO: Running task: prepare_dataset
+2024-03-20 23:05:50,017 torchfusion INFO: Global seed set to 42
+2024-03-20 23:05:50,024 torchfusion INFO: Setting up datamodule...
+2024-03-20 23:05:50,025 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-20 23:05:50,028 torchfusion ERROR: Exception raised while loading the dataset [SROIEDataset]: type object 'ModuleLazyImporter' has no attribute 'get_tokenizers'
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 331, in _load_dataset
+    dataset_class = dataset_class()
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 22, in <lambda>
+    return lambda: getattr(importlib.import_module(name + "." + module_name), cls_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 102, in <module>
+    class SROIE(FusionImageDataset):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 108, in SROIE
+    SROIEConfig(
+  File "<string>", line 18, in __init__
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 97, in __post_init__
+    self.tokenizer = TokenizerFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/text_utils/tokenizers/factory.py", line 15, in create
+    tokenizer_class = ModuleLazyImporter.get_tokenizers().get(name, None)
+AttributeError: type object 'ModuleLazyImporter' has no attribute 'get_tokenizers'
+2024-03-20 23:06:36,113 torchfusion INFO: Starting torchfusion training script
+2024-03-20 23:06:36,119 torchfusion INFO: Running task: prepare_dataset
+2024-03-20 23:06:36,119 torchfusion INFO: Global seed set to 42
+2024-03-20 23:06:36,128 torchfusion INFO: Setting up datamodule...
+2024-03-20 23:06:36,128 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-20 23:06:36,130 torchfusion ERROR: Exception raised while loading the dataset [SROIEDataset]: DataAugmentation [bert-base-uncased] is not supported.
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/text_utils/tokenizers/factory.py", line 23, in create
+    importlib.import_module(".".join(name.split(".")[:-1])),
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1047, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 981, in _sanity_check
+ValueError: Empty module name
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 331, in _load_dataset
+    dataset_class = dataset_class()
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 23, in <lambda>
+    importlib.import_module(name + "." + module_name), cls_name
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 102, in <module>
+    class SROIE(FusionImageDataset):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 108, in SROIE
+    SROIEConfig(
+  File "<string>", line 18, in __init__
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 97, in __post_init__
+    self.tokenizer = TokenizerFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/text_utils/tokenizers/factory.py", line 27, in create
+    raise ValueError(f"DataAugmentation [{name}] is not supported.")
+ValueError: DataAugmentation [bert-base-uncased] is not supported.
+2024-03-20 23:06:58,058 torchfusion INFO: Starting torchfusion training script
+2024-03-20 23:06:58,084 torchfusion INFO: Running task: prepare_dataset
+2024-03-20 23:06:58,084 torchfusion INFO: Global seed set to 42
+2024-03-20 23:06:58,165 torchfusion INFO: Setting up datamodule...
+2024-03-20 23:06:58,165 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-20 23:06:58,209 torchfusion ERROR: Exception raised while loading the dataset [SROIEDataset]: DataAugmentation [hf_tokenizer] is not supported.
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/text_utils/tokenizers/factory.py", line 23, in create
+    importlib.import_module(".".join(name.split(".")[:-1])),
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1047, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 981, in _sanity_check
+ValueError: Empty module name
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 331, in _load_dataset
+    dataset_class = dataset_class()
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 23, in <lambda>
+    importlib.import_module(name + "." + module_name), cls_name
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 105, in <module>
+    class SROIE(FusionImageDataset):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 111, in SROIE
+    SROIEConfig(
+  File "<string>", line 18, in __init__
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 100, in __post_init__
+    self.tokenizer = TokenizerFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/text_utils/tokenizers/factory.py", line 27, in create
+    raise ValueError(f"DataAugmentation [{name}] is not supported.")
+ValueError: DataAugmentation [hf_tokenizer] is not supported.
+2024-03-20 23:07:25,178 torchfusion INFO: Starting torchfusion training script
+2024-03-20 23:07:25,184 torchfusion INFO: Running task: prepare_dataset
+2024-03-20 23:07:25,184 torchfusion INFO: Global seed set to 42
+2024-03-20 23:07:25,191 torchfusion INFO: Setting up datamodule...
+2024-03-20 23:07:25,191 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-20 23:07:25,194 torchfusion ERROR: Exception raised while loading the dataset [SROIEDataset]: Tokenizer [hf_tokenizer] is not supported. Available tokenizers: {'HuggingfaceTokenizer': <function ModuleLazyImporter.get_module.<locals>.<lambda> at 0x7f2aef6ed750>, 'TorchTextTokenizer': <function ModuleLazyImporter.get_module.<locals>.<lambda> at 0x7f2aef6ed7e0>}
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/text_utils/tokenizers/factory.py", line 23, in create
+    importlib.import_module(".".join(name.split(".")[:-1])),
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1047, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 981, in _sanity_check
+ValueError: Empty module name
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 331, in _load_dataset
+    dataset_class = dataset_class()
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 23, in <lambda>
+    importlib.import_module(name + "." + module_name), cls_name
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 105, in <module>
+    class SROIE(FusionImageDataset):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 111, in SROIE
+    SROIEConfig(
+  File "<string>", line 18, in __init__
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 100, in __post_init__
+    self.tokenizer = TokenizerFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/text_utils/tokenizers/factory.py", line 27, in create
+    raise ValueError(
+ValueError: Tokenizer [hf_tokenizer] is not supported. Available tokenizers: {'HuggingfaceTokenizer': <function ModuleLazyImporter.get_module.<locals>.<lambda> at 0x7f2aef6ed750>, 'TorchTextTokenizer': <function ModuleLazyImporter.get_module.<locals>.<lambda> at 0x7f2aef6ed7e0>}
+2024-03-20 23:07:37,443 torchfusion INFO: Starting torchfusion training script
+2024-03-20 23:07:37,449 torchfusion INFO: Running task: prepare_dataset
+2024-03-20 23:07:37,449 torchfusion INFO: Global seed set to 42
+2024-03-20 23:07:37,457 torchfusion INFO: Setting up datamodule...
+2024-03-20 23:07:37,457 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-20 23:07:37,831 torchfusion ERROR: Exception raised while loading the dataset [SROIEDataset]: 'XAI_TORCH_OUTPUT_DIR'
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 331, in _load_dataset
+    dataset_class = dataset_class()
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 23, in <lambda>
+    importlib.import_module(name + "." + module_name), cls_name
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 105, in <module>
+    class SROIE(FusionImageDataset):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 111, in SROIE
+    SROIEConfig(
+  File "<string>", line 18, in __init__
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/ner/sroie.py", line 100, in __post_init__
+    self.tokenizer = TokenizerFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/text_utils/tokenizers/factory.py", line 31, in create
+    return from_dict(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/dataclasses/dacite_wrapper.py", line 174, in from_dict
+    return create_instance(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/dacite/dataclasses.py", line 25, in create_instance
+    instance = data_class(**init_values)
+  File "<string>", line 8, in __init__
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/text_utils/tokenizers/hf_tokenizer.py", line 32, in __post_init__
+    "cache_dir": f"{os.environ['XAI_TORCH_OUTPUT_DIR']}/.huggingface/",
+  File "/usr/lib/python3.10/os.py", line 680, in __getitem__
+    raise KeyError(key) from None
+KeyError: 'XAI_TORCH_OUTPUT_DIR'
+2024-03-20 23:08:08,674 torchfusion INFO: Starting torchfusion training script
+2024-03-20 23:08:08,679 torchfusion INFO: Running task: prepare_dataset
+2024-03-20 23:08:08,679 torchfusion INFO: Global seed set to 42
+2024-03-20 23:08:08,687 torchfusion INFO: Setting up datamodule...
+2024-03-20 23:08:08,688 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-20 23:08:10,783 torchfusion ERROR: Exception raised while loading the dataset [SROIEDataset]: module 'torchfusion.data.datasets.ner.sroie' has no attribute 'SROIEDataset'
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 331, in _load_dataset
+    dataset_class = dataset_class()
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 22, in <lambda>
+    return lambda: getattr(
+AttributeError: module 'torchfusion.data.datasets.ner.sroie' has no attribute 'SROIEDataset'
+2024-03-20 23:08:28,226 torchfusion INFO: Starting torchfusion training script
+2024-03-20 23:08:28,232 torchfusion INFO: Running task: prepare_dataset
+2024-03-20 23:08:28,232 torchfusion INFO: Global seed set to 42
+2024-03-20 23:08:28,239 torchfusion INFO: Setting up datamodule...
+2024-03-20 23:08:28,240 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-20 23:08:28,240 torchfusion WARNING: Dataset class for SROIEDataset not found. Please make sure the dataset is added to registry. Available datasets: {'DueBenchmark': <function ModuleLazyImporter.get_module.<locals>.<lambda> at 0x7a622ec80d30>, 'DocBank': <function ModuleLazyImporter.get_module.<locals>.<lambda> at 0x7a622ec80dc0>, 'SROIE': <function ModuleLazyImporter.get_module.<locals>.<lambda> at 0x7a622ec80ee0>}
+2024-03-20 23:08:28,240 torchfusion ERROR: Exception raised while loading the dataset [SROIEDataset]: 'NoneType' object is not callable
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 331, in _load_dataset
+    dataset_class = dataset_class()
+TypeError: 'NoneType' object is not callable
+2024-03-20 23:08:56,800 torchfusion INFO: Starting torchfusion training script
+2024-03-20 23:08:56,805 torchfusion INFO: Running task: prepare_dataset
+2024-03-20 23:08:56,805 torchfusion INFO: Global seed set to 42
+2024-03-20 23:08:56,813 torchfusion INFO: Setting up datamodule...
+2024-03-20 23:08:56,813 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-20 23:08:56,813 torchfusion ERROR: Exception raised while loading the dataset [SROIEDataset]: Dataset class for SROIEDataset not found. Please make sure the dataset is added to registry. Available datasets: {'DueBenchmark': <function ModuleLazyImporter.get_module.<locals>.<lambda> at 0x7811dead4d30>, 'DocBank': <function ModuleLazyImporter.get_module.<locals>.<lambda> at 0x7811dead4dc0>, 'SROIE': <function ModuleLazyImporter.get_module.<locals>.<lambda> at 0x7811dead4f70>}
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 325, in _load_dataset
+    raise ValueError(
+ValueError: Dataset class for SROIEDataset not found. Please make sure the dataset is added to registry. Available datasets: {'DueBenchmark': <function ModuleLazyImporter.get_module.<locals>.<lambda> at 0x7811dead4d30>, 'DocBank': <function ModuleLazyImporter.get_module.<locals>.<lambda> at 0x7811dead4dc0>, 'SROIE': <function ModuleLazyImporter.get_module.<locals>.<lambda> at 0x7811dead4f70>}

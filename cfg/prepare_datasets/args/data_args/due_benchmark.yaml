@@ -1,0 +1,27 @@
+dataset_name: DueBenchmark
+dataset_config_name: DocVQA
+dataset_dir: ${oc.env:DATA_ROOT_DIR}/documents/DueBenchmark/
+dataset_cache_dir: ${args.data_args.dataset_dir}/huggingface/
+cache_file_name: ${args.data_args.dataset_kwargs.ocr_engine} # cache file name is according to the ocr_engine used
+train_preprocess_augs: null
+eval_preprocess_augs: null 
+train_realtime_augs: null
+eval_realtime_augs: null
+train_val_sampler: null
+data_loader_args:
+  per_device_train_batch_size: 32
+  per_device_eval_batch_size: 32
+  dataloader_drop_last: False
+  shuffle_data: True
+  pin_memory: True
+  dataloader_num_workers: 8
+  use_test_set_for_val: False
+  train_batch_sampler:
+    name: ""
+    kwargs: {}
+  eval_batch_sampler:
+    name: ""
+    kwargs: {}
+  max_test_samples: null
+  max_train_samples: null
+  max_val_samples: null

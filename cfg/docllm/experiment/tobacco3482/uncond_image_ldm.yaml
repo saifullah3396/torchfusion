@@ -1,0 +1,48 @@
+# @package _global_
+defaults:
+  - /args/model_args: uncond_image_ldm
+  - /args/data_args: tobacco3482/256
+  - override /args/training_args: default
+
+args:
+  general_args:
+    do_train: ${do_train}
+    do_val: ${do_val}
+    do_test: ${do_test}
+  training_args:
+    experiment_name: uncond_image_ldm
+    max_epochs: 100
+    eval_on_start: False
+    eval_every_n_epochs: 10
+    visualize_every_n_epochs: 1
+    visualize_on_start: False
+    test_run: False
+    with_amp: True
+    with_amp_inference: True
+    stop_on_nan: False
+    eval_training: false # we don't want to evaluate on training set since this is generative task and fid is applied only to eval set
+    use_ema_for_val: True
+  data_args:
+    # use predefined features from the dataset
+    features_path: /run/user/3841/gvfs/sftp:host=login1.pegasus.kl.dfki.de/ds-sds/documents/tobacco3482/features/Tobacco3482_madebyollin_sdxl-vae-fp16-fix/with_ocr-256x256/generate_vae_features
+    train_realtime_augs: null # with features we do not need realtime transforms, data is already processed
+    eval_realtime_augs: null # with features we do not need realtime transforms, data is already processed
+    dataset_statistics_n_samples: 10 
+    compute_dataset_statistics: True
+    data_loader_args:
+      per_device_train_batch_size: 32
+      per_device_eval_batch_size: 4
+      max_val_samples: 10
+  model_args:
+    config:
+      inference_diffusion_steps: 10
+      compute_scale_factor: True
+      features_present: True
+        
+do_train: True
+do_val: True
+do_test: False
+
+# comments:
+# when using features with fp16 we need to set with_amp_inference to True, with_amp to True. 
+# with_amp=True sets autocast for fp16 during training and fp16_decode sets half precision for decoding during evaluation

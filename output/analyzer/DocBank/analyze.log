@@ -1,0 +1,1971 @@
+2024-03-19 02:51:50,260 torchfusion INFO: Starting torchfusion training script
+2024-03-19 02:52:01,385 torchfusion INFO: Starting torchfusion training script
+2024-03-19 02:52:11,760 torchfusion INFO: Starting torchfusion training script
+2024-03-19 02:52:52,361 torchfusion INFO: Starting torchfusion training script
+2024-03-19 02:53:05,950 torchfusion INFO: Starting torchfusion training script
+2024-03-19 02:53:05,957 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 02:53:05,958 torchfusion INFO: Global seed set to 42
+2024-03-19 02:53:06,151 torchfusion INFO: Setting up datamodule...
+2024-03-19 02:53:06,151 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 02:53:06,179 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: Please provide either num_classes, names or names_file.
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 223, in _load_fusion_dataset
+    builder = self._get_builder()
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 298, in _get_builder
+    return DatasetFactory.create_builder(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 54, in create_builder
+    return load_dataset_builder(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2265, in load_dataset_builder
+    builder_instance: DatasetBuilder = builder_cls(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 22, in __init__
+    super().__init__(*args, **kwargs)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 382, in __init__
+    info.update(self._info())
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_image_dataset.py", line 33, in _info
+    features=self._dataset_features(),
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/6ac9166a419e0572a29c83ed18da058f1579e46ef684b2cab0ac71a2b7dd301d/docbank.py", line 115, in _dataset_features
+    dataset_features = super()._dataset_features()
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_image_dataset.py", line 45, in _dataset_features
+    DataKeys.LABEL: datasets.features.ClassLabel(names=self.config.labels),
+  File "<string>", line 5, in __init__
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/features/features.py", line 986, in __post_init__
+    raise ValueError("Please provide either num_classes, names or names_file.")
+ValueError: Please provide either num_classes, names or names_file.
+2024-03-19 02:54:37,281 torchfusion INFO: Starting torchfusion training script
+2024-03-19 02:54:37,287 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 02:54:37,287 torchfusion INFO: Global seed set to 42
+2024-03-19 02:54:37,304 torchfusion INFO: Setting up datamodule...
+2024-03-19 02:54:37,304 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 02:54:37,315 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: Column label is not a ClassLabel.
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 223, in _load_fusion_dataset
+    builder = self._get_builder()
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 298, in _get_builder
+    return DatasetFactory.create_builder(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 54, in create_builder
+    return load_dataset_builder(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2265, in load_dataset_builder
+    builder_instance: DatasetBuilder = builder_cls(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 22, in __init__
+    super().__init__(*args, **kwargs)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 382, in __init__
+    info.update(self._info())
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_image_text_layout_dataset.py", line 31, in _info
+    return datasets.DatasetInfo(
+  File "<string>", line 21, in __init__
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/info.py", line 208, in __post_init__
+    self.task_templates = [
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/info.py", line 209, in <listcomp>
+    template.align_with_features(self.features) for template in (self.task_templates)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/tasks/image_classification.py", line 21, in align_with_features
+    raise ValueError(f"Column {self.label_column} is not a ClassLabel.")
+ValueError: Column label is not a ClassLabel.
+2024-03-19 02:54:49,771 torchfusion INFO: Starting torchfusion training script
+2024-03-19 02:54:49,778 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 02:54:49,778 torchfusion INFO: Global seed set to 42
+2024-03-19 02:54:49,796 torchfusion INFO: Setting up datamodule...
+2024-03-19 02:54:49,796 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 02:54:49,805 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: Column label is not a ClassLabel.
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 223, in _load_fusion_dataset
+    builder = self._get_builder()
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 298, in _get_builder
+    return DatasetFactory.create_builder(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 54, in create_builder
+    return load_dataset_builder(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2265, in load_dataset_builder
+    builder_instance: DatasetBuilder = builder_cls(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 22, in __init__
+    super().__init__(*args, **kwargs)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 382, in __init__
+    info.update(self._info())
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_image_text_layout_dataset.py", line 32, in _info
+    return datasets.DatasetInfo(
+  File "<string>", line 21, in __init__
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/info.py", line 208, in __post_init__
+    self.task_templates = [
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/info.py", line 209, in <listcomp>
+    template.align_with_features(self.features) for template in (self.task_templates)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/tasks/image_classification.py", line 21, in align_with_features
+    raise ValueError(f"Column {self.label_column} is not a ClassLabel.")
+ValueError: Column label is not a ClassLabel.
+2024-03-19 02:54:54,852 torchfusion INFO: Starting torchfusion training script
+2024-03-19 02:54:54,858 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 02:54:54,858 torchfusion INFO: Global seed set to 42
+2024-03-19 02:54:54,875 torchfusion INFO: Setting up datamodule...
+2024-03-19 02:54:54,876 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 02:54:54,884 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: DatasetBuilder._relative_data_dir() got an unexpected keyword argument 'is_local'
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 223, in _load_fusion_dataset
+    builder = self._get_builder()
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 298, in _get_builder
+    return DatasetFactory.create_builder(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 54, in create_builder
+    return load_dataset_builder(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2265, in load_dataset_builder
+    builder_instance: DatasetBuilder = builder_cls(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 22, in __init__
+    super().__init__(*args, **kwargs)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 412, in __init__
+    self._cache_dir = self._build_cache_dir()
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 692, in _build_cache_dir
+    builder_data_dir = posixpath.join(self._cache_dir_root, self._relative_data_dir(with_version=False))
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 26, in _relative_data_dir
+    return super()._relative_data_dir(
+TypeError: DatasetBuilder._relative_data_dir() got an unexpected keyword argument 'is_local'
+2024-03-19 02:55:10,458 torchfusion INFO: Starting torchfusion training script
+2024-03-19 02:55:10,464 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 02:55:10,464 torchfusion INFO: Global seed set to 42
+2024-03-19 02:55:10,481 torchfusion INFO: Setting up datamodule...
+2024-03-19 02:55:10,481 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 02:55:11,131 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DockBank//huggingface/docbank/text-text/1.0.0)
+2024-03-19 02:55:11,654 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 02:55:11,655 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 02:55:11,705 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 68, in _generate_examples
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/06fce4847ac624ed450c87d8eb34c5dbe98c82f8137e1e50466357e7a59a56a8/docbank.py", line 158, in _generate_examples_text
+    with open(filepath, "rt") as fp:
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/streaming.py", line 75, in wrapper
+    return function(*args, download_config=download_config, **kwargs)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/download/streaming_download_manager.py", line 507, in xopen
+    return open(main_hop, mode, *args, **kwargs)
+FileNotFoundError: [Errno 2] No such file or directory: '/home/ataraxia/Datasets/documents/DockBank/train.jsonl'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 02:55:16,403 torchfusion INFO: Starting torchfusion training script
+2024-03-19 02:55:16,409 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 02:55:16,409 torchfusion INFO: Global seed set to 42
+2024-03-19 02:55:16,425 torchfusion INFO: Setting up datamodule...
+2024-03-19 02:55:16,425 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 02:55:16,526 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DockBank//huggingface/docbank/text-text/1.0.0)
+2024-03-19 02:55:17,298 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 02:55:17,299 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 02:55:17,304 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/06fce4847ac624ed450c87d8eb34c5dbe98c82f8137e1e50466357e7a59a56a8/docbank.py", line 158, in _generate_examples_text
+    with open(filepath, "rt") as fp:
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/streaming.py", line 75, in wrapper
+    return function(*args, download_config=download_config, **kwargs)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/download/streaming_download_manager.py", line 507, in xopen
+    return open(main_hop, mode, *args, **kwargs)
+FileNotFoundError: [Errno 2] No such file or directory: '/home/ataraxia/Datasets/documents/DockBank/train.jsonl'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 02:55:56,295 torchfusion INFO: Starting torchfusion training script
+2024-03-19 02:55:56,301 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 02:55:56,301 torchfusion INFO: Global seed set to 42
+2024-03-19 02:55:56,319 torchfusion INFO: Setting up datamodule...
+2024-03-19 02:55:56,319 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 02:55:56,420 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-text/1.0.0)
+2024-03-19 02:55:56,777 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 02:55:56,778 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 02:55:56,782 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/06fce4847ac624ed450c87d8eb34c5dbe98c82f8137e1e50466357e7a59a56a8/docbank.py", line 158, in _generate_examples_text
+    with open(filepath, "rt") as fp:
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/streaming.py", line 75, in wrapper
+    return function(*args, download_config=download_config, **kwargs)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/download/streaming_download_manager.py", line 507, in xopen
+    return open(main_hop, mode, *args, **kwargs)
+FileNotFoundError: [Errno 2] No such file or directory: '/home/ataraxia/Datasets/documents/DocBank/train.jsonl'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 03:24:57,632 torchfusion INFO: Starting torchfusion training script
+2024-03-19 03:24:57,658 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 03:24:57,658 torchfusion INFO: Global seed set to 42
+2024-03-19 03:24:57,740 torchfusion INFO: Setting up datamodule...
+2024-03-19 03:24:57,741 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 03:24:58,231 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/1.0.0)
+2024-03-19 03:24:59,074 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 03:24:59,075 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+[2024-03-19 03:25:14,311][root][INFO] - Received ctrl-c interrupt. Stopping training...
+2024-03-19 03:25:48,353 torchfusion INFO: Starting torchfusion training script
+2024-03-19 03:25:48,359 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 03:25:48,359 torchfusion INFO: Global seed set to 42
+2024-03-19 03:25:48,377 torchfusion INFO: Setting up datamodule...
+2024-03-19 03:25:48,377 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 03:25:48,504 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/1.0.0)
+2024-03-19 03:25:48,831 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 03:25:48,832 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+[2024-03-19 03:26:27,063][root][INFO] - Received ctrl-c interrupt. Stopping training...
+2024-03-19 03:26:30,933 torchfusion INFO: Starting torchfusion training script
+2024-03-19 03:26:30,939 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 03:26:30,939 torchfusion INFO: Global seed set to 42
+2024-03-19 03:26:30,956 torchfusion INFO: Setting up datamodule...
+2024-03-19 03:26:30,957 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 03:26:31,072 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/1.0.0)
+2024-03-19 03:26:31,359 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 03:26:31,360 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+[2024-03-19 03:26:42,314][root][INFO] - Received ctrl-c interrupt. Stopping training...
+2024-03-19 03:27:47,578 torchfusion INFO: Starting torchfusion training script
+2024-03-19 03:27:47,584 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 03:27:47,584 torchfusion INFO: Global seed set to 42
+2024-03-19 03:27:47,602 torchfusion INFO: Setting up datamodule...
+2024-03-19 03:27:47,602 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 03:27:47,707 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/1.0.0)
+2024-03-19 03:27:48,032 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 03:27:48,033 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+[2024-03-19 03:27:52,138][root][INFO] - Received ctrl-c interrupt. Stopping training...
+2024-03-19 03:28:48,571 torchfusion INFO: Starting torchfusion training script
+2024-03-19 03:28:48,578 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 03:28:48,578 torchfusion INFO: Global seed set to 42
+2024-03-19 03:28:48,595 torchfusion INFO: Setting up datamodule...
+2024-03-19 03:28:48,595 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 03:28:48,703 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/1.0.0)
+2024-03-19 03:28:49,527 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 03:28:49,528 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+[2024-03-19 03:29:16,375][root][INFO] - Received ctrl-c interrupt. Stopping training...
+2024-03-19 03:29:19,851 torchfusion INFO: Starting torchfusion training script
+2024-03-19 03:29:19,857 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 03:29:19,857 torchfusion INFO: Global seed set to 42
+2024-03-19 03:29:19,874 torchfusion INFO: Setting up datamodule...
+2024-03-19 03:29:19,875 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 03:29:19,978 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/1.0.0)
+2024-03-19 03:29:20,304 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 03:29:20,305 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+[2024-03-19 05:01:40,018][root][INFO] - Received ctrl-c interrupt. Stopping training...
+2024-03-19 07:10:40,370 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:10:40,376 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:10:40,376 torchfusion INFO: Global seed set to 42
+2024-03-19 07:10:40,397 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:10:40,397 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:10:40,400 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: mutable default <class 'list'> for field splits is not allowed: use default_factory
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 320, in _load_dataset
+    dataset_class = ModuleLazyImporter.get_datasets().get(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 22, in <lambda>
+    return lambda: getattr(importlib.import_module(name + "." + module_name), cls_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 30, in <module>
+    from torchfusion.core.data.datasets.fusion_coco_dataset import (
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 23, in <module>
+    class FusionCocoDatasetConfig(FusionDatasetConfig):
+  File "/usr/lib/python3.10/dataclasses.py", line 1184, in dataclass
+    return wrap(cls)
+  File "/usr/lib/python3.10/dataclasses.py", line 1175, in wrap
+    return _process_class(cls, init, repr, eq, order, unsafe_hash,
+  File "/usr/lib/python3.10/dataclasses.py", line 955, in _process_class
+    cls_fields.append(_get_field(cls, name, type, kw_only))
+  File "/usr/lib/python3.10/dataclasses.py", line 812, in _get_field
+    raise ValueError(f'mutable default {type(f.default)} for field '
+ValueError: mutable default <class 'list'> for field splits is not allowed: use default_factory
+2024-03-19 07:11:01,417 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:11:01,423 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:11:01,423 torchfusion INFO: Global seed set to 42
+2024-03-19 07:11:01,443 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:11:01,443 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:11:01,445 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: non-default argument 'category_names' follows default argument
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 320, in _load_dataset
+    dataset_class = ModuleLazyImporter.get_datasets().get(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 22, in <lambda>
+    return lambda: getattr(importlib.import_module(name + "." + module_name), cls_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 30, in <module>
+    from torchfusion.core.data.datasets.fusion_coco_dataset import (
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 23, in <module>
+    class FusionCocoDatasetConfig(FusionDatasetConfig):
+  File "/usr/lib/python3.10/dataclasses.py", line 1184, in dataclass
+    return wrap(cls)
+  File "/usr/lib/python3.10/dataclasses.py", line 1175, in wrap
+    return _process_class(cls, init, repr, eq, order, unsafe_hash,
+  File "/usr/lib/python3.10/dataclasses.py", line 1024, in _process_class
+    _init_fn(all_init_fields,
+  File "/usr/lib/python3.10/dataclasses.py", line 544, in _init_fn
+    raise TypeError(f'non-default argument {f.name!r} '
+TypeError: non-default argument 'category_names' follows default argument
+2024-03-19 07:11:07,217 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:11:07,223 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:11:07,223 torchfusion INFO: Global seed set to 42
+2024-03-19 07:11:07,242 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:11:07,242 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:11:07,244 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: non-default argument 'category_names' follows default argument
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 320, in _load_dataset
+    dataset_class = ModuleLazyImporter.get_datasets().get(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 22, in <lambda>
+    return lambda: getattr(importlib.import_module(name + "." + module_name), cls_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 30, in <module>
+    from torchfusion.core.data.datasets.fusion_coco_dataset import (
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 23, in <module>
+    class FusionCocoDatasetConfig(FusionDatasetConfig):
+  File "/usr/lib/python3.10/dataclasses.py", line 1184, in dataclass
+    return wrap(cls)
+  File "/usr/lib/python3.10/dataclasses.py", line 1175, in wrap
+    return _process_class(cls, init, repr, eq, order, unsafe_hash,
+  File "/usr/lib/python3.10/dataclasses.py", line 1024, in _process_class
+    _init_fn(all_init_fields,
+  File "/usr/lib/python3.10/dataclasses.py", line 544, in _init_fn
+    raise TypeError(f'non-default argument {f.name!r} '
+TypeError: non-default argument 'category_names' follows default argument
+2024-03-19 07:11:37,030 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:11:37,036 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:11:37,036 torchfusion INFO: Global seed set to 42
+2024-03-19 07:11:37,054 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:11:37,054 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:11:37,057 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: cannot import name 'FusionImageTextLayoutDataset' from 'torchfusion.core.data.datasets.fusion_coco_dataset' (/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py)
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 320, in _load_dataset
+    dataset_class = ModuleLazyImporter.get_datasets().get(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 22, in <lambda>
+    return lambda: getattr(importlib.import_module(name + "." + module_name), cls_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 30, in <module>
+    from torchfusion.core.data.datasets.fusion_coco_dataset import (
+ImportError: cannot import name 'FusionImageTextLayoutDataset' from 'torchfusion.core.data.datasets.fusion_coco_dataset' (/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py)
+2024-03-19 07:12:02,394 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:12:02,400 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:12:02,400 torchfusion INFO: Global seed set to 42
+2024-03-19 07:12:02,418 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:12:02,419 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:12:02,421 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: category_names must be provided for Coco type datasets.
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 320, in _load_dataset
+    dataset_class = ModuleLazyImporter.get_datasets().get(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 22, in <lambda>
+    return lambda: getattr(importlib.import_module(name + "." + module_name), cls_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 30, in <module>
+    from torchfusion.core.data.datasets.fusion_coco_dataset import (
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 39, in <module>
+    class FusionCocoDataset(FusionDataset):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 41, in FusionCocoDataset
+    FusionCocoDatasetConfig(
+  File "<string>", line 16, in __init__
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 33, in __post_init__
+    self.category_names is not None
+AssertionError: category_names must be provided for Coco type datasets.
+2024-03-19 07:12:18,391 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:12:18,397 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:12:18,397 torchfusion INFO: Global seed set to 42
+2024-03-19 07:12:18,415 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:12:18,416 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:12:18,418 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: category_names must be provided for Coco type datasets.
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 320, in _load_dataset
+    dataset_class = ModuleLazyImporter.get_datasets().get(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 22, in <lambda>
+    return lambda: getattr(importlib.import_module(name + "." + module_name), cls_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 30, in <module>
+    from torchfusion.core.data.datasets.fusion_coco_dataset import (
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 37, in <module>
+    class FusionCocoDataset(FusionDataset):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 39, in FusionCocoDataset
+    FusionCocoDatasetConfig(
+  File "<string>", line 16, in __init__
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 33, in __post_init__
+    self.category_names is not None
+AssertionError: category_names must be provided for Coco type datasets.
+2024-03-19 07:12:55,830 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:12:55,836 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:12:55,836 torchfusion INFO: Global seed set to 42
+2024-03-19 07:12:55,856 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:12:55,856 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:12:55,860 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: FusionCocoDatasetConfig.__init__() got an unexpected keyword argument 'load_images'
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 320, in _load_dataset
+    dataset_class = ModuleLazyImporter.get_datasets().get(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 22, in <lambda>
+    return lambda: getattr(importlib.import_module(name + "." + module_name), cls_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 107, in <module>
+    class DocBank(FusionCocoDataset):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 113, in DocBank
+    DocBankConfig(
+TypeError: FusionCocoDatasetConfig.__init__() got an unexpected keyword argument 'load_images'
+2024-03-19 07:13:10,890 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:13:10,896 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:13:10,896 torchfusion INFO: Global seed set to 42
+2024-03-19 07:13:10,914 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:13:10,914 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:13:10,917 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: category_names must be provided for Coco type datasets.
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 320, in _load_dataset
+    dataset_class = ModuleLazyImporter.get_datasets().get(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 22, in <lambda>
+    return lambda: getattr(importlib.import_module(name + "." + module_name), cls_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 107, in <module>
+    class DocBank(FusionCocoDataset):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 113, in DocBank
+    DocBankConfig(
+  File "<string>", line 16, in __init__
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 33, in __post_init__
+    self.category_names is None
+AssertionError: category_names must be provided for Coco type datasets.
+2024-03-19 07:13:26,080 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:13:26,086 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:13:26,086 torchfusion INFO: Global seed set to 42
+2024-03-19 07:13:26,105 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:13:26,105 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:13:26,108 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: category_names must be provided for Coco type datasets.
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 320, in _load_dataset
+    dataset_class = ModuleLazyImporter.get_datasets().get(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 22, in <lambda>
+    return lambda: getattr(importlib.import_module(name + "." + module_name), cls_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 107, in <module>
+    class DocBank(FusionCocoDataset):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 113, in DocBank
+    DocBankConfig(
+  File "<string>", line 16, in __init__
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 34, in __post_init__
+    self.category_names is None
+AssertionError: category_names must be provided for Coco type datasets.
+2024-03-19 07:13:42,951 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:13:42,957 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:13:42,957 torchfusion INFO: Global seed set to 42
+2024-03-19 07:13:42,975 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:13:42,975 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:13:42,978 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: category_names must be provided for Coco type datasets.
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 320, in _load_dataset
+    dataset_class = ModuleLazyImporter.get_datasets().get(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 22, in <lambda>
+    return lambda: getattr(importlib.import_module(name + "." + module_name), cls_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 30, in <module>
+    from torchfusion.core.data.datasets.fusion_coco_dataset import (
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 37, in <module>
+    class FusionCocoDataset(FusionDataset):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 39, in FusionCocoDataset
+    FusionCocoDatasetConfig(
+  File "<string>", line 16, in __init__
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 33, in __post_init__
+    self.category_names is not None
+AssertionError: category_names must be provided for Coco type datasets.
+2024-03-19 07:14:28,240 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:14:28,247 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:14:28,247 torchfusion INFO: Global seed set to 42
+2024-03-19 07:14:28,264 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:14:28,264 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:14:28,266 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: category_names must be provided for Coco type datasets.
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 320, in _load_dataset
+    dataset_class = ModuleLazyImporter.get_datasets().get(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 22, in <lambda>
+    return lambda: getattr(importlib.import_module(name + "." + module_name), cls_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 30, in <module>
+    from torchfusion.core.data.datasets.fusion_coco_dataset import (
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 37, in <module>
+    class FusionCocoDataset(FusionDataset):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 39, in FusionCocoDataset
+    FusionCocoDatasetConfig(
+  File "<string>", line 16, in __init__
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 33, in __post_init__
+    self.category_names is not None
+AssertionError: category_names must be provided for Coco type datasets.
+2024-03-19 07:14:34,951 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:14:34,957 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:14:34,957 torchfusion INFO: Global seed set to 42
+2024-03-19 07:14:34,975 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:14:34,975 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:14:34,976 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: category_names must be provided for Coco type datasets.
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 320, in _load_dataset
+    dataset_class = ModuleLazyImporter.get_datasets().get(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 22, in <lambda>
+    return lambda: getattr(importlib.import_module(name + "." + module_name), cls_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 30, in <module>
+    from torchfusion.core.data.datasets.fusion_coco_dataset import (
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 37, in <module>
+    class FusionCocoDataset(FusionDataset):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 39, in FusionCocoDataset
+    FusionCocoDatasetConfig(
+  File "<string>", line 16, in __init__
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 33, in __post_init__
+    self.category_names is not None
+AssertionError: category_names must be provided for Coco type datasets.
+2024-03-19 07:14:40,713 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:14:40,719 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:14:40,719 torchfusion INFO: Global seed set to 42
+2024-03-19 07:14:40,737 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:14:40,737 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:14:40,747 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: type object 'DataKeys' has no attribute 'IMAGE_ID'
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 223, in _load_fusion_dataset
+    builder = self._get_builder()
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 298, in _get_builder
+    return DatasetFactory.create_builder(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 54, in create_builder
+    return load_dataset_builder(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2265, in load_dataset_builder
+    builder_instance: DatasetBuilder = builder_cls(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 22, in __init__
+    super().__init__(*args, **kwargs)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 382, in __init__
+    info.update(self._info())
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 41, in _info
+    features=self._dataset_features(),
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/7aa54d6b8a17ab078240702cdd7594506411c8c00950f2b20a7861b4e25430b9/docbank.py", line 132, in _dataset_features
+    dataset_features = super()._dataset_features()
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 56, in _dataset_features
+    DataKeys.IMAGE_ID: datasets.Value("int64"),
+AttributeError: type object 'DataKeys' has no attribute 'IMAGE_ID'
+2024-03-19 07:14:56,678 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:14:56,683 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:14:56,683 torchfusion INFO: Global seed set to 42
+2024-03-19 07:14:56,703 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:14:56,704 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:14:56,808 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/0.0.0)
+2024-03-19 07:14:57,138 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:14:57,139 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:14:57,142 torchfusion INFO: Loading annotations file...
+2024-03-19 07:14:57,143 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/7aa54d6b8a17ab078240702cdd7594506411c8c00950f2b20a7861b4e25430b9/docbank.py", line 155, in _generate_examples_impl
+    image_info, image_id_to_annotations = self._get_image_to_ann_dict(json_path)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 94, in _get_image_to_ann_dict
+    with open(json_path, encoding="utf8") as f:
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/streaming.py", line 75, in wrapper
+    return function(*args, download_config=download_config, **kwargs)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/download/streaming_download_manager.py", line 507, in xopen
+    return open(main_hop, mode, *args, **kwargs)
+FileNotFoundError: [Errno 2] No such file or directory: '/home/ataraxia/Datasets/documents/DocBank/train.json'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 07:15:49,533 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:15:49,539 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:15:49,539 torchfusion INFO: Global seed set to 42
+2024-03-19 07:15:49,556 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:15:49,556 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:15:49,661 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/0.0.0)
+2024-03-19 07:15:49,974 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:15:49,975 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:15:49,978 torchfusion INFO: Loading annotations file...
+2024-03-19 07:16:11,203 torchfusion INFO: Preparing annotations...
+2024-03-19 07:16:12,814 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/75a2b81f40d4f1b2e384110e750583e2dc38d67faf5aadb4958c66d76b71adee/docbank.py", line 158, in _generate_examples_impl
+    example = self._image_info_to_example(image_info)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 82, in _image_info_to_example
+    image_file_path = os.path.join(self._get_image_dir(), image_info["file_name"])
+TypeError: DocBank._get_image_dir() missing 1 required positional argument: 'split'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 07:17:01,584 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:17:01,613 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:17:01,613 torchfusion INFO: Global seed set to 42
+2024-03-19 07:17:01,670 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:17:01,670 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:17:02,665 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/0.0.0)
+2024-03-19 07:17:03,013 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:17:03,013 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:17:03,044 torchfusion INFO: Loading annotations file...
+2024-03-19 07:17:26,709 torchfusion INFO: Preparing annotations...
+2024-03-19 07:17:28,399 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/2af1d7092a25ea15527c575f9f91861c9d2b30e7a4fa1c23d1de9cbde2c9aa81/docbank.py", line 158, in _generate_examples_impl
+    example = self._image_info_to_example(image_info)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 84, in _image_info_to_example
+    DataKeys.IMAGE_ID: image_info["id"],
+AttributeError: type object 'DataKeys' has no attribute 'IMAGE_ID'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 07:18:03,637 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:18:03,678 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:18:03,679 torchfusion INFO: Global seed set to 42
+2024-03-19 07:18:03,742 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:18:03,743 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:18:04,110 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/0.0.0)
+2024-03-19 07:18:04,515 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:18:04,516 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:18:04,545 torchfusion INFO: Loading annotations file...
+2024-03-19 07:18:29,190 torchfusion INFO: Preparing annotations...
+2024-03-19 07:18:30,901 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/f0b26ee23cc9ddd8836b00855117735fc71aa0089af3b8f71c2fefb3baa09116/docbank.py", line 158, in _generate_examples_impl
+    example = self._image_info_to_example(image_info, split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_coco_dataset.py", line 91, in _image_info_to_example
+    image = PIL.Image.open(image_file_path)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/PIL/Image.py", line 3236, in open
+    fp = builtins.open(filename, "rb")
+FileNotFoundError: [Errno 2] No such file or directory: '/home/ataraxia/Datasets//documents/DocBank//DocBank_500K_ori_img/101.tar_1705.04790.gz_short_fuse_9_ori.jpg'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 07:19:17,788 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:19:17,794 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:19:17,794 torchfusion INFO: Global seed set to 42
+2024-03-19 07:19:17,812 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:19:17,812 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:19:17,914 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/0.0.0)
+2024-03-19 07:19:18,742 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:19:18,743 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:19:18,747 torchfusion INFO: Loading annotations file...
+2024-03-19 07:19:36,987 torchfusion INFO: Preparing annotations...
+2024-03-19 07:19:38,664 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/f0b26ee23cc9ddd8836b00855117735fc71aa0089af3b8f71c2fefb3baa09116/docbank.py", line 165, in _generate_examples_impl
+    text_annotation_data = pd.read_table(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/io/parsers/readers.py", line 1405, in read_table
+    return _read(filepath_or_buffer, kwds)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/io/parsers/readers.py", line 620, in _read
+    parser = TextFileReader(filepath_or_buffer, **kwds)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/io/parsers/readers.py", line 1620, in __init__
+    self._engine = self._make_engine(f, self.engine)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/io/parsers/readers.py", line 1880, in _make_engine
+    self.handles = get_handle(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/io/common.py", line 873, in get_handle
+    handle = open(
+FileNotFoundError: [Errno 2] No such file or directory: '/home/ataraxia/Datasets//documents/DocBank//DocBank_500K_txt/101.tar_1705.04790.gz_short_fuse_9_ori.jpg'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 07:21:23,468 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:21:23,474 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:21:23,474 torchfusion INFO: Global seed set to 42
+2024-03-19 07:21:23,491 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:21:23,492 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:21:23,595 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/0.0.0)
+2024-03-19 07:21:24,402 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:21:24,403 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:21:24,406 torchfusion INFO: Loading annotations file...
+2024-03-19 07:21:41,170 torchfusion INFO: Preparing annotations...
+2024-03-19 07:21:42,780 torchfusion WARNING: Image directory /home/ataraxia/Datasets//documents/DocBank//DocBank_500K_ori_img/ does not exist. Loading data without images...
+2024-03-19 07:21:42,866 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/91a32429fb12dcd785e773518b6afe25f6359b1036b4b73ccca5e405c07829d8/docbank.py", line 172, in _generate_examples_impl
+    text_annotation_data = pd.read_table(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/io/parsers/readers.py", line 1405, in read_table
+    return _read(filepath_or_buffer, kwds)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/io/parsers/readers.py", line 620, in _read
+    parser = TextFileReader(filepath_or_buffer, **kwds)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/io/parsers/readers.py", line 1620, in __init__
+    self._engine = self._make_engine(f, self.engine)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/io/parsers/readers.py", line 1880, in _make_engine
+    self.handles = get_handle(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/io/common.py", line 873, in get_handle
+    handle = open(
+FileNotFoundError: [Errno 2] No such file or directory: '/home/ataraxia/Datasets//documents/DocBank//DocBank_500K_txt/101.tar_1705.04790.gz_short_fuse_9_ori.txt'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 07:23:57,144 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:23:57,150 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:23:57,150 torchfusion INFO: Global seed set to 42
+2024-03-19 07:23:57,167 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:23:57,167 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:23:57,270 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/0.0.0)
+2024-03-19 07:23:57,593 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:23:57,594 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:23:57,598 torchfusion INFO: Loading annotations file...
+2024-03-19 07:24:20,968 torchfusion INFO: Preparing annotations...
+2024-03-19 07:24:22,600 torchfusion WARNING: Image directory /home/ataraxia/Datasets//documents/DocBank//DocBank_500K_ori_img/ does not exist. Loading data without images...
+2024-03-19 07:24:22,692 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/core/indexes/base.py", line 3805, in get_loc
+    return self._engine.get_loc(casted_key)
+  File "index.pyx", line 167, in pandas._libs.index.IndexEngine.get_loc
+  File "index.pyx", line 196, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/hashtable_class_helper.pxi", line 7081, in pandas._libs.hashtable.PyObjectHashTable.get_item
+  File "pandas/_libs/hashtable_class_helper.pxi", line 7089, in pandas._libs.hashtable.PyObjectHashTable.get_item
+KeyError: 0
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/f4028a5c5edbb2b2cf1cde182f76e34ea969bc862d51e5e23e0a9a80d8416c46/docbank.py", line 186, in _generate_examples_impl
+    text_annotation = text_annotation_data[annotation["id"] - 1]
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/core/frame.py", line 4090, in __getitem__
+    indexer = self.columns.get_loc(key)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/core/indexes/base.py", line 3812, in get_loc
+    raise KeyError(key) from err
+KeyError: 0
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 07:27:29,108 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:27:29,114 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:27:29,114 torchfusion INFO: Global seed set to 42
+2024-03-19 07:27:29,131 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:27:29,132 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:27:29,256 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/0.0.0)
+2024-03-19 07:27:29,599 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:27:29,600 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:27:29,603 torchfusion INFO: Loading annotations file...
+2024-03-19 07:27:47,461 torchfusion INFO: Preparing annotations...
+2024-03-19 07:27:49,081 torchfusion WARNING: Image directory /home/ataraxia/Datasets//documents/DocBank//DocBank_500K_ori_img/ does not exist. Loading data without images...
+2024-03-19 07:27:49,131 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/429d4f0005156368c63f682c10355d26ac5f6829275f9a45edd576dfa99b2007/docbank.py", line 195, in _generate_examples_impl
+    assert annotation["bbox"] == [
+AssertionError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 07:29:44,976 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:29:44,981 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:29:44,981 torchfusion INFO: Global seed set to 42
+2024-03-19 07:29:45,020 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:29:45,020 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:29:45,144 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/0.0.0)
+2024-03-19 07:29:45,512 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:29:45,513 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:29:45,516 torchfusion INFO: Loading annotations file...
+2024-03-19 07:30:02,239 torchfusion INFO: Preparing annotations...
+2024-03-19 07:30:03,847 torchfusion WARNING: Image directory /home/ataraxia/Datasets//documents/DocBank//DocBank_500K_ori_img/ does not exist. Loading data without images...
+2024-03-19 07:30:03,898 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/0e6c4a0aa677bbfb73b5310c9c39c1372d3d42a52155e8209c8b8b31b17c7094/docbank.py", line 196, in _generate_examples_impl
+    assert annotation["bbox"] == [
+AssertionError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 07:31:09,409 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:31:09,414 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:31:09,414 torchfusion INFO: Global seed set to 42
+2024-03-19 07:31:09,431 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:31:09,432 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:31:09,537 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/0.0.0)
+2024-03-19 07:31:09,821 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:31:09,822 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:31:09,825 torchfusion INFO: Loading annotations file...
+2024-03-19 07:31:26,704 torchfusion INFO: Preparing annotations...
+2024-03-19 07:31:28,252 torchfusion WARNING: Image directory /home/ataraxia/Datasets//documents/DocBank//DocBank_500K_ori_img/ does not exist. Loading data without images...
+2024-03-19 07:31:28,305 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/e506f714132b769f593ccefa00bfba38b4c59caefd0f3b83b5dd52da5fc48b16/docbank.py", line 196, in _generate_examples_impl
+    assert annotation["bbox"] == [
+AssertionError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 07:35:09,447 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:35:09,453 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:35:09,453 torchfusion INFO: Global seed set to 42
+2024-03-19 07:35:09,472 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:35:09,472 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:35:09,622 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/0.0.0)
+2024-03-19 07:35:09,966 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:35:09,967 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:35:09,970 torchfusion INFO: Loading annotations file...
+2024-03-19 07:35:26,699 torchfusion INFO: Preparing annotations...
+2024-03-19 07:35:28,304 torchfusion WARNING: Image directory /home/ataraxia/Datasets//documents/DocBank//DocBank_500K_ori_img/ does not exist. Loading data without images...
+2024-03-19 07:35:28,370 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/dc1b3d5bcad2f3fbddeab522602463cc440190d32f3e2fc4c0dda049b178bdd4/docbank.py", line 198, in _generate_examples_impl
+    assert annotation["bbox"] == [
+AssertionError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 07:35:58,434 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:35:58,440 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:35:58,440 torchfusion INFO: Global seed set to 42
+2024-03-19 07:35:58,458 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:35:58,458 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:35:58,583 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/0.0.0)
+2024-03-19 07:35:58,867 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:35:58,869 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:35:58,872 torchfusion INFO: Loading annotations file...
+2024-03-19 07:36:16,250 torchfusion INFO: Preparing annotations...
+[2024-03-19 07:36:16,504][root][INFO] - Received ctrl-c interrupt. Stopping training...
+2024-03-19 07:36:17,848 torchfusion WARNING: Image directory /home/ataraxia/Datasets//documents/DocBank//DocBank_500K_ori_img/ does not exist. Loading data without images...
+2024-03-19 07:36:24,547 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:36:24,553 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:36:24,553 torchfusion INFO: Global seed set to 42
+2024-03-19 07:36:24,571 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:36:24,571 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:36:24,678 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/0.0.0)
+2024-03-19 07:36:25,122 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:36:25,122 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:36:25,126 torchfusion INFO: Loading annotations file...
+2024-03-19 07:36:41,943 torchfusion INFO: Preparing annotations...
+2024-03-19 07:36:43,448 torchfusion WARNING: Image directory /home/ataraxia/Datasets//documents/DocBank//DocBank_500K_ori_img/ does not exist. Loading data without images...
+2024-03-19 07:36:43,505 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/348d13df045b97c80ec8321a5fa84d8baef0894ff3131001b6accb0365959754/docbank.py", line 200, in _generate_examples_impl
+    assert annotation["bbox"] == [
+AssertionError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 07:37:55,263 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:37:55,269 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:37:55,269 torchfusion INFO: Global seed set to 42
+2024-03-19 07:37:55,288 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:37:55,288 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:37:55,423 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/0.0.0)
+2024-03-19 07:37:55,751 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:37:55,752 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:37:55,756 torchfusion INFO: Loading annotations file...
+2024-03-19 07:39:48,068 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:39:48,118 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:39:48,118 torchfusion INFO: Global seed set to 42
+2024-03-19 07:39:48,199 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:39:48,200 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:39:48,698 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/text-default/0.0.0)
+2024-03-19 07:39:49,086 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:39:49,087 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:39:49,115 torchfusion INFO: Loading annotations file...
+2024-03-19 07:40:08,797 torchfusion INFO: Preparing annotations...
+2024-03-19 07:40:10,343 torchfusion WARNING: Image directory /home/ataraxia/Datasets//documents/DocBank//DocBank_500K_ori_img/ does not exist. Loading data without images...
+2024-03-19 07:40:10,438 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/e447a048634e36455af77eafa1a3babfafd2f7b978453c444a90aa08d4d1ac9c/docbank.py", line 200, in _generate_examples_impl
+    assert annotation["bbox"] == [
+AssertionError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 07:41:55,115 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:41:55,121 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:41:55,121 torchfusion INFO: Global seed set to 42
+2024-03-19 07:41:55,142 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:41:55,142 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:41:55,145 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: FusionCocoDatasetConfig.__init__() got an unexpected keyword argument 'load_images'
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 320, in _load_dataset
+    dataset_class = ModuleLazyImporter.get_datasets().get(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 22, in <lambda>
+    return lambda: getattr(importlib.import_module(name + "." + module_name), cls_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 171, in <module>
+    class DocBank(FusionCocoDataset):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 177, in DocBank
+    DocBankConfig(
+TypeError: FusionCocoDatasetConfig.__init__() got an unexpected keyword argument 'load_images'
+2024-03-19 07:43:47,120 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:43:47,126 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:43:47,126 torchfusion INFO: Global seed set to 42
+2024-03-19 07:43:47,144 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:43:47,145 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:43:47,147 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: FusionCocoDatasetConfig.__init__() got an unexpected keyword argument 'load_images'
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 320, in _load_dataset
+    dataset_class = ModuleLazyImporter.get_datasets().get(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 22, in <lambda>
+    return lambda: getattr(importlib.import_module(name + "." + module_name), cls_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 171, in <module>
+    class DocBank(FusionCocoDataset):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 177, in DocBank
+    DocBankConfig(
+TypeError: FusionCocoDatasetConfig.__init__() got an unexpected keyword argument 'load_images'
+2024-03-19 07:44:26,428 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:44:26,434 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:44:26,434 torchfusion INFO: Global seed set to 42
+2024-03-19 07:44:26,453 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:44:26,453 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:44:26,454 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: FusionCocoDatasetConfig.__init__() got an unexpected keyword argument 'load_images'
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 320, in _load_dataset
+    dataset_class = ModuleLazyImporter.get_datasets().get(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/utilities/module_import.py", line 22, in <lambda>
+    return lambda: getattr(importlib.import_module(name + "." + module_name), cls_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 171, in <module>
+    class DocBank(FusionCocoDataset):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/data/datasets/docbank.py", line 177, in DocBank
+    DocBankConfig(
+TypeError: FusionCocoDatasetConfig.__init__() got an unexpected keyword argument 'load_images'
+2024-03-19 07:44:47,492 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:44:47,499 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:44:47,499 torchfusion INFO: Global seed set to 42
+2024-03-19 07:44:47,519 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:44:47,520 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:44:47,532 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: BuilderConfig 'text' not found. Available: ['default']
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 223, in _load_fusion_dataset
+    builder = self._get_builder()
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 298, in _get_builder
+    return DatasetFactory.create_builder(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 54, in create_builder
+    return load_dataset_builder(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2265, in load_dataset_builder
+    builder_instance: DatasetBuilder = builder_cls(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 22, in __init__
+    super().__init__(*args, **kwargs)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 371, in __init__
+    self.config, self.config_id = self._create_builder_config(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 592, in _create_builder_config
+    raise ValueError(
+ValueError: BuilderConfig 'text' not found. Available: ['default']
+2024-03-19 07:45:13,930 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:45:13,936 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:45:13,936 torchfusion INFO: Global seed set to 42
+2024-03-19 07:45:13,953 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:45:13,953 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:45:13,961 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: BuilderConfig 'text' not found. Available: ['default']
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 223, in _load_fusion_dataset
+    builder = self._get_builder()
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 298, in _get_builder
+    return DatasetFactory.create_builder(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 54, in create_builder
+    return load_dataset_builder(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2265, in load_dataset_builder
+    builder_instance: DatasetBuilder = builder_cls(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 22, in __init__
+    super().__init__(*args, **kwargs)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 371, in __init__
+    self.config, self.config_id = self._create_builder_config(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 592, in _create_builder_config
+    raise ValueError(
+ValueError: BuilderConfig 'text' not found. Available: ['default']
+2024-03-19 07:45:20,573 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:45:20,579 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:45:20,580 torchfusion INFO: Global seed set to 42
+2024-03-19 07:45:20,597 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:45:20,598 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:45:20,607 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: BuilderConfig 'text' not found. Available: ['default']
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 223, in _load_fusion_dataset
+    builder = self._get_builder()
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 298, in _get_builder
+    return DatasetFactory.create_builder(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 54, in create_builder
+    return load_dataset_builder(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2265, in load_dataset_builder
+    builder_instance: DatasetBuilder = builder_cls(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 22, in __init__
+    super().__init__(*args, **kwargs)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 371, in __init__
+    self.config, self.config_id = self._create_builder_config(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 592, in _create_builder_config
+    raise ValueError(
+ValueError: BuilderConfig 'text' not found. Available: ['default']
+2024-03-19 07:45:28,118 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:45:28,124 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:45:28,124 torchfusion INFO: Global seed set to 42
+2024-03-19 07:45:28,142 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:45:28,142 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:45:28,247 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/default-default/0.0.0)
+2024-03-19 07:45:29,084 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:45:29,085 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:45:29,088 torchfusion INFO: Loading annotations file...
+2024-03-19 07:45:29,088 torchfusion WARNING: Image directory /home/ataraxia/Datasets/documents/DocBank/DocBank_500K_ori_img does not exist. Loading data without images...
+2024-03-19 07:45:29,089 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/7107aa6e5469e72873419b09ab567e9835cba19e61762f2e588f3f07a114be0b/docbank.py", line 220, in _generate_examples_impl
+    with open(Path(self.config.data_dir) / f"{split}.jsonl", "rt") as fp:
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/streaming.py", line 75, in wrapper
+    return function(*args, download_config=download_config, **kwargs)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/download/streaming_download_manager.py", line 507, in xopen
+    return open(main_hop, mode, *args, **kwargs)
+FileNotFoundError: [Errno 2] No such file or directory: '/home/ataraxia/Datasets/documents/DocBank/train.jsonl'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 07:50:36,396 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:50:36,402 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:50:36,402 torchfusion INFO: Global seed set to 42
+2024-03-19 07:50:36,419 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:50:36,420 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:50:36,524 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/default-default/0.0.0)
+2024-03-19 07:50:36,868 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:50:36,869 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:50:36,872 torchfusion INFO: Loading annotations file...
+2024-03-19 07:50:36,872 torchfusion WARNING: Image directory /home/ataraxia/Datasets/documents/DocBank/DocBank_500K_ori_img does not exist. Loading data without images...
+2024-03-19 07:50:36,905 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/7107aa6e5469e72873419b09ab567e9835cba19e61762f2e588f3f07a114be0b/docbank.py", line 248, in _generate_examples_impl
+    object_dict = create_coco_object_dict(
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/7107aa6e5469e72873419b09ab567e9835cba19e61762f2e588f3f07a114be0b/docbank.py", line 136, in create_coco_object_dict
+    object_dict["category_id"] = _CLASSES.index(doc_object[9])
+ValueError: 'date' is not in list
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 07:51:16,194 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:51:16,200 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:51:16,200 torchfusion INFO: Global seed set to 42
+2024-03-19 07:51:16,217 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:51:16,217 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:51:16,324 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/default-default/0.0.0)
+2024-03-19 07:51:16,645 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:51:16,646 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:51:16,649 torchfusion INFO: Loading annotations file...
+2024-03-19 07:51:16,649 torchfusion WARNING: Image directory /home/ataraxia/Datasets/documents/DocBank/DocBank_500K_ori_img does not exist. Loading data without images...
+2024-03-19 07:51:16,654 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/7107aa6e5469e72873419b09ab567e9835cba19e61762f2e588f3f07a114be0b/docbank.py", line 248, in _generate_examples_impl
+    object_dict = create_coco_object_dict(
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/7107aa6e5469e72873419b09ab567e9835cba19e61762f2e588f3f07a114be0b/docbank.py", line 136, in create_coco_object_dict
+    object_dict["category_id"] = _CLASSES.index(doc_object[9])
+ValueError: 'date' is not in list
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 07:53:59,300 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:53:59,306 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:53:59,306 torchfusion INFO: Global seed set to 42
+2024-03-19 07:53:59,323 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:53:59,324 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:53:59,444 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/default-default/0.0.0)
+2024-03-19 07:54:00,213 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:54:00,214 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:54:00,217 torchfusion INFO: Loading annotations file...
+2024-03-19 07:54:00,218 torchfusion WARNING: Image directory /home/ataraxia/Datasets/documents/DocBank/DocBank_500K_ori_img does not exist. Loading data without images...
+[2024-03-19 07:54:05,881][root][INFO] - Received ctrl-c interrupt. Stopping training...
+2024-03-19 07:54:12,005 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:54:12,011 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:54:12,011 torchfusion INFO: Global seed set to 42
+2024-03-19 07:54:12,029 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:54:12,029 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:54:12,132 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/default-default/0.0.0)
+2024-03-19 07:54:12,459 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:54:12,459 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:54:12,463 torchfusion INFO: Loading annotations file...
+2024-03-19 07:54:12,463 torchfusion WARNING: Image directory /home/ataraxia/Datasets/documents/DocBank/DocBank_500K_ori_img does not exist. Loading data without images...
+2024-03-19 07:54:13,919 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/7107aa6e5469e72873419b09ab567e9835cba19e61762f2e588f3f07a114be0b/docbank.py", line 231, in _generate_examples_impl
+    ann_table = pd.read_table(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/io/parsers/readers.py", line 1405, in read_table
+    return _read(filepath_or_buffer, kwds)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/io/parsers/readers.py", line 626, in _read
+    return parser.read(nrows)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/io/parsers/readers.py", line 1923, in read
+    ) = self._engine.read(  # type: ignore[attr-defined]
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/io/parsers/c_parser_wrapper.py", line 234, in read
+    chunks = self._reader.read_low_memory(nrows)
+  File "parsers.pyx", line 838, in pandas._libs.parsers.TextReader.read_low_memory
+  File "parsers.pyx", line 905, in pandas._libs.parsers.TextReader._read_rows
+  File "parsers.pyx", line 874, in pandas._libs.parsers.TextReader._tokenize_rows
+  File "parsers.pyx", line 891, in pandas._libs.parsers.TextReader._check_tokenize_status
+  File "parsers.pyx", line 2061, in pandas._libs.parsers.raise_parser_error
+pandas.errors.ParserError: Error tokenizing data. C error: EOF inside string starting at row 44
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 07:55:21,853 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:55:21,859 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:55:21,859 torchfusion INFO: Global seed set to 42
+2024-03-19 07:55:21,876 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:55:21,877 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:55:21,979 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/default-default/0.0.0)
+2024-03-19 07:55:22,816 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:55:22,817 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:55:22,821 torchfusion INFO: Loading annotations file...
+2024-03-19 07:55:22,821 torchfusion WARNING: Image directory /home/ataraxia/Datasets/documents/DocBank/DocBank_500K_ori_img does not exist. Loading data without images...
+2024-03-19 07:55:24,086 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/7107aa6e5469e72873419b09ab567e9835cba19e61762f2e588f3f07a114be0b/docbank.py", line 231, in _generate_examples_impl
+    ann_table = pd.read_table(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/io/parsers/readers.py", line 1405, in read_table
+    return _read(filepath_or_buffer, kwds)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/io/parsers/readers.py", line 626, in _read
+    return parser.read(nrows)
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/io/parsers/readers.py", line 1923, in read
+    ) = self._engine.read(  # type: ignore[attr-defined]
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/pandas/io/parsers/c_parser_wrapper.py", line 234, in read
+    chunks = self._reader.read_low_memory(nrows)
+  File "parsers.pyx", line 838, in pandas._libs.parsers.TextReader.read_low_memory
+  File "parsers.pyx", line 905, in pandas._libs.parsers.TextReader._read_rows
+  File "parsers.pyx", line 874, in pandas._libs.parsers.TextReader._tokenize_rows
+  File "parsers.pyx", line 891, in pandas._libs.parsers.TextReader._check_tokenize_status
+  File "parsers.pyx", line 2061, in pandas._libs.parsers.raise_parser_error
+pandas.errors.ParserError: Error tokenizing data. C error: EOF inside string starting at row 44
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 07:56:14,973 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:56:14,979 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:56:14,979 torchfusion INFO: Global seed set to 42
+2024-03-19 07:56:14,995 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:56:14,996 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:56:15,104 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/default-default/0.0.0)
+2024-03-19 07:56:15,916 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:56:15,917 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:56:15,920 torchfusion INFO: Loading annotations file...
+2024-03-19 07:56:15,920 torchfusion WARNING: Image directory /home/ataraxia/Datasets/documents/DocBank/DocBank_500K_ori_img does not exist. Loading data without images...
+2024-03-19 07:56:15,923 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/d3f49fb3e125cc7fe28b48a4beb5e4ea570ca76f3b60a943209b073cb8dee57f/docbank.py", line 251, in _generate_examples_impl
+    object_dict = create_coco_object_dict(
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/d3f49fb3e125cc7fe28b48a4beb5e4ea570ca76f3b60a943209b073cb8dee57f/docbank.py", line 137, in create_coco_object_dict
+    object_dict["category_id"] = _CLASSES.index(doc_object[9])
+ValueError: 'date' is not in list
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset
+2024-03-19 07:56:27,610 torchfusion INFO: Starting torchfusion training script
+2024-03-19 07:56:27,616 torchfusion INFO: Running task: prepare_dataset
+2024-03-19 07:56:27,616 torchfusion INFO: Global seed set to 42
+2024-03-19 07:56:27,634 torchfusion INFO: Setting up datamodule...
+2024-03-19 07:56:27,634 torchfusion INFO: Loading data for stage == train|test|val
+2024-03-19 07:56:27,739 torchfusion.core.data.datasets.msgpack.builder INFO: Generating dataset docbank (/home/ataraxia/Datasets//documents/DocBank//huggingface/docbank/default-default/0.0.0)
+2024-03-19 07:56:28,067 torchfusion.core.data.datasets.msgpack.builder INFO: Dataset not on Hf google storage. Downloading and preparing it from source
+2024-03-19 07:56:28,068 torchfusion.core.data.datasets.msgpack.builder WARNING: Using num_proc=4 for a single shard instead of multiprocessing with multiple hards for train split.
+2024-03-19 07:56:28,071 torchfusion INFO: Loading annotations file...
+2024-03-19 07:56:28,071 torchfusion WARNING: Image directory /home/ataraxia/Datasets/documents/DocBank/DocBank_500K_ori_img does not exist. Loading data without images...
+2024-03-19 08:33:48,025 torchfusion ERROR: Exception raised while loading the dataset [DocBank]: An error occurred while generating the dataset
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 545, in _prepare_split_single
+    for key, record in pool.imap(record_preprocessor, generator):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 144, in _helper_reraises_exception
+    raise ex
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 391, in _guarded_task_generation
+    for i, x in enumerate(iterable):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/fusion_dataset.py", line 66, in _generate_examples
+    for key, sample in self._generate_examples_impl(*args, **kwargs):
+  File "/home/ataraxia/.cache/huggingface/modules/datasets_modules/datasets/docbank/5c8e1ded172302b3a16b3741aa251dd3d19f63509180d3baaac76d2b36d9fe0b/docbank.py", line 224, in _generate_examples_impl
+    index, basename = eval(file)
+  File "<string>", line 1
+    
+SyntaxError: invalid syntax
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 334, in _load_dataset
+    return self._load_fusion_dataset(split=split)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/data_modules/fusion_data_module.py", line 248, in _load_fusion_dataset
+    msgpack_dataset = DatasetFactory.create(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/factory/dataset.py", line 26, in create
+    return load_dataset(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/load.py", line 2582, in load_dataset
+    builder_instance.download_and_prepare(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 311, in download_and_prepare
+    self._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1767, in _download_and_prepare
+    super()._download_and_prepare(
+  File "/home/ataraxia/.virtualenvs/torchfusion/lib/python3.10/site-packages/datasets/builder.py", line 1100, in _download_and_prepare
+    self._prepare_split(split_generator, **prepare_split_kwargs)
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 390, in _prepare_split
+    for job_id, done, content in self._prepare_split_single(
+  File "/home/ataraxia/Projects/docllm/docllm/src/torchfusion/core/data/datasets/msgpack/builder.py", line 568, in _prepare_split_single
+    raise DatasetGenerationError("An error occurred while generating the dataset") from e
+datasets.exceptions.DatasetGenerationError: An error occurred while generating the dataset

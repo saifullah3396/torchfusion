@@ -1,0 +1,76 @@
+# @package _global_
+defaults:
+  - /args/data_args: "???"
+
+args:
+  analyzer_args:
+    analyzer_output_dir: ${oc.env:TORCH_FUSION_OUTPUT_DIR}/analyzer/
+    tasks:
+      prepare_dataset:
+        task_type: PrepareDataset
+        task_config: {}
+  data_args:
+    num_proc: 4
+    dataset_config_name: ${dataset_config_name}
+    cache_file_name: ${image_size_x}x${image_size_y}
+    train_preprocess_augs:
+      - name: PreprocessAug
+        kwargs:
+          rescale_size:
+            - ${image_size_x}
+            - ${image_size_y}
+          key: image
+    eval_preprocess_augs:
+      - name: PreprocessAug
+        kwargs:
+          rescale_size:
+            - ${image_size_x}
+            - ${image_size_y}
+          key: image
+    train_realtime_augs:
+      - name: BasicImageAug
+        kwargs:
+          gray_to_rgb: True
+          normalize: True
+          mean:
+            - 0.5
+          std:
+            - 0.5
+          rescale_strategy:
+            name: Rescale
+            kwargs:
+              size:
+                - ${realtime_image_size_x}
+                - ${realtime_image_size_y}
+          key:
+            - image
+    eval_realtime_augs:
+      - name: BasicImageAug
+        kwargs:
+          gray_to_rgb: True
+          normalize: True
+          mean:
+            - 0.5
+          std:
+            - 0.5
+          rescale_strategy:
+            name: Rescale
+            kwargs:
+              size:
+                - ${realtime_image_size_x}
+                - ${realtime_image_size_y}
+          key:
+            - image
+
+hydra:
+  run:
+    dir: ${args.analyzer_args.analyzer_output_dir}/${args.data_args.dataset_name}/
+  output_subdir: hydra
+  job:
+    chdir: False
+
+image_size_x: 1024
+image_size_y: 1024
+realtime_image_size_x: 1024
+realtime_image_size_y: 1024
+dataset_config_name: default

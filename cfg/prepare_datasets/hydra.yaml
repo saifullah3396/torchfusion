@@ -1,0 +1,3 @@
+defaults:
+  - args/general_args: default
+  - _self_

@@ -1,0 +1,65 @@
+# @package _global_
+defaults:
+  - /args/data_args: "???"
+
+args:
+  analyzer_args:
+    analyzer_output_dir: ${oc.env:TORCH_FUSION_OUTPUT_DIR}/analyzer/
+    tasks:
+      prepare_dataset:
+        task_type: PrepareDataset
+        task_config: {}
+  data_args:
+    num_proc: 12
+    dataset_kwargs:
+      max_encoder_length: ${max_encoder_length}
+      target_image_width: ${image_size_x}
+      target_image_height: ${image_size_y}
+      ocr_engine: ${ocr_engine}
+      train_strategy: ${train_strategy}
+    dataset_config_name: ${dataset_config_name}
+    cache_file_name: ${args.data_args.dataset_kwargs.ocr_engine}_${image_size_x}x${image_size_y}
+    train_preprocess_augs: null 
+    eval_preprocess_augs: null
+    train_realtime_augs:
+      - name: BasicImageAug
+        kwargs:
+          gray_to_rgb: True
+          normalize: True # defaults to imagenet mean/std
+          rescale_strategy:
+            name: Rescale
+            kwargs:
+              size:
+                - ${realtime_image_size_x}
+                - ${realtime_image_size_y}
+          key:
+            - image
+    eval_realtime_augs:
+      - name: BasicImageAug
+        kwargs:
+          gray_to_rgb: True
+          normalize: True # defaults to imagenet mean/std
+          rescale_strategy:
+            name: Rescale
+            kwargs:
+              size:
+                - ${realtime_image_size_x}
+                - ${realtime_image_size_y}
+          key:
+            - image
+
+hydra:
+  run:
+    dir: ${args.analyzer_args.analyzer_output_dir}/${args.data_args.dataset_name}/
+  output_subdir: hydra
+  job:
+    chdir: False
+
+image_size_x: 384
+image_size_y: 384
+realtime_image_size_x: 384
+realtime_image_size_y: 384
+dataset_config_name: DocVQA
+max_encoder_length: 1024
+ocr_engine: microsoft_cv
+train_strategy: all_items

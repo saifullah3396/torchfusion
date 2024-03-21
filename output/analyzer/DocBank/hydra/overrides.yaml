@@ -1,0 +1,3 @@
+- +run=prepare_text_dataset
+- dataset_config_name=default
+- args/data_args=docbank
