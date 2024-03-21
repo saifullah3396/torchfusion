@@ -1,6 +1,0 @@
-- +run=prepare_due_benchmark_with_preprocess
-- args/data_args=due_benchmark
-- dataset_config_name=DocVQA
-- max_encoder_length=1024
-- train_strategy=all_items
-- ocr_engine=microsoft_cv
