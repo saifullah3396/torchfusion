@@ -16,11 +16,4 @@ args:
     train_realtime_augs: null
     eval_realtime_augs: null
 
-hydra:
-  run:
-    dir: ${args.analyzer_args.analyzer_output_dir}/${args.data_args.dataset_name}/
-  output_subdir: hydra
-  job:
-    chdir: False
-
 dataset_config_name: default

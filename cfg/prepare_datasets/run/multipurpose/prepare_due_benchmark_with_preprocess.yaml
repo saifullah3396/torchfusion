@@ -48,13 +48,6 @@ args:
           key:
             - image
 
-hydra:
-  run:
-    dir: ${args.analyzer_args.analyzer_output_dir}/${args.data_args.dataset_name}/
-  output_subdir: hydra
-  job:
-    chdir: False
-
 image_size_x: 384
 image_size_y: 384
 realtime_image_size_x: 384

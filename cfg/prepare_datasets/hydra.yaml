@@ -1,3 +1,10 @@
 defaults:
   - args/general_args: default
   - _self_
+
+hydra:
+  run:
+    dir: ${args.data_args.dataset_cache_dir}
+  output_subdir: hydra
+  job:
+    chdir: False
