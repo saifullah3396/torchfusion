@@ -12,65 +12,45 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""SROIE dataset"""
+"""FUNSD dataset"""
 
 
-import collections
-import csv
 import dataclasses
-import itertools
 import json
 import os
-from dataclasses import field
 from pathlib import Path
-from typing import Callable, List, Optional, Tuple, Union
 
 import datasets
 import numpy as np
 import pandas as pd
 import PIL
-import tqdm
-from attr import dataclass
-from datasets import load_dataset
-from datasets.features import Features, Image
 
-from torchfusion.core.args.args_base import ClassInitializerArgs
 from torchfusion.core.constants import DataKeys
-from torchfusion.core.data.datasets.fusion_dataset import FusionDataset
-from torchfusion.core.data.datasets.fusion_dataset_config import FusionDatasetConfig
-from torchfusion.core.data.datasets.fusion_image_dataset import (
-    FusionImageDataset,
-    FusionImageDatasetConfig,
-)
 from torchfusion.core.data.datasets.fusion_ner_dataset import (
     FusionNERDataset,
     FusionNERDatasetConfig,
 )
-from torchfusion.core.data.text_utils.tokenizers.factory import TokenizerFactory
-from torchfusion.core.data.text_utils.tokenizers.hf_tokenizer import DataPadder
 from torchfusion.core.data.text_utils.utilities import normalize_bbox
 
 # Find for instance the citation on arxiv or on the dataset repo/website
 _CITATION = """"""
 
 # You can copy an official description
-_DESCRIPTION = """SROIE Receipts Dataset"""
+_DESCRIPTION = """FUNSD Dataset"""
 
-_HOMEPAGE = "https://rrc.cvc.uab.es/?ch=13"
+_HOMEPAGE = "https://guillaumejaume.github.io/FUNSD/"
 
 _LICENSE = "Apache-2.0 license"
 
 _NER_LABELS_PER_SCHEME = {
     "IOB": [
         "O",
-        "B-COMPANY",
-        "I-COMPANY",
-        "B-DATE",
-        "I-DATE",
-        "B-ADDRESS",
-        "I-ADDRESS",
-        "B-TOTAL",
-        "I-TOTAL",
+        "B-HEADER",
+        "I-HEADER",
+        "B-QUESTION",
+        "I-QUESTION",
+        "B-ANSWER",
+        "I-ANSWER",
     ]
 }
 
@@ -85,17 +65,17 @@ def convert_to_list(row):
 
 
 @dataclasses.dataclass
-class SROIEConfig(FusionNERDatasetConfig):
+class FUNSDConfig(FusionNERDatasetConfig):
     pass
 
 
-class SROIE(FusionNERDataset):
-    """SROIE dataset."""
+class FUNSD(FusionNERDataset):
+    """FUNSD dataset."""
 
     VERSION = datasets.Version("1.0.0")
 
     BUILDER_CONFIGS = [
-        SROIEConfig(
+        FUNSDConfig(
             name="default",
             description=_DESCRIPTION,
             homepage=_HOMEPAGE,
@@ -107,38 +87,83 @@ class SROIE(FusionNERDataset):
     ]
 
     def _split_generators(self, dl_manager):
+        for dir in ["training_data", "testing_data"]:
+            assert (
+                Path(self.config.data_dir) / dir
+            ).exists(), f"Data directory {self.config.data_dir} {dir} does not exist."
         return [
             datasets.SplitGenerator(
                 name=datasets.Split.TRAIN,
-                gen_kwargs={"filepath": Path(self.config.data_dir) / "train"},
+                gen_kwargs={"filepath": Path(self.config.data_dir) / "training_data"},
             ),
             datasets.SplitGenerator(
                 name=datasets.Split.TEST,
-                gen_kwargs={"filepath": Path(self.config.data_dir) / "test"},
+                gen_kwargs={"filepath": Path(self.config.data_dir) / "testing_data"},
             ),
         ]
 
+    def _quad_to_box(self, quad):
+        # test 87 is wrongly annotated
+        box = (max(0, quad["x1"]), max(0, quad["y1"]), quad["x3"], quad["y3"])
+        if box[3] < box[1]:
+            bbox = list(box)
+            tmp = bbox[3]
+            bbox[3] = bbox[1]
+            bbox[1] = tmp
+            box = tuple(bbox)
+        if box[2] < box[0]:
+            bbox = list(box)
+            tmp = bbox[2]
+            bbox[2] = bbox[0]
+            bbox[0] = tmp
+            box = tuple(bbox)
+        return box
+
     def _load_dataset_to_pandas(self, filepath):
-        ann_dir = os.path.join(filepath, "tagged")
+        ann_dir = os.path.join(filepath, "annotations")
         image_dir = os.path.join(filepath, "images")
 
         data = []
         for fname in sorted(os.listdir(image_dir)):
             name, ext = os.path.splitext(fname)
-            file_path = os.path.join(ann_dir, name + ".json")
-            with open(file_path, "r", encoding="utf8") as f:
-                sample = json.load(f)
+            ann_path = os.path.join(ann_dir, name + ".json")
             image_path = os.path.join(image_dir, fname)
-            image = PIL.Image.open(image_path)
-            boxes = [normalize_bbox(box, image.size) for box in sample["bbox"]]
+            with open(ann_path, "r", encoding="utf8") as f:
+                annotation = json.load(f)
+            image_size = PIL.Image.open(image_path).size
 
+            words_list = []
+            bboxes = []
+            labels = []
+            # get annotations
+            for item in annotation["form"]:
+                cur_line_bboxes = []
+                words, label = item["words"], item["label"]
+                words = [w for w in words if w["text"].strip() != ""]
+                if len(words) == 0:
+                    continue
+
+                if label == "other":
+                    for w in words:
+                        words_list.append(w["text"])
+                        labels.append("O")
+                        cur_line_bboxes.append(normalize_bbox(w["box"], image_size))
+                else:
+                    words_list.append(words[0]["text"])
+                    labels.append("B-" + label.upper())
+                    cur_line_bboxes.append(normalize_bbox(words[0]["box"], image_size))
+                    for w in words[1:]:
+                        words_list.append(w["text"])
+                        labels.append("I-" + label.upper())
+                        cur_line_bboxes.append(normalize_bbox(w["box"], image_size))
+                if self.config.segment_level_layout:
+                    cur_line_bboxes = self.get_line_bbox(cur_line_bboxes)
+                bboxes.extend(cur_line_bboxes)
             data.append(
                 {
-                    DataKeys.WORDS: sample["words"],
-                    DataKeys.WORD_BBOXES: boxes,
-                    DataKeys.LABEL: [
-                        self.config.ner_labels.index(l) for l in sample["labels"]
-                    ],
+                    DataKeys.WORDS: words_list,
+                    DataKeys.WORD_BBOXES: bboxes,
+                    DataKeys.LABEL: [self.config.ner_labels.index(l) for l in labels],
                     DataKeys.IMAGE_FILE_PATH: image_path,
                     # we don't load all images here to save memory
                 }
@@ -150,6 +175,8 @@ class SROIE(FusionNERDataset):
         filepath,
     ):
         data = self._load_dataset_to_pandas(filepath)
+        self._logger.info("Base dataset pandas dataframe loaded:")
+        self._logger.info(data)
         try:
             data = data.apply(convert_to_list, axis=1)
             self._update_ner_labels(data)

@@ -12,65 +12,65 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""SROIE dataset"""
+"""WildReceipts dataset"""
 
 
-import collections
-import csv
 import dataclasses
-import itertools
 import json
 import os
-from dataclasses import field
 from pathlib import Path
-from typing import Callable, List, Optional, Tuple, Union
 
 import datasets
 import numpy as np
 import pandas as pd
 import PIL
-import tqdm
-from attr import dataclass
-from datasets import load_dataset
-from datasets.features import Features, Image
 
-from torchfusion.core.args.args_base import ClassInitializerArgs
 from torchfusion.core.constants import DataKeys
-from torchfusion.core.data.datasets.fusion_dataset import FusionDataset
-from torchfusion.core.data.datasets.fusion_dataset_config import FusionDatasetConfig
-from torchfusion.core.data.datasets.fusion_image_dataset import (
-    FusionImageDataset,
-    FusionImageDatasetConfig,
-)
 from torchfusion.core.data.datasets.fusion_ner_dataset import (
     FusionNERDataset,
     FusionNERDatasetConfig,
 )
-from torchfusion.core.data.text_utils.tokenizers.factory import TokenizerFactory
-from torchfusion.core.data.text_utils.tokenizers.hf_tokenizer import DataPadder
 from torchfusion.core.data.text_utils.utilities import normalize_bbox
 
 # Find for instance the citation on arxiv or on the dataset repo/website
 _CITATION = """"""
 
 # You can copy an official description
-_DESCRIPTION = """SROIE Receipts Dataset"""
+_DESCRIPTION = """WildReceipts Dataset"""
 
-_HOMEPAGE = "https://rrc.cvc.uab.es/?ch=13"
+_HOMEPAGE = ""
 
 _LICENSE = "Apache-2.0 license"
 
+_URLS = ["https://download.openmmlab.com/mmocr/data/wildreceipt.tar"]
+
 _NER_LABELS_PER_SCHEME = {
     "IOB": [
+        "B-Store_name_value",
+        "B-Store_name_key",
+        "B-Store_addr_value",
+        "B-Store_addr_key",
+        "B-Tel_value",
+        "B-Tel_key",
+        "B-Date_value",
+        "B-Date_key",
+        "B-Time_value",
+        "B-Time_key",
+        "B-Prod_item_value",
+        "B-Prod_item_key",
+        "B-Prod_quantity_value",
+        "B-Prod_quantity_key",
+        "B-Prod_price_value",
+        "B-Prod_price_key",
+        "B-Subtotal_value",
+        "B-Subtotal_key",
+        "B-Tax_value",
+        "B-Tax_key",
+        "B-Tips_value",
+        "B-Tips_key",
+        "B-Total_value",
+        "B-Total_key",
         "O",
-        "B-COMPANY",
-        "I-COMPANY",
-        "B-DATE",
-        "I-DATE",
-        "B-ADDRESS",
-        "I-ADDRESS",
-        "B-TOTAL",
-        "I-TOTAL",
     ]
 }
 
@@ -85,17 +85,17 @@ def convert_to_list(row):
 
 
 @dataclasses.dataclass
-class SROIEConfig(FusionNERDatasetConfig):
+class WildReceiptsConfig(FusionNERDatasetConfig):
     pass
 
 
-class SROIE(FusionNERDataset):
-    """SROIE dataset."""
+class WildReceipts(FusionNERDataset):
+    """WildReceipts dataset."""
 
     VERSION = datasets.Version("1.0.0")
 
     BUILDER_CONFIGS = [
-        SROIEConfig(
+        WildReceiptsConfig(
             name="default",
             description=_DESCRIPTION,
             homepage=_HOMEPAGE,
@@ -107,38 +107,62 @@ class SROIE(FusionNERDataset):
     ]
 
     def _split_generators(self, dl_manager):
+        for file in ["train.txt", "test.txt"]:
+            assert (
+                Path(self.config.data_dir) / file
+            ).exists(), f"Data directory {self.config.data_dir} {file} does not exist."
         return [
             datasets.SplitGenerator(
                 name=datasets.Split.TRAIN,
-                gen_kwargs={"filepath": Path(self.config.data_dir) / "train"},
+                gen_kwargs={"filepath": Path(self.config.data_dir) / "train.txt"},
             ),
             datasets.SplitGenerator(
                 name=datasets.Split.TEST,
-                gen_kwargs={"filepath": Path(self.config.data_dir) / "test"},
+                gen_kwargs={"filepath": Path(self.config.data_dir) / "test.txt"},
             ),
         ]
 
     def _load_dataset_to_pandas(self, filepath):
-        ann_dir = os.path.join(filepath, "tagged")
-        image_dir = os.path.join(filepath, "images")
+        item_list = []
+        with open(filepath, "r") as f:
+            for line in f:
+                item_list.append(line.rstrip("\n\r"))
+
+        class_list = pd.read_csv(
+            filepath.parent / "class_list.txt", delimiter="\s", header=None
+        )
+        id2labels = dict(zip(class_list[0].tolist(), class_list[1].tolist()))
 
         data = []
-        for fname in sorted(os.listdir(image_dir)):
-            name, ext = os.path.splitext(fname)
-            file_path = os.path.join(ann_dir, name + ".json")
-            with open(file_path, "r", encoding="utf8") as f:
-                sample = json.load(f)
-            image_path = os.path.join(image_dir, fname)
-            image = PIL.Image.open(image_path)
-            boxes = [normalize_bbox(box, image.size) for box in sample["bbox"]]
+        for guid, fname in enumerate(item_list):
+            ann = json.loads(fname)
+            image_path = filepath.parent / ann["file_name"]
+            image_size = PIL.Image.open(image_path).size
+
+            words = []
+            labels = []
+            bboxes = []
+            for i in ann["annotations"]:
+                label = id2labels[i["label"]]
+                if label == "Ignore":  # label 0 is attached to ignore so we skip it
+                    continue
+                if label in ["Others"]:
+                    label = "O"
+                else:
+                    label = "B-" + label
+                labels.append(label)
+                words.append(i["text"])
+                bboxes.append(
+                    normalize_bbox(
+                        [i["box"][6], i["box"][7], i["box"][2], i["box"][3]], image_size
+                    )
+                )
 
             data.append(
                 {
-                    DataKeys.WORDS: sample["words"],
-                    DataKeys.WORD_BBOXES: boxes,
-                    DataKeys.LABEL: [
-                        self.config.ner_labels.index(l) for l in sample["labels"]
-                    ],
+                    DataKeys.WORDS: words,
+                    DataKeys.WORD_BBOXES: bboxes,
+                    DataKeys.LABEL: [self.config.ner_labels.index(l) for l in labels],
                     DataKeys.IMAGE_FILE_PATH: image_path,
                     # we don't load all images here to save memory
                 }
@@ -150,6 +174,8 @@ class SROIE(FusionNERDataset):
         filepath,
     ):
         data = self._load_dataset_to_pandas(filepath)
+        self._logger.info("Base dataset pandas dataframe loaded:")
+        self._logger.info(data)
         try:
             data = data.apply(convert_to_list, axis=1)
             self._update_ner_labels(data)
