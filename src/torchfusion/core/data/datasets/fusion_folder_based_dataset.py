@@ -120,9 +120,6 @@ class FusionFolderBasedDataset(FusionDataset):
             downloaded_dirs = dl_manager.download_and_extract(archives)
             if do_analyze:  # drop_metadata is None or False, drop_labels is None or False
                 logger.info(f"Searching for labels and/or metadata files in {split_name} data files...")
-                print("files", files)
-                print("downloaded_files", downloaded_files)
-                print("split_name", split_name)
                 analyze(files, downloaded_files, split_name)
                 analyze(archives, downloaded_dirs, split_name)
 
