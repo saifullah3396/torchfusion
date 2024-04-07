@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import io
+import json
 import os
 import pickle
 import sys
@@ -17,16 +18,22 @@ from datasets import DownloadConfig
 from torch.utils.data import BatchSampler, DataLoader, Dataset
 
 from torchfusion.core.constants import DataKeys
-from torchfusion.core.data.data_modules.data_visualization_mixin import (
-    DataVisualizationMixin,
-)
 from torchfusion.core.data.datasets.msgpack.dataset import (
     MsgpackBasedDataset,
     MsgpackBasedTorchDataset,
 )
 from torchfusion.core.data.factory.dataset import DatasetFactory
+from torchfusion.core.data.text_utils.tokenizers.factory import TokenizerFactory
+from torchfusion.core.data.text_utils.tokenizers.hf_tokenizer import (
+    HuggingfaceTokenizer,
+)
 from torchfusion.core.data.train_val_samplers.base import TrainValSampler
 from torchfusion.core.data.utilities.containers import CollateFnDict, TransformsDict
+from torchfusion.core.data.utilities.data_visualization import (
+    print_batch_info,
+    show_batch,
+    show_images,
+)
 from torchfusion.core.data.utilities.dataset_stats import load_or_precalc_dataset_stats
 from torchfusion.core.training.utilities.constants import TrainingStage
 from torchfusion.utilities.logging import get_logger
@@ -101,7 +108,7 @@ class TorchMsgpackDataset(Dataset):
         return len(self.dataset)
 
 
-class FusionDataModule(ABC, DataVisualizationMixin):
+class FusionDataModule(ABC):
     def __init__(
         self,
         dataset_name: str,
@@ -225,29 +232,25 @@ class FusionDataModule(ABC, DataVisualizationMixin):
             self._logger.warning(f"The split {split} is not available in this dataset.")
             return
 
-        # generate dataset kwargs with some main arguments
-        # prepare download config
-        download_config = self._get_download_config()
-        kwargs = dict(
-            name=self._dataset_config_name,
-            data_dir=self._dataset_dir,
-            cache_dir=self._dataset_cache_dir,
-            cache_file_name=self._cache_file_name,
-            download_config=download_config,
-            split=split,
-            num_proc=self._num_proc,
-        )
+        # then add all additional kwargs
+        dataset_build_kwargs = {
+            **self._get_builder_kwargs(),
+            **dict(
+                split=split,
+                num_proc=self._num_proc,
+            ),
+        }
+
         preprocess_transforms, realtime_transforms = self._get_transforms(split)
         if preprocess_transforms and preprocess_transforms.transforms is not None:
-            kwargs["preprocess_transforms"] = preprocess_transforms
-
-        # then add all additional kwargs
-        kwargs = {**kwargs, **self._dataset_kwargs}
+            dataset_build_kwargs["preprocess_transforms"] = preprocess_transforms
 
         # create the dataset
+        self._logger.info("Loading dataset with the following kwargs:")
+        self._logger.info(dataset_build_kwargs)
         msgpack_dataset = DatasetFactory.create(
             self._dataset_name,
-            **kwargs,
+            **dataset_build_kwargs,
         )
 
         # assign realtime transforms to msgpack dataset to be applied on runtime
@@ -281,7 +284,7 @@ class FusionDataModule(ABC, DataVisualizationMixin):
             delete_extracted=True,
         )
 
-    def _get_builder(self):
+    def _get_builder_kwargs(self):
         # prepare download config
         download_config = self._get_download_config()
 
@@ -292,12 +295,16 @@ class FusionDataModule(ABC, DataVisualizationMixin):
             cache_dir=self._dataset_cache_dir,
             cache_file_name=self._cache_file_name,
             download_config=download_config,
+            **self._dataset_kwargs,
         )
 
+        return builder_kwargs
+
+    def _get_builder(self):
         # create the dataset
         return DatasetFactory.create_builder(
             self._dataset_name,
-            **builder_kwargs,
+            **self._get_builder_kwargs(),
         )
 
     def _get_transforms(self, split: str = "train"):
@@ -625,3 +632,19 @@ class FusionDataModule(ABC, DataVisualizationMixin):
             return self.test_dataloader()
         elif stage == TrainingStage.validation:
             return self.val_dataloader()
+
+    def show_batch(self, batch):
+        builder = self._get_builder()
+        tokenizer = None
+        if hasattr(builder.config, "tokenizer_config"):
+            # create tokenizer
+            tokenizer_name = builder.config.tokenizer_config["name"]
+            tokenizer_kwargs = builder.config.tokenizer_config["kwargs"]
+            tokenizer = TokenizerFactory.create(tokenizer_name, tokenizer_kwargs)
+            tokenizer = (
+                tokenizer.tokenizer
+                if isinstance(tokenizer, HuggingfaceTokenizer)
+                else tokenizer
+            )
+        print_batch_info(batch, tokenizer=tokenizer)
+        show_batch(batch)
