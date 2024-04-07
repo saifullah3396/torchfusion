@@ -42,6 +42,7 @@ class PrepareDataset(AnalyzerTask):
             self._args.data_args.data_loader_args.per_device_eval_batch_size,
             dataloader_num_workers=self._args.data_args.data_loader_args.dataloader_num_workers,
             pin_memory=self._args.data_args.data_loader_args.pin_memory,
+            shuffle_data=False,
         )
         self._test_dataloader = self._datamodule.test_dataloader(
             self._args.data_args.data_loader_args.per_device_eval_batch_size,
@@ -58,10 +59,8 @@ class PrepareDataset(AnalyzerTask):
             if self._train_dataloader is not None:
                 for batch in self._train_dataloader:
                     self._datamodule.show_batch(batch)
-                    break
 
             # visualize data points
             if self._test_dataloader is not None:
                 for batch in self._test_dataloader:
                     self._datamodule.show_batch(batch)
-                    break
