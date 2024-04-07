@@ -38,7 +38,6 @@ class HuggingfaceTokenizer(TorchFusionTokenizer):
             "local_files_only": False,
         }
         self.init_kwargs = {**self.default_init_kwargs, **self.init_kwargs}
-
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.model_name, **self.init_kwargs
         )
@@ -125,7 +124,7 @@ class HuggingfaceTokenizer(TorchFusionTokenizer):
 
         # post process here we repete all additional ids if they are matched to the same original file
         # for example if we have 2 overflowed samples from the same original sample we need to repeat the image file path
-        overflowed_data = {k: [] for k in self.keys_to_add_on_overflow}
+        overflowed_data = {k: [] for k in self.keys_to_add_on_overflow if k in samples}
         for batch_index in range(len(tokenized_samples[DataKeys.TOKEN_IDS])):
             org_batch_index = tokenized_samples[DataKeys.OVERFLOW_MAPPING][batch_index]
             for k in overflowed_data.keys():
@@ -135,9 +134,11 @@ class HuggingfaceTokenizer(TorchFusionTokenizer):
             tokenized_samples[k] = overflowed_data[k]
 
         # convert dict of lists to list of dicts
-        tokenized_samples = [
+        tokenized_samples_list = [
             dict(zip(tokenized_samples, t)) for t in zip(*tokenized_samples.values())
         ]
+        for k, v in tokenized_samples.items():
+            assert len(tokenized_samples_list) == len(v)
 
         # pad the samples
         if self.padding_required:
@@ -147,9 +148,9 @@ class HuggingfaceTokenizer(TorchFusionTokenizer):
                 self.tokenizer.pad_token_type_id,
                 self.tokenizer.pad_token_type_id,
             )
-            tokenized_samples = data_padder(tokenized_samples)
+            tokenized_samples_list = data_padder(tokenized_samples_list)
 
-        return tokenized_samples
+        return tokenized_samples_list
 
 
 @dataclass
