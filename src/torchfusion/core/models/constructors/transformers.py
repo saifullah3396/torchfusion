@@ -12,6 +12,7 @@ from transformers import (
 )
 
 from torchfusion.core.models.constructors.base import ModelConstructor
+from torchfusion.core.models.tasks import ModelTasks
 from torchfusion.models.utilities import (
     find_layer_in_model,
     freeze_layers,
@@ -40,20 +41,27 @@ class TransformersModelConstructor(ModelConstructor):
             ), "Please provide the encoder encoder_layer_name to unfreeze last N layers of."
 
     def _init_model(self, num_labels: int) -> torch.Any:
-        if self.model_task == "sequence_classification":
+        if self.model_task == ModelTasks.sequence_classification:
             initializer_class = AutoModelForSequenceClassification
-        elif self.model_task == "token_classification":
+        elif self.model_task == ModelTasks.token_classification:
             initializer_class = AutoModelForTokenClassification
-        elif self.model_task == "image_classification":
+        elif self.model_task == ModelTasks.image_classification:
             initializer_class = AutoModelForImageClassification
         else:
             raise ValueError(f"Task {self.model_task} not supported.")
+
+        if initializer_class == AutoModelForTokenClassification:
+            kwargs = dict(
+                num_labels=num_labels,
+                return_dict=True,
+            )
 
         if self.pretrained:
             hf_config = AutoConfig.from_pretrained(
                 self.model_name,
                 cache_dir=self.cache_dir,
                 **self.init_args,
+                **kwargs,
             )
             model = initializer_class.from_pretrained(
                 self.model_name,
@@ -65,6 +73,7 @@ class TransformersModelConstructor(ModelConstructor):
                 self.model_name,
                 cache_dir=self.cache_dir,
                 **self.init_args,
+                **kwargs,
             )
             model = initializer_class(
                 self.model_name,
@@ -72,8 +81,9 @@ class TransformersModelConstructor(ModelConstructor):
                 cache_dir=self.cache_dir,
             )
 
-        # reset the classifier head to match the labels
-        model.classifier = torch.nn.Linear(model.classifier.in_features, num_labels)
+        if initializer_class == AutoModelForImageClassification:
+            # reset the classifier head to match the labels
+            model.classifier = torch.nn.Linear(model.classifier.in_features, num_labels)
 
         if self.n_frozen_encoder_layers > 0:
             encoder_layer = find_layer_in_model(model, self.encoder_layer_name)

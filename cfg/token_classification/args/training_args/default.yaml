@@ -72,5 +72,15 @@ warmup_steps: 0
 wd_schedulers: null
 with_amp: True
 load_best_checkpoint_resume: false
+metric_args:
+  - name: accuracy
+    kwargs: {}
+  - name: precision
+    kwargs: {}
+  - name: recall
+    kwargs: {}
+  - name: f1
+    kwargs: {}
+    
 outputs_to_metric:
   - loss

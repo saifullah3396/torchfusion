@@ -1,7 +1,7 @@
 # @package _global_
 defaults:
   - /args/data_args: "???"
-  - /args/model_args: hf_model
+  - /args/model_args: transformers/layoutlmv3
 
 args:
   general_args:
@@ -9,13 +9,20 @@ args:
     do_val: ${do_val}
     do_test: ${do_test}
   training_args:
-    experiment_name: token_classification_${segment_level_layout}
+    experiment_name: token_classification_${segment_level_layout}_ema={model_ema_args.enabled}_seq_128
     max_epochs: 100
     eval_on_start: True
     eval_every_n_epochs: 1
     test_run: False
+    # use_ema_for_val: True
+    # model_ema_args:
+    #   enabled: true
+    #   momentum: 0.0001
+    #   update_every: 1
+      # momentum_warmup: 0.999 # start from online model
+      # warmup_iters: 1000
   data_args:
-    cache_file_name: default_${segment_level_layout}
+    cache_file_name: default_${segment_level_layout}_128
     dataset_kwargs:
       segment_level_layout: ${segment_level_layout}
       tokenizer_config: 
@@ -30,8 +37,8 @@ args:
             add_special_tokens: True
             padding: "max_length"
             truncation: True
-            max_length: 512
-            stride: 128
+            max_length: 128
+            stride: 0
             pad_to_multiple_of: 8
           # post processing padding args
           padding_required: True
@@ -75,5 +82,5 @@ realtime_image_size_x: 224
 realtime_image_size_y: 224
 do_train: True
 do_val: True
-do_test: True
-segment_level_layout: False
+do_test: False
+segment_level_layout: True

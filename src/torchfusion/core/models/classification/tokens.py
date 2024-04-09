@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
 import torch
 
@@ -9,40 +9,28 @@ from torchfusion.core.data.args.data_args import DataArguments
 from torchfusion.core.data.text_utils.data_collators import SequenceDataCollator
 from torchfusion.core.data.utilities.containers import CollateFnDict
 from torchfusion.core.models.args.model_args import ModelArguments
-from torchfusion.core.models.classification.base import (
-    BaseFusionNNModelForClassification,
+from torchfusion.core.models.classification.base import FusionModelForClassification
+from torchfusion.core.models.constructors.factory import ModelConstructorFactory
+from torchfusion.core.models.constructors.transformers import (
+    TransformersModelConstructor,
+)
+from torchfusion.core.models.utilities.knowledge_distillation import (
+    EnsembleKnowledgeTransferLoss,
+    GaussianLoss,
+    TemperatureScaledKLDivLoss,
 )
 from torchfusion.core.training.args.training import TrainingArguments
 from torchfusion.core.training.utilities.constants import TrainingStage
 
 
-class FusionNNModelForTokenClassification(BaseFusionNNModelForClassification):
+class FusionModelForTokenClassification(FusionModelForClassification):
+    _SUPPORTS_CUTMIX = False
+    _SUPPORTS_KD = False
+
     @dataclass
-    class Config(BaseFusionNNModelForClassification.Config):
+    class Config(FusionModelForClassification.Config):
         use_bbox: bool = True
         use_image: bool = True
-
-    def __init__(
-        self,
-        model_args: ModelArguments,
-        data_args: DataArguments,
-        training_args: TrainingArguments,
-        dataset_features: Any,
-        **kwargs,
-    ):
-        super().__init__(
-            model_args=model_args,
-            data_args=data_args,
-            training_args=training_args,
-            dataset_features=dataset_features,
-            supports_cutmix=False,
-            label_key=DataKeys.LABEL,
-            **kwargs,
-        )
-
-    @abstractmethod
-    def _build_classification_model(self):
-        pass
 
     def _prepare_input(self, engine, batch, tb_logger, **kwargs):
         inputs = dict(
@@ -57,32 +45,48 @@ class FusionNNModelForTokenClassification(BaseFusionNNModelForClassification):
         return inputs
 
     def _prepare_label(self, engine, batch, tb_logger, **kwargs):
-        return batch[self._label_key]
+        return batch[self._LABEL_KEY]
 
-    def _build_model(self):
-        self.model = self._build_classification_model()
+    def _build_classification_model(
+        self, checkpoint: Optional[str] = None, strict: bool = False
+    ):
+        model_constructor = ModelConstructorFactory.create(
+            name=self.config.model_constructor,
+            kwargs=self.config.model_constructor_args,
+        )
+        assert isinstance(
+            model_constructor,
+            (TransformersModelConstructor),
+        ), (
+            f"Model constructor must be of type TransformersModelConstructor. "
+            f"Got {type(model_constructor)}"
+        )
+        return model_constructor(self.num_labels)
 
-    def training_step(self, engine, batch, tb_logger, **kwargs) -> None:
-        assert self._label_key in batch, "Label must be passed for training"
+    def _build_model(self, checkpoint: Optional[str] = None, strict: bool = False):
+        return self._build_classification_model()
+
+    def _training_step(self, engine, batch, tb_logger, **kwargs) -> None:
+        assert self._LABEL_KEY in batch, "Label must be passed for training"
 
         # get data
         input = self._prepare_input(engine, batch, tb_logger, **kwargs)
         label = self._prepare_label(engine, batch, tb_logger, **kwargs)
 
         # compute logits
-        hf_output = self({**input, "labels": label})
+        hf_output = self._model_forward({**input, "labels": label})
 
         # return outputs
-        if self.config.return_dict:
+        if self.model_args.return_dict:
             return {
                 DataKeys.LOSS: hf_output.loss,
                 DataKeys.LOGITS: hf_output.logits,
-                self._label_key: label,
+                self._LABEL_KEY: label,
             }
         else:
             return (hf_output.loss, hf_output.logits, label)
 
-    def evaluation_step(
+    def _evaluation_step(
         self,
         engine,
         training_engine,
@@ -91,45 +95,45 @@ class FusionNNModelForTokenClassification(BaseFusionNNModelForClassification):
         stage: TrainingStage = TrainingStage.test,
         **kwargs,
     ) -> None:
-        assert self._label_key in batch, "Label must be passed for evaluation"
+        assert self._LABEL_KEY in batch, "Label must be passed for evaluation"
 
         # get data
         input = self._prepare_input(engine, batch, tb_logger, **kwargs)
         label = self._prepare_label(engine, batch, tb_logger, **kwargs)
 
         # compute logits
-        hf_output = self({**input, "labels": label})
+        hf_output = self._model_forward({**input, "labels": label})
 
         # return outputs
-        if self.config.return_dict:
+        if self.model_args.return_dict:
             return {
                 DataKeys.LOSS: hf_output.loss,
                 DataKeys.LOGITS: hf_output.logits,
-                self._label_key: label,
+                self._LABEL_KEY: label,
             }
         else:
             return (hf_output.loss, hf_output.logits, label)
 
-    def predict_step(self, engine, batch, tb_logger, **kwargs) -> None:
+    def _predict_step(self, engine, batch, tb_logger, **kwargs) -> None:
         # get data
         input = self._prepare_input(engine, batch, tb_logger, **kwargs)
 
         # compute logits
-        hf_output = self(input)
+        hf_output = self._model_forward(input)
 
         # return outputs
-        if self.config.return_dict:
+        if self.model_args.return_dict:
             return {
                 DataKeys.LOGITS: hf_output.logits,
             }
         else:
             return (hf_output.logits,)
 
-    def forward(self, input):
+    def _model_forward(self, input):
         if isinstance(input, dict):
-            return self.model(**input)
+            return self.torch_model(**input)
         else:
-            return self.model(input)
+            return self.torch_model(input)
 
     def get_data_collators(self, data_key_type_map=None) -> CollateFnDict:
         collate_fn_class = SequenceDataCollator
@@ -138,18 +142,18 @@ class FusionNNModelForTokenClassification(BaseFusionNNModelForClassification):
                 DataKeys.TOKEN_IDS: torch.long,
                 DataKeys.TOKEN_TYPE_IDS: torch.long,
                 DataKeys.ATTENTION_MASKS: torch.long,
-                self._label_key: torch.long,
+                self._LABEL_KEY: torch.long,
             }
         else:
             data_key_type_map[DataKeys.TOKEN_IDS] = torch.long
             data_key_type_map[DataKeys.TOKEN_TYPE_IDS] = torch.long
             data_key_type_map[DataKeys.ATTENTION_MASKS] = torch.long
-            data_key_type_map[self._label_key] = torch.long
+            data_key_type_map[self._LABEL_KEY] = torch.long
 
-        if self.model_args.config.use_bbox:
+        if self.model_args.model_config.use_bbox:
             data_key_type_map[DataKeys.TOKEN_BBOXES] = torch.long
 
-        if self.model_args.config.use_image:
+        if self.model_args.model_config.use_image:
             data_key_type_map[DataKeys.IMAGE] = torch.float
 
         collate_fn = collate_fn_class(
