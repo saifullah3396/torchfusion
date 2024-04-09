@@ -324,14 +324,14 @@ class GANTrainingFunctionality(DefaultTrainingFunctionality):
         @torch.no_grad()
         def visualize(engine):
             # prepare model for validation
-            model.prepare_model_for_run(stage=TrainingStage.visualization)
+            model.update_ema_for_stage(stage=TrainingStage.visualization)
 
             visualization_engine.run(
                 val_dataloader, max_epochs=1, epoch_length=1
             )  # only run for one batch
 
             # prepare model for training again
-            model.prepare_model_for_run(stage=TrainingStage.train)
+            model.update_ema_for_stage(stage=TrainingStage.train)
 
         if args.training_args.visualize_every_n_epochs >= 1:
             cond = Events.EPOCH_COMPLETED(

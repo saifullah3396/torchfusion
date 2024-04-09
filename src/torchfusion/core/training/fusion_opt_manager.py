@@ -11,7 +11,9 @@ if TYPE_CHECKING:
 
 
 class FusionOptimizerManager:
-    def __init__(self, args: FusionArguments, model: FusionModel, trainer: FusionTrainer) -> None:
+    def __init__(
+        self, args: FusionArguments, model: FusionModel, trainer: FusionTrainer
+    ) -> None:
         self._args = args
         self._model = model
         self._trainer = trainer
@@ -24,7 +26,7 @@ class FusionOptimizerManager:
 
     @property
     def param_groups(self):
-        return self._model.torch_model.get_param_groups()
+        return self._model.get_param_groups()
 
     def _setup_optimizers(self):
         from torchfusion.core.training.optim.factory import OptimizerFactory
@@ -42,17 +44,17 @@ class FusionOptimizerManager:
                 )
 
             # set optimizers
-            if self._args.model_args.config.bypass_params_creation:
+            if self._args.model_args.bypass_params_creation:
                 optimizers[k] = OptimizerFactory.create(
                     args=args,
                     model_param_groups=model_param_groups[k],
-                    bypass_params_creation=self._args.model_args.config.bypass_params_creation,
+                    bypass_params_creation=self._args.model_args.bypass_params_creation,
                 )
             else:
                 optimizers[k] = OptimizerFactory.create(
                     args=args,
                     model_param_groups=model_param_groups,
-                    bypass_params_creation=self._args.model_args.config.bypass_params_creation,
+                    bypass_params_creation=self._args.model_args.bypass_params_creation,
                 )
 
         return optimizers

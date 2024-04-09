@@ -62,7 +62,11 @@ class ModuleLazyImporter:
                     )
 
     @staticmethod
-    def register_models(name, import_structure, registry_key="models"):
+    def register_fusion_models(name, import_structure, registry_key="fusion_models"):
+        ModuleLazyImporter.register_modules(name, import_structure, registry_key)
+
+    @staticmethod
+    def register_torch_models(name, import_structure, registry_key="torch_models"):
         ModuleLazyImporter.register_modules(name, import_structure, registry_key)
 
     @staticmethod
@@ -92,9 +96,16 @@ class ModuleLazyImporter:
         ModuleLazyImporter.register_modules(name, import_structure, registry_key)
 
     @staticmethod
-    def get_models():
-        if "models" in ModuleLazyImporter.MODULES_REGISTRY:
-            return ModuleLazyImporter.MODULES_REGISTRY["models"]
+    def get_fusion_models():
+        if "fusion_models" in ModuleLazyImporter.MODULES_REGISTRY:
+            return ModuleLazyImporter.MODULES_REGISTRY["fusion_models"]
+        else:
+            return {}
+
+    @staticmethod
+    def get_torch_models():
+        if "torch_models" in ModuleLazyImporter.MODULES_REGISTRY:
+            return ModuleLazyImporter.MODULES_REGISTRY["torch_models"]
         else:
             return {}
 

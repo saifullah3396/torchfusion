@@ -7,7 +7,7 @@ import torch
 from ignite.contrib.handlers.tensorboard_logger import OutputHandler, TensorboardLogger
 from ignite.engine import Engine, EventEnum
 
-from torchfusion.core.constants import SupportedMetricKeys
+from torchfusion.core.constants import MetricKeys
 
 
 class CustomOutputHandler(OutputHandler):
@@ -84,7 +84,7 @@ class CustomOutputHandler(OutputHandler):
             else:
                 if isinstance(value, str) and log_text:
                     metrics_state_attrs_dict[key_tf(self.tag, name)] = value
-                elif SupportedMetricKeys.CONFUSION_MATRIX in name:
+                elif MetricKeys.CONFUSION_MATRIX in name:
                     metrics_state_attrs_dict[key_tf(self.tag, name)] = value
                 else:
                     warnings.warn(
@@ -114,7 +114,7 @@ class CustomOutputHandler(OutputHandler):
 
         accuracy = None
         for key, value in metrics.items():
-            if SupportedMetricKeys.ACCURACY in key:
+            if MetricKeys.ACCURACY in key:
                 accuracy = value
 
         for key, value in metrics.items():
@@ -127,7 +127,7 @@ class CustomOutputHandler(OutputHandler):
             #         img = plot_confusion_matrix(value, self._class_labels, accuracy=accuracy)
             #         logger.writer.add_image(key, img.transpose(2, 0, 1), global_step=global_step)
             # else:
-            if SupportedMetricKeys.CONFUSION_MATRIX not in key:
+            if MetricKeys.CONFUSION_MATRIX not in key:
                 logger.writer.add_scalar(key, value, global_step)
 
 

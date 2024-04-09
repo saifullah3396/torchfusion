@@ -1,72 +1,63 @@
 from abc import abstractmethod
 from dataclasses import dataclass, is_dataclass
-from typing import Any, Optional
+from typing import Optional
 
 import torch
 from datasets.features import Sequence
+from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
 
 from torchfusion.core.constants import DataKeys
-from torchfusion.core.data.args.data_args import DataArguments
-from torchfusion.core.data.utilities.containers import CollateFnDict, MetricsDict
-from torchfusion.core.models.args.fusion_model_config import FusionModelConfig
-from torchfusion.core.models.args.model_args import ModelArguments
-from torchfusion.core.models.fusion_nn_model import FusionNNModel
-from torchfusion.core.training.args.training import TrainingArguments
+from torchfusion.core.data.utilities.containers import CollateFnDict
+from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.training.utilities.constants import TrainingStage
 
 
-class BaseFusionNNModelForClassification(FusionNNModel):
+class FusionModelForClassification(FusionModel):
+    _SUPPORTS_CUTMIX = False
+    _SUPPORTS_KD = False
+    _LABEL_KEY = DataKeys.LABEL
+
     @dataclass
-    class Config(FusionModelConfig):
+    class Config(FusionModel.Config):
         pass
 
     def __init__(
         self,
-        model_args: ModelArguments,
-        data_args: DataArguments,
-        training_args: TrainingArguments,
-        dataset_features: Any,
-        label_key: str = DataKeys.LABEL,
-        supports_cutmix: bool = False,
+        *args,
         **kwargs,
     ):
-        super().__init__(
-            model_args=model_args,
-            data_args=data_args,
-            training_args=training_args,
-            dataset_features=dataset_features,
-            **kwargs,
-        )
-
-        self._label_key = label_key
-        self._supports_cutmix = supports_cutmix
-
+        super().__init__(*args, **kwargs)
         self._logger.info(
             "Initialized the model with data labels: {}".format(self.labels)
         )
 
     @property
     def labels(self):
-        if isinstance(self._dataset_features[self._label_key], Sequence):
-            return self._dataset_features[self._label_key].feature.names
+        if isinstance(self._dataset_features[self._LABEL_KEY], Sequence):
+            return self._dataset_features[self._LABEL_KEY].feature.names
         else:
-            return self._dataset_features[self._label_key].names
+            return self._dataset_features[self._LABEL_KEY].names
 
     @property
     def num_labels(self):
         return len(self.labels)
 
-    def _build_model(self):
-        import torch
-        from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
+    @abstractmethod
+    def _build_classification_model(
+        self, checkpoint: Optional[str] = None, strict: bool = False
+    ):
+        pass
 
-        self.model = self._build_classification_model()
+    def _build_model(self, checkpoint: Optional[str] = None, strict: bool = False):
+        model = self._build_classification_model(checkpoint=checkpoint, strict=strict)
+
+        # initialize classification related stuff
         self.loss_fn_train = torch.nn.CrossEntropyLoss()
         self.loss_fn_eval = torch.nn.CrossEntropyLoss()
 
         # setup mixup function
         self.mixup_fn = None
-        if self._supports_cutmix and self.training_args.cutmixup_args is not None:
+        if self._SUPPORTS_CUTMIX and self.training_args.cutmixup_args is not None:
             self.mixup_fn = self.training_args.cutmixup_args.get_fn(
                 num_classes=self.num_labels, smoothing=self.training_args.smoothing
             )
@@ -83,30 +74,56 @@ class BaseFusionNNModelForClassification(FusionNNModel):
             self.loss_fn_train = torch.nn.CrossEntropyLoss()
         self.loss_fn_eval = torch.nn.CrossEntropyLoss()
 
-    def training_step(self, engine, batch, tb_logger, **kwargs) -> None:
-        assert self._label_key in batch, "Label must be passed for training"
+        # if self.training_args.enable_knowledge_distillation:
+        #     self.teacher_model = self._build_teacher_model()
+
+        #     # build teacher training parameters
+        #     teacher_logit_criterion = TemperatureScaledKLDivLoss(
+        #         temperature=self._args.temperature
+        #     )
+        #     teacher_feature_criterion = GaussianLoss()
+        #     self.loss_fn_train = EnsembleKnowledgeTransferLoss(
+        #         label_criterion=self.loss_fn_train,
+        #         teacher_logit_criterion=teacher_logit_criterion,
+        #         teacher_feature_criterion=teacher_feature_criterion,
+        #         teacher_logit_factor=self._args.knowledge_distillation_factor,
+        #         teacher_feature_factor=self._args.variational_information_distillation_factor,
+        #     )
+
+        return model
+
+    def _training_step(self, engine, batch, tb_logger, **kwargs) -> None:
+        assert self._LABEL_KEY in batch, "Label must be passed for training"
 
         # get data
         input = self._prepare_input(engine, batch, tb_logger, **kwargs)
         label = self._prepare_label(engine, batch, tb_logger, **kwargs)
 
+        # if self._supports_kd and self.config.enable_knowledge_distillation:
+        #     assert (
+        #         "teacher" in kwargs
+        #     ), "Teacher model must be passed for training with knowledge distillation"
+        #     teacher_model = kwargs["teacher"]
+        #     with torch.no_grad():
+        #         teacher_logit, teacher_features = teacher_model(input)
+
         # compute logits
-        logits = self(input)
+        logits = self._model_forward(input)
 
         # compute loss
         loss = self.loss_fn_train(logits, label)
 
         # return outputs
-        if self.config.return_dict:
+        if self.model_args.return_dict:
             return {
                 DataKeys.LOSS: loss,
                 DataKeys.LOGITS: logits,
-                self._label_key: label,
+                self._LABEL_KEY: label,
             }
         else:
             return (loss, logits, label)
 
-    def evaluation_step(
+    def _evaluation_step(
         self,
         engine,
         training_engine,
@@ -115,57 +132,53 @@ class BaseFusionNNModelForClassification(FusionNNModel):
         stage: TrainingStage = TrainingStage.test,
         **kwargs,
     ) -> None:
-        assert self._label_key in batch, "Label must be passed for evaluation"
+        assert self._LABEL_KEY in batch, "Label must be passed for evaluation"
 
         # get data
         input = self._prepare_input(engine, batch, tb_logger, **kwargs)
         label = self._prepare_label(engine, batch, tb_logger, **kwargs)
 
         # compute logits
-        logits = self(input)
+        logits = self._model_forward(input)
 
         # compute loss
         loss = self.loss_fn_eval(logits, label)
 
         # return outputs
-        if self.config.return_dict:
+        if self.model_args.return_dict:
             return {
                 DataKeys.LOSS: loss,
                 DataKeys.LOGITS: logits,
-                self._label_key: label,
+                self._LABEL_KEY: label,
             }
         else:
             return (loss, logits, label)
 
-    def predict_step(self, engine, batch, tb_logger, **kwargs) -> None:
+    def _predict_step(self, engine, batch, tb_logger, **kwargs) -> None:
         # get data
         input = self._prepare_input(engine, batch, tb_logger, **kwargs)
 
         # compute logits
-        logits = self(input)
+        logits = self._model_forward(input)
 
         # return outputs
-        if self.config.return_dict:
+        if self.model_args.return_dict:
             return {
                 DataKeys.LOGITS: logits,
             }
         else:
             return (logits,)
 
-    def forward(self, input):
+    def _model_forward(self, input):
         if isinstance(input, dict):
             # compute logits
-            output = self.model(**input)
+            output = self.torch_model(**input)
         else:
-            output = self.model(input)
+            output = self.torch_model(input)
         if isinstance(output, torch.Tensor):  # usually timm returns a tensor directly
             return output
         elif is_dataclass(output):  # usually huggingface returns a dataclass
             return getattr(output, "logits")
-
-    @abstractmethod
-    def _build_classification_model(self):
-        pass
 
     @abstractmethod
     def _prepare_input(self, engine, batch, tb_logger, **kwargs):

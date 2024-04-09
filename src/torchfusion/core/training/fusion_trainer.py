@@ -226,11 +226,10 @@ class FusionTrainer:
     def _setup_model(
         self,
         summarize: bool = False,
-        stage: TrainingStage = TrainingStage.train,
+        setup_for_train: bool = True,
         dataset_features: Optional[dict] = None,
         checkpoint: Optional[str] = None,
         strict: bool = False,
-        wrapper_class: Type[FusionModel] = FusionModel,
     ) -> FusionModel:
         """
         Initializes the model for training.
@@ -246,10 +245,9 @@ class FusionTrainer:
             tb_logger=self._tb_logger,
             dataset_features=dataset_features,
             strict=strict,
-            wrapper_class=wrapper_class,
         )
 
-        model.setup_model(stage=stage)
+        model.setup_model(setup_for_train=setup_for_train)
 
         # generate model summary
         if summarize:
@@ -277,11 +275,9 @@ class FusionTrainer:
         )
 
     def _setup_trainer_functionality(self):
-        if self._args.model_args.config.required_training_functionality == "gan":
+        if self._args.model_args.required_training_functionality == "gan":
             return GANTrainingFunctionality
-        elif (
-            self._args.model_args.config.required_training_functionality == "diffusion"
-        ):
+        elif self._args.model_args.required_training_functionality == "diffusion":
             return DiffusionTrainingFunctionality
         else:
             return DefaultTrainingFunctionality
@@ -365,12 +361,12 @@ class FusionTrainer:
         )
         self._model = self._setup_model(
             summarize=True,
-            stage=TrainingStage.train,
+            setup_for_train=True,
             dataset_features=info.features,
         )
 
         # now assign collate fns
-        collate_fns = self._model._nn_model.get_data_collators()
+        collate_fns = self._model.get_data_collators()
         self._datamodule._collate_fns = collate_fns
 
         # setup dataloaders
@@ -462,12 +458,12 @@ class FusionTrainer:
             # setup model
             self._model = self._setup_model(
                 summarize=True,
-                stage=TrainingStage.test,
+                setup_for_train=False,
                 dataset_features=info.features,
             )
 
             # now assign collate fns
-            collate_fns = self._model._nn_model.get_data_collators()
+            collate_fns = self._model.get_data_collators()
             self._datamodule._collate_fns = collate_fns
 
             # create dataloader
@@ -490,12 +486,12 @@ class FusionTrainer:
             # setup model
             self._model = self._setup_model(
                 summarize=True,
-                stage=TrainingStage.test,
+                setup_for_train=False,
                 dataset_features=info.features,
             )
 
             # now assign collate fns
-            collate_fns = self._model._nn_model.get_data_collators()
+            collate_fns = self._model.get_data_collators()
             self._datamodule._collate_fns = collate_fns
 
             # setup dataloaders
@@ -579,7 +575,8 @@ class FusionTrainer:
             if args.general_args.do_train:
                 # setup logging
                 logger = get_logger(hydra_config=hydra_config)
-                logger.info("Starting torchfusion training script")
+                logger.info("Starting torchfusion training script with arguments:")
+                logger.info(args)
 
                 try:
                     import ignite.distributed as idist
@@ -596,7 +593,7 @@ class FusionTrainer:
                         with idist.Parallel(
                             backend=args.general_args.backend,
                             nproc_per_node=args.general_args.n_devices,
-                            master_port=port
+                            master_port=port,
                         ) as parallel:
                             return parallel.run(cls.train_parallel, args, hydra_config)
                     elif ntasks == int(args.general_args.n_devices):
@@ -619,7 +616,8 @@ class FusionTrainer:
             if args.general_args.do_train:
                 # setup logging
                 logger = get_logger(hydra_config=hydra_config)
-                logger.info("Starting torchfusion training script")
+                logger.info("Starting torchfusion training script with arguments:")
+                logger.info(args)
 
                 try:
                     return cls(args, hydra_config).train()
@@ -644,7 +642,8 @@ class FusionTrainer:
         if args.general_args.do_test:
             # setup logging
             logger = get_logger("init")
-            logger.info("Starting torchfusion testing script")
+            logger.info("Starting torchfusion testing script with arguments:")
+            logger.info(args)
 
             try:
                 return cls(args, hydra_config).test()
@@ -655,7 +654,8 @@ class FusionTrainer:
         if args.general_args.do_test:
             # setup logging
             logger = get_logger("init")
-            logger.info("Starting torchfusion testing script")
+            logger.info("Starting torchfusion testing script with arguments:")
+            logger.info(args)
 
             try:
                 return cls(args, hydra_config).test()

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from abc import abstractmethod
+from dataclasses import dataclass
+from typing import Optional, Union
 
 import ignite.distributed as idist
 import torch
@@ -12,9 +14,9 @@ from torch.nn.parallel import DataParallel, DistributedDataParallel
 
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.constants import DataKeys
-from torchfusion.core.models.factory import ModelFactory
-from torchfusion.core.models.fusion_nn_model import FusionNNModel
-from torchfusion.core.models.utilities.ddp_model_proxy import ModuleProxyWrapper
+from torchfusion.core.models.args.fusion_model_config import FusionModelConfig
+from torchfusion.core.models.utilities.ddp_model_proxy import \
+    ModuleProxyWrapper
 from torchfusion.core.models.utilities.general import batch_norm_to_group_norm
 from torchfusion.core.training.args.ema import FusionEMAHandler
 from torchfusion.core.training.utilities.constants import TrainingStage
@@ -22,6 +24,10 @@ from torchfusion.utilities.logging import get_logger
 
 
 class FusionModel:
+    @dataclass
+    class Config(FusionModelConfig):
+        pass
+
     def __init__(
         self,
         args: FusionArguments,
@@ -40,13 +46,72 @@ class FusionModel:
         self._ema_activated = False
         self._stored_parameters = None
 
-        # build model
-        self._nn_model = self._build_model()
-
         # initialize logger
         self._logger = get_logger()
 
+    @property
+    def ema_handler(self):
+        return self._ema_handler
+
+    @property
+    def model_name(self):
+        return self.model_args.model_directory_name
+
+    @property
+    def torch_model(self):
+        return self._torch_model
+
+    @property
+    def model_args(self):
+        return self._args.model_args
+
+    @property
+    def config(self) -> FusionModelConfig:
+        return self.model_args.model_config
+
+    @property
+    def data_args(self):
+        return self._args.data_args
+
+    @property
+    def training_args(self):
+        return self._args.training_args
+
+    @abstractmethod
     def _build_model(self):
+        pass
+
+    @abstractmethod
+    def _training_step(self):
+        pass
+
+    @abstractmethod
+    def _eval_step(self):
+        pass
+
+    @abstractmethod
+    def _predict_step(self):
+        pass
+
+    @abstractmethod
+    def _model_forward(self):
+        pass
+
+    @abstractmethod
+    def get_data_collators(self):
+        pass
+
+    def _init_weights(self):
+        pass
+
+    def get_param_groups(self):
+        return {
+            "default": list(self.torch_model.parameters()),
+        }
+
+    def build_model(self, checkpoint: Optional[str] = None, strict: bool = False):
+        from torchfusion.core.models.factory import ModelFactory
+
         # models sometimes download pretrained checkpoints when initializing. Only download it on rank 0
         if idist.get_rank() > 0:  # stop all ranks > 0
             idist.barrier()
@@ -61,22 +126,15 @@ class FusionModel:
                     "class_labels are required in dataset_features for image_classification tasks."
                 )
 
-        model_class = ModelFactory.get_fusion_nn_model_class(self._args.model_args)
-        nn_model = model_class(
-            model_args=self._args.model_args,
-            data_args=self._args.data_args,
-            training_args=self._args.training_args,
-            dataset_features=self._dataset_features,
-        )
-
-        # build model
-        nn_model.build_model()
+        # build the underlying nn model
+        self._torch_model = self._build_model(checkpoint, strict)
+        assert self._torch_model is not None and isinstance(
+            self._torch_model, nn.Module
+        ), "Child class must return a torch nn.Module on self._build_model()"
 
         # wait for rank 0 to download checkpoints
         if idist.get_rank() == 0:
             idist.barrier()
-
-        return nn_model
 
     def training_step(self, *args, **kwargs) -> None:
         if self._args.training_args.test_run:
@@ -91,88 +149,35 @@ class FusionModel:
                 self._logger.info(f"[{key}] Sample input: {value[0]}")
         if "stage" in kwargs:
             kwargs.pop("stage")
-        return self.torch_model.training_step(*args, **kwargs)
+        return self._training_step(*args, **kwargs)
 
     def evaluation_step(self, *args, **kwargs) -> None:
-        return self.torch_model.evaluation_step(*args, **kwargs)
+        return self._evaluation_step(*args, **kwargs)
 
     def predict_step(self, *args, **kwargs) -> None:
         if "stage" in kwargs:
             kwargs.pop("stage")
-        return self.torch_model.predict_step(*args, **kwargs)
+        return self._predict_step(*args, **kwargs)
 
-    def get_staged_modules(self):
-        staged_modules = None
-        if hasattr(self.torch_model, "staged_modules"):
-            staged_modules = self.torch_model.staged_modules()
-        return staged_modules
-
-    def put_modules_to_device(self, staged_modules, stage, initial_setup=True):
-        if initial_setup:
-            # adapt model for distributed settings if configured and put it to device
-            if staged_modules is not None:
-                staged_modules = staged_modules[stage]
-                for key in staged_modules:
-                    setattr(
-                        self._nn_model,
-                        key,
-                        self.module_to_device(getattr(self._nn_model, key)),
-                    )
-            else:
-                self._nn_model = self.module_to_device(self._nn_model)
-        else:
-            if staged_modules is not None:
-                if (
-                    stage == TrainingStage.train
-                ):  # if this is training stage, we offload all validation related modules to cpu
-                    # reset all modules that are not in training to cpu first, (since training module will always stay on anyways)
-                    train_keys = staged_modules[TrainingStage.train]
-                    for s in [TrainingStage.validation, TrainingStage.test]:
-                        for key in staged_modules[s]:
-                            if key in train_keys:
-                                continue
-                            getattr(self._nn_model, key).to("cpu")
-                else:
-                    staged_modules = staged_modules[stage]
-                    for key in staged_modules:
-                        self.module_to_device(getattr(self._nn_model, key))
-
-    def setup_ema(self, staged_modules, stage: TrainingStage):
+    def setup_ema(self):
         if (
-            stage == TrainingStage.train
-            and self._args.training_args.model_ema_args.enabled
+            self._args.training_args.model_ema_args.enabled
             and self._ema_handler is None
         ):  # if ema handler has not been setup already, set it up for the first time
-            if staged_modules is not None:
-                self._ema_handler = {}
-                for key in staged_modules[stage]:
-                    module = getattr(self._nn_model, key)
-                    if isinstance(module, ModuleProxyWrapper):
-                        module = module.module
+            # EMA takes care of DDP so if model is DDP model here it will get taken care of so we move ModuleProxyWrapper after applying EMA.
+            module = self._torch_model
+            if isinstance(module, ModuleProxyWrapper):
+                module = module.module
 
-                    # EMA takes care of DDP so if model is DDP model here it will get taken care of so we move ModuleProxyWrapper after applying EMA.
-                    self._ema_handler[key] = FusionEMAHandler(
-                        module,
-                        momentum=self._args.training_args.model_ema_args.momentum,
-                        momentum_warmup=self._args.training_args.model_ema_args.momentum_warmup,
-                        warmup_iters=self._args.training_args.model_ema_args.warmup_iters,
-                        handle_buffers="update",
-                    )
-            else:
-                # EMA takes care of DDP so if model is DDP model here it will get taken care of so we move ModuleProxyWrapper after applying EMA.
-                module = self.torch_model
-                if isinstance(self.torch_model, ModuleProxyWrapper):
-                    module = self.torch_model.module
+            self._ema_handler = FusionEMAHandler(
+                module,
+                momentum=self._args.training_args.model_ema_args.momentum,
+                momentum_warmup=self._args.training_args.model_ema_args.momentum_warmup,
+                warmup_iters=self._args.training_args.model_ema_args.warmup_iters,
+                handle_buffers="update",
+            )
 
-                self._ema_handler = FusionEMAHandler(
-                    module,
-                    momentum=self._args.training_args.model_ema_args.momentum,
-                    momentum_warmup=self._args.training_args.model_ema_args.momentum_warmup,
-                    warmup_iters=self._args.training_args.model_ema_args.warmup_iters,
-                    handle_buffers="update",
-                )
-
-    def update_ema(self, stage: TrainingStage):
+    def update_ema_for_stage(self, stage: TrainingStage):
         if stage == TrainingStage.train:
             if self._ema_activated:
                 self._logger.info("Resetting model weights to training weights")
@@ -205,42 +210,26 @@ class FusionModel:
             module = ModuleProxyWrapper(module)
         return module
 
-    def setup_model(self, stage: TrainingStage):
-        self._logger.info(f"Setting up model for stage = {stage}")
-
-        # if required reinit some weights
-        self._nn_model._reinit_weights()
-
+    def setup_model(self, setup_for_train):
         # replace batch norm with group norm if required
         if self._args.model_args.convert_bn_to_gn:
-            batch_norm_to_group_norm(self.torch_model)
+            batch_norm_to_group_norm(self._torch_model)
 
-        # replace batch norm with group norm if required
-        # if self._args.model_args.remove_lora_layers:
-        #     remove_lora_layers(self._nn_model)
+        if setup_for_train:
+            self._init_weights()
 
-        staged_modules = self.get_staged_modules()
-        self.put_modules_to_device(
-            staged_modules=staged_modules, stage=stage, initial_setup=True
-        )
-        self.setup_ema(staged_modules=staged_modules, stage=stage)
+        # put model to device
+        self._torch_model = self.module_to_device(self._torch_model)
 
-    def prepare_model_for_run(self, stage: TrainingStage):
-        self._logger.info(f"Preparing model for stage = {stage}")
-        if stage == TrainingStage.visualization:
-            stage = TrainingStage.validation
-
-        staged_modules = self.get_staged_modules()
-        self.put_modules_to_device(
-            staged_modules=staged_modules, stage=stage, initial_setup=False
-        )
-        self.update_ema(stage=stage)
+        # setup model ema
+        if setup_for_train:
+            self.setup_ema()
 
     def module_to_device(
         self,
         module: nn.Module,
         device="gpu",
-    ):
+    ) -> Union[nn.Module, FusionNNModel]:
         self._logger.info(f"Putting {type(module)} to {device}.")
         module_requires_grad = False
         for p in module.parameters():
@@ -263,18 +252,6 @@ class FusionModel:
             module.to(device)
 
         return module
-
-    @property
-    def ema_handler(self):
-        return self._ema_handler
-
-    @property
-    def model_name(self):
-        return self._nn_model.model_name
-
-    @property
-    def torch_model(self):
-        return self._nn_model
 
     def summarize_model(self):
         from torchinfo import summary
@@ -307,11 +284,5 @@ class FusionModel:
                 checkpoint_state_dict["ema_momentum_scheduler"] = (
                     self._ema_handler.momentum_scheduler
                 )
-
-        # add additional information from the underlying model if needed
-        checkpoint_state_dict = {
-            **checkpoint_state_dict,
-            **self.torch_model.get_checkpoint_state_dict(),
-        }
 
         return checkpoint_state_dict

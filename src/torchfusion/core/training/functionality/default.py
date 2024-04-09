@@ -618,8 +618,8 @@ class DefaultTrainingFunctionality:
         tb_logger: TensorboardLogger,
     ):
         class_labels = None
-        if hasattr(model._nn_model, "class_labels"):
-            class_labels = model._nn_model.class_labels
+        if hasattr(model, "labels"):
+            class_labels = model.labels
 
         # setup tensorboard logging if required
         if args.training_args.log_to_tb is not None:
@@ -691,8 +691,8 @@ class DefaultTrainingFunctionality:
         from ignite.engine import Events
 
         class_labels = None
-        if hasattr(model._nn_model, "class_labels"):
-            class_labels = model._nn_model.class_labels
+        if hasattr(model, "labels"):
+            class_labels = model.labels
 
         # attach tb logger to validation engine
         tb_logger.attach_output_handler(
@@ -715,13 +715,15 @@ class DefaultTrainingFunctionality:
         if stage == TrainingStage.train and not args.training_args.eval_training:
             return
 
-        labels = model.torch_model.labels if hasattr(model, "labels") else None
+        labels = model.labels if hasattr(model, "labels") else None
         metrics = MetricsFactory.initialize_stage_metrics(
-            args.training_args.metric_args, args.model_args, labels=labels
+            metric_args=args.training_args.metric_args,
+            model_task=args.model_args.model_task,
+            labels=labels,
         )
 
         if metrics[stage] is not None:
-            for k, metric in model.metrics[stage].items():
+            for k, metric in metrics[stage].items():
                 metric().attach(
                     engine, f"{stage}/{k}" if prefix == "" else f"{prefix}/{stage}/{k}"
                 )
@@ -1167,7 +1169,7 @@ class DefaultTrainingFunctionality:
 
         def validate(engine):
             # prepare model for validation
-            model.prepare_model_for_run(stage=TrainingStage.validation)
+            model.update_ema_for_stage(stage=TrainingStage.validation)
 
             epoch = training_engine.state.epoch
             state = validation_engine.run(val_dataloader, max_epochs=1)
@@ -1180,7 +1182,7 @@ class DefaultTrainingFunctionality:
             )
 
             # prepare model for training again
-            model.prepare_model_for_run(stage=TrainingStage.train)
+            model.update_ema_for_stage(stage=TrainingStage.train)
 
         if args.training_args.eval_every_n_epochs >= 1:
             cond = Events.EPOCH_COMPLETED(every=args.training_args.eval_every_n_epochs)

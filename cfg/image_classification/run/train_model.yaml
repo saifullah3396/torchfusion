@@ -1,0 +1,58 @@
+# @package _global_
+defaults:
+  - /args/data_args: "???"
+  - /args/model_args: "???"
+
+args:
+  general_args:
+    do_train: ${do_train}
+    do_val: ${do_val}
+    do_test: ${do_test}
+  training_args:
+    experiment_name: cifar10_rain
+    max_epochs: 10
+    eval_on_start: True
+    eval_every_n_epochs: 1
+    test_run: False
+  data_args:
+    cache_file_name: default
+    train_realtime_augs:
+      - name: BasicImageAug
+        kwargs:
+          gray_to_rgb: True
+          normalize: True
+          rescale_strategy:
+            name: Rescale
+            kwargs:
+              size:
+                - ${realtime_image_size_x}
+                - ${realtime_image_size_y}
+          key:
+            - image
+    eval_realtime_augs:
+      - name: BasicImageAug
+        kwargs:
+          gray_to_rgb: True
+          normalize: True
+          rescale_strategy:
+            name: Rescale
+            kwargs:
+              size:
+                - ${realtime_image_size_x}
+                - ${realtime_image_size_y}
+          key:
+            - image
+    data_loader_args:
+      per_device_train_batch_size: 32
+      per_device_eval_batch_size: 32
+      dataloader_drop_last: False
+      shuffle_data: True
+      pin_memory: True
+      dataloader_num_workers: 8
+      use_test_set_for_val: False
+
+realtime_image_size_x: 224
+realtime_image_size_y: 224
+do_train: True
+do_val: True
+do_test: True

@@ -20,32 +20,20 @@ class ModelArguments(ArgumentsBase):
         default="",
         metadata={
             "help": "The name of the model to use.",
-            "choices": [e for e in ModuleLazyImporter.get_models().keys()],
+            "choices": [e for e in ModuleLazyImporter.get_fusion_models().keys()],
         },
     )
     model_task: str = field(
         default="image_classification",
         metadata={"help": "Training task for which the model is loaded."},
     )
+    required_training_functionality: str = field(
+        default="default",
+        metadata={"help": "The required functionality for the model."},
+    )
     cache_dir: str = field(
         default=os.environ.get("TORCH_FUSION_CACHE_DIR", "./cache/") + "/pretrained/",
         metadata={"help": "The location to store pretrained or cached models."},
-    )
-    pretrained_checkpoint: Optional[str] = field(
-        default=None,
-        metadata={"help": "Checkpoint file name to load the model weights from."},
-    )
-    pretrained: bool = field(
-        default=True,
-        metadata={"help": ("Whether to load the model weights if available.")},
-    )
-    checkpoint_state_dict_key: str = field(
-        default="state_dict",
-        metadata={"help": "The state dict key for checkpoint"},
-    )
-    config: dict = field(
-        default_factory=lambda: {},
-        metadata={"help": "The model configuration."},
     )
     convert_bn_to_gn: bool = field(
         default=False,
@@ -59,6 +47,23 @@ class ModelArguments(ArgumentsBase):
         default=None,
         metadata={"help": "The name of the model directory."},
     )
+    bypass_params_creation: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "If this is true, the the mapping of the groups with optimizers is not generated."
+                "It can be used for customized parameter groups for example for lr decay in some layers."
+            )
+        },
+    )
+    return_dict: bool = field(
+        default=True,
+        metadata={"help": ("Whether the outputs of the model return a dictionary.")},
+    )
+    model_config: dict = field(
+        default_factory=lambda: {},
+        metadata={"help": "The model configuration."},
+    )
 
     def __post_init__(self):
         from torchfusion.core.models.args.fusion_model_config import FusionModelConfig
@@ -70,7 +75,7 @@ class ModelArguments(ArgumentsBase):
             self.model_directory_name = self.name
 
         # update config
-        model_class = ModelFactory.get_fusion_nn_model_class(self)
+        model_class = ModelFactory.get_fusion_model_class(self)
         config_class = FusionModelConfig
         if hasattr(model_class, "Config"):
             config_class = model_class.Config
@@ -79,10 +84,13 @@ class ModelArguments(ArgumentsBase):
                     f"Model configuration [{model_class.Config}] must be a "
                     f"child of the [{FusionModelConfig}] class."
                 )
-        if self.config is None:
-            self.config = config_class()
-        elif isinstance(self.config, dict):
-            self.config = from_dict(
-                data_class=config_class,
-                data=self.config,
-            )
+
+        if self.model_config is None:
+            raise ValueError("Model configuration is required to initialize the model.")
+
+        self.model_config["model_constructor_args"]["model_task"] = self.model_task
+        self.model_config["model_constructor_args"]["cache_dir"] = self.cache_dir
+        self.model_config = from_dict(
+            data_class=config_class,
+            data=self.model_config,
+        )

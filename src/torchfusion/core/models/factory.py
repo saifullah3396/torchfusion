@@ -7,12 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, Type
 
 from torchfusion.core.args.args import FusionArguments
-from torchfusion.core.data.args.data_args import DataArguments
 from torchfusion.core.models.args.model_args import ModelArguments
-from torchfusion.core.models.fusion_model import FusionModel
-from torchfusion.core.models.fusion_nn_model import FusionNNModel
-from torchfusion.core.models.utilities.checkpoints import setup_checkpoint
-from torchfusion.core.training.args.training import TrainingArguments
 from torchfusion.utilities.module_import import ModuleLazyImporter
 
 if TYPE_CHECKING:
@@ -26,12 +21,29 @@ class ModelFactory:
     """
 
     @staticmethod
-    def get_fusion_nn_model_class(model_args: ModelArguments) -> Type[FusionNNModel]:
+    def get_torch_model_class(model_name, model_task) -> Type[FusionModel]:
+        """
+        Find the model given the task and its name
+        """
+        models_in_task = ModuleLazyImporter.get_torch_models().get(model_task, None)
+        if models_in_task is None:
+            raise ValueError(f"Task [{model_task}] is not supported.")
+        model_class = models_in_task.get(model_name, None)
+        if model_class is None:
+            raise ValueError(
+                f"Model [{model_task}/{model_name}] "
+                f"is not supported. Supported models are: {models_in_task}."
+            )
+        model_class = model_class()
+        return model_class
+
+    @staticmethod
+    def get_fusion_model_class(model_args: ModelArguments) -> Type[FusionModel]:
         """
         Find the model given the task and its name
         """
 
-        models_in_task = ModuleLazyImporter.get_models().get(
+        models_in_task = ModuleLazyImporter.get_fusion_models().get(
             model_args.model_task, None
         )
         if models_in_task is None:
@@ -50,58 +62,59 @@ class ModelFactory:
         args: FusionArguments,
         checkpoint: Optional[str] = None,
         strict: bool = False,
-        wrapper_class=FusionModel,
-        load_checkpoint_if_available: bool = True,
         **model_kwargs,
     ) -> FusionModel:
         """
         Initialize the model
         """
 
-        model = wrapper_class(args=args, **model_kwargs)
-        if load_checkpoint_if_available:
-            checkpoint = (
-                args.model_args.pretrained_checkpoint
-                if checkpoint is None
-                else checkpoint
-            )
-            checkpoint_state_dict_key = args.model_args.checkpoint_state_dict_key
-            setup_checkpoint(
-                model.torch_model,
-                checkpoint=checkpoint,
-                checkpoint_state_dict_key=checkpoint_state_dict_key,
-                strict=strict,
-            )
+        model_class = ModelFactory.get_fusion_model_class(args.model_args)
+        fusion_model = model_class(args=args, **model_kwargs)
+        fusion_model.build_model(checkpoint=checkpoint, strict=strict)
+        return fusion_model
 
-        return model
-        if load_checkpoint_if_available:
-            setup_checkpoint(model, model_args, checkpoint=checkpoint, strict=strict)
+    # @staticmethod
+    # def create_fusion_kd_model(
+    #     args: FusionArguments,
+    #     teacher_checkpoint: Optional[str] = None,
+    #     student_checkpoint: Optional[str] = None,
+    #     strict: bool = False,
+    #     wrapper_class=FusionKDModel,
+    #     load_checkpoint_if_available: bool = True,
+    #     **model_kwargs,
+    # ) -> FusionKDModel:
+    #     """
+    #     Initialize the model
+    #     """
 
-        return model
+    #     model = wrapper_class(
+    #         args=args,
+    #         teacher_model_class=ModelFactory.get_fusion_nn_model_class(
+    #             args.teacher_model_args
+    #         ),
+    #         student_model_class=ModelFactory.get_fusion_nn_model_class(
+    #             args.student_model_args
+    #         ),
+    #         **model_kwargs,
+    #     )
+    #     if load_checkpoint_if_available:
+    #         teacher_checkpoint = (
+    #             args.teacher_model_args.checkpoint
+    #             if teacher_checkpoint is None
+    #             else teacher_checkpoint
+    #         )
+    #         checkpoint_state_dict_key = args.model_args.checkpoint_state_dict_key
+    #         setup_checkpoint(
+    #             model.torch_teacher_model,
+    #             teacher_model_args,
+    #             checkpoint=teacher_checkpoint,
+    #             strict=strict,
+    #         )
+    #         setup_checkpoint(
+    #             model.torch_student_model,
+    #             student_model_args,
+    #             checkpoint=student_checkpoint,
+    #             strict=strict,
+    #         )
 
-    @staticmethod
-    def create_fusion_nn_model(
-        model_args: ModelArguments,
-        training_args: TrainingArguments,
-        data_args: DataArguments,
-        checkpoint: Optional[str] = None,
-        strict: bool = False,
-        dataset_features: Optional[dict] = None,
-        **model_kwargs,
-    ) -> FusionNNModel:
-        """
-        Initialize the model
-        """
-
-        model_class = ModelFactory.get_fusion_nn_model_class(model_args)
-        model = model_class(
-            model_args=model_args,
-            data_args=data_args,
-            training_args=training_args,
-            dataset_features=dataset_features,
-            **model_kwargs,
-        )
-        model.build_model()
-        setup_checkpoint(model, model_args, checkpoint=checkpoint, strict=strict)
-
-        return model
+    #     return model

@@ -1,16 +1,14 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 import ignite.distributed as idist
 import torch
 from fsspec.core import url_to_fs
 from fsspec.implementations.local import AbstractFileSystem
+from torch import nn
 
-from torchfusion.core.models.args.model_args import ModelArguments
-from torchfusion.core.models.fusion_model import FusionModel
-from torchfusion.core.models.fusion_nn_model import FusionNNModel
 from torchfusion.utilities.logging import get_logger
 
 DEFAULT_STATE_DICT_KEY = "state_dict"
@@ -86,7 +84,7 @@ def replace_keys(checkpoint, key: str, replacement: str):
 
 
 def setup_checkpoint(
-    model: FusionNNModel,
+    model: nn.Module,
     checkpoint: Optional[str] = None,
     checkpoint_state_dict_key: str = DEFAULT_STATE_DICT_KEY,
     strict: bool = True,
@@ -120,11 +118,12 @@ def load_checkpoint(checkpoint_path: Union[str, Path]):
 
 
 def load_from_checkpoint(
-    model: FusionNNModel,
+    model: nn.Module,
     checkpoint_path: Union[str, Path],
     checkpoint_state_dict_key: str,
     strict: bool = True,
 ):
+
     # create logger
     logger = get_logger()
 
@@ -166,7 +165,7 @@ def load_from_checkpoint(
     cleaned_checkpoint = filter_keys(cleaned_checkpoint, keys=["module."])
 
     # now loda the checkpoint
-    keys = model.on_load_checkpoint(cleaned_checkpoint, strict=strict)
+    keys = model.load_state_dict(cleaned_checkpoint, strict=strict)
     if not strict:
         if keys.missing_keys:
             logger.warning(
