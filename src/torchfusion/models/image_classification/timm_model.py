@@ -1,6 +1,5 @@
 """ Base Model class for the any model from Timm Repository. """
 
-
 from dataclasses import dataclass, field
 
 import timm
@@ -13,7 +12,7 @@ from torchfusion.core.models.image_classification.fusion_nn_model import (
 
 class TimmModelForImageClassification(FusionNNModelForImageClassification):
     @dataclass
-    class Config(FusionModelConfig):
+    class Config(FusionNNModelForImageClassification.Config):
         timm_name: str = "alexnet"
         timm_kwargs: dict = field(default_factory=lambda: {})
 

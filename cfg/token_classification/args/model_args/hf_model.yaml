@@ -1,0 +1,10 @@
+name: hf_model
+model_task: token_classification
+pretrained: True
+cache_dir: ${oc.env:TORCH_FUSION_CACHE_DIR}/pretrained/
+model_directory_name: ${args.model_args.name}_${args.model_args.config.hf_name}
+config:
+  return_dict: True
+  hf_name: microsoft/layoutlmv3-base
+  hf_kwargs: {}
+

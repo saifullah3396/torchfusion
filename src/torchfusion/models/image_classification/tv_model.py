@@ -1,6 +1,5 @@
 """ Base Model class for the any model from Timm Repository. """
 
-
 from dataclasses import dataclass, field
 
 import torch
@@ -13,7 +12,7 @@ from torchfusion.core.models.image_classification.fusion_nn_model import (
 
 class TorchvisionModelForImageClassification(FusionNNModelForImageClassification):
     @dataclass
-    class Config(FusionModelConfig):
+    class Config(FusionNNModelForImageClassification.Config):
         tv_name: str = "alexnet"
         tv_kwargs: dict = field(default_factory=lambda: {})
 
@@ -27,9 +26,13 @@ class TorchvisionModelForImageClassification(FusionNNModelForImageClassification
         )
 
         if self.config.tv_name == "alexnet":
-            model.classifier[6] = torch.nn.Linear(model.classifier[6].in_features, self.num_labels)
+            model.classifier[6] = torch.nn.Linear(
+                model.classifier[6].in_features, self.num_labels
+            )
         elif self.config.tv_name == "vgg16":
-            model.classifier[6] = torch.nn.Linear(model.classifier[6].in_features, self.num_labels)
+            model.classifier[6] = torch.nn.Linear(
+                model.classifier[6].in_features, self.num_labels
+            )
         elif self.config.tv_name == "resnet50":
             model.fc = torch.nn.Linear(model.fc.in_features, self.num_labels)
         elif self.config.tv_name == "inception_v3":
@@ -37,6 +40,8 @@ class TorchvisionModelForImageClassification(FusionNNModelForImageClassification
         elif self.config.tv_name == "googlenet":
             model.fc = torch.nn.Linear(model.fc.in_features, self.num_labels)
         else:
-            raise ValueError(f"No classification head replacer defined for the model {self.config.tv_name}.")
+            raise ValueError(
+                f"No classification head replacer defined for the model {self.config.tv_name}."
+            )
 
         return model

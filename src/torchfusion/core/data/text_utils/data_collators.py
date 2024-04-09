@@ -11,6 +11,8 @@ class SequenceDataCollator:
         batch = {}
 
         for k, dtype in self.data_key_type_map.items():
+            if k not in features[0]:
+                continue
             if isinstance(features[0][k], torch.Tensor):
                 batch[k] = torch.stack([sample[k] for sample in features]).type(dtype)
             elif isinstance(features[0][k], list):

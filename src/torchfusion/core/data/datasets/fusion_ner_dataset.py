@@ -7,6 +7,7 @@ import numpy as np
 from datasets.features import Image
 
 from torchfusion.core.constants import DataKeys
+from torchfusion.core.data.datasets.features import FusionClassLabel
 from torchfusion.core.data.datasets.fusion_dataset import FusionDataset
 from torchfusion.core.data.datasets.fusion_dataset_config import FusionDatasetConfig
 from torchfusion.core.data.text_utils.tokenizers.factory import TokenizerFactory
@@ -44,16 +45,11 @@ class FusionNERDataset(FusionDataset):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self._initialize_config()
         self._initialize_tokenizer()
 
-    def _initialize_config(self):
-        assert (
-            self.config.ner_scheme in _NER_LABELS_PER_SCHEME
-        ), f"NER scheme {self.config.ner_scheme} not supported. Supported schemes: {list(_NER_LABELS_PER_SCHEME.keys())}"
-
-        self.config.ner_labels = self.config.ner_labels[self.config.ner_scheme]
+    @property
+    def ner_labels(self):
+        return self.config.ner_labels[self.config.ner_scheme]
 
     def _initialize_tokenizer(self):
         # create tokenizer
@@ -119,7 +115,12 @@ class FusionNERDataset(FusionDataset):
                 DataKeys.ATTENTION_MASKS: datasets.Sequence(
                     datasets.Value(dtype="uint8")
                 ),
-                DataKeys.LABEL: datasets.Sequence(datasets.Value(dtype="int32")),
+                DataKeys.LABEL: datasets.Sequence(
+                    FusionClassLabel(
+                        names=self.ner_labels,
+                        num_classes=len(self.ner_labels),
+                    ),
+                ),
             }
         )
 

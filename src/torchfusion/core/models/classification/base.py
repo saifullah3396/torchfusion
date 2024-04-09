@@ -1,25 +1,21 @@
-from __future__ import annotations
-
 from abc import abstractmethod
 from dataclasses import dataclass, is_dataclass
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any, Optional
 
 import torch
+from datasets.features import Sequence
 
+from torchfusion.core.constants import DataKeys, MetricKeys
+from torchfusion.core.data.args.data_args import DataArguments
+from torchfusion.core.data.utilities.containers import CollateFnDict, MetricsDict
 from torchfusion.core.models.args.fusion_model_config import FusionModelConfig
 from torchfusion.core.models.args.model_args import ModelArguments
 from torchfusion.core.models.fusion_nn_model import FusionNNModel
-
-if TYPE_CHECKING:
-    from torchfusion.core.data.args.data_args import DataArguments
-    from torchfusion.core.training.args.training import TrainingArguments
-    from torchfusion.core.data.utilities.containers import CollateFnDict
-
-from torchfusion.core.constants import DataKeys, MetricKeys
+from torchfusion.core.training.args.training import TrainingArguments
 from torchfusion.core.training.utilities.constants import TrainingStage
 
 
-class FusionNNModelForImageClassification(FusionNNModel):
+class BaseFusionNNModelForClassification(FusionNNModel):
     @dataclass
     class Config(FusionModelConfig):
         pass
@@ -30,6 +26,8 @@ class FusionNNModelForImageClassification(FusionNNModel):
         data_args: DataArguments,
         training_args: TrainingArguments,
         dataset_features: Any,
+        label_key: str = DataKeys.LABEL,
+        supports_cutmix: bool = False,
         **kwargs,
     ):
         super().__init__(
@@ -40,31 +38,53 @@ class FusionNNModelForImageClassification(FusionNNModel):
             **kwargs,
         )
 
+        self._label_key = label_key
+        self._supports_cutmix = supports_cutmix
+
         self._logger.info(
-            "Initialized the model with data labels: {}".format(
-                self._dataset_features[DataKeys.LABEL].names
-            )
+            "Initialized the model with data labels: {}".format(self.labels)
         )
 
     @property
     def labels(self):
-        return self._dataset_features[DataKeys.LABEL].names
+        if isinstance(self._dataset_features[self._label_key], Sequence):
+            return self._dataset_features[self._label_key].feature.names
+        else:
+            return self._dataset_features[self._label_key].names
 
     @property
     def num_labels(self):
         return len(self.labels)
 
     def init_metrics(self):
-        from ignite.metrics import Accuracy
+        from ignite.metrics import Accuracy, Precision, Recall
 
-        def acc_output_transform(output):
-            return output[DataKeys.LOGITS], output[DataKeys.LABEL]
+        def output_transform(output):
+            return output[DataKeys.LOGITS], output[self._label_key]
 
-        return {
+        def f1_score():
+            # use ignite arthematics of metrics to compute f1 score
+            # unnecessary complication
+            precision = Precision(output_transform=output_transform)
+            recall = Recall(output_transform=output_transform)
+            return (precision * recall * 2 / (precision + recall)).mean()
+
+        metrics = {
             MetricKeys.ACCURACY: lambda: Accuracy(
-                output_transform=acc_output_transform,
-            )
+                output_transform=output_transform,
+            ),
+            MetricKeys.PRECISION: lambda: Precision(
+                output_transform=output_transform,
+            ),
+            MetricKeys.RECALL: lambda: Recall(
+                output_transform=output_transform,
+            ),
+            MetricKeys.F1: lambda: f1_score,
         }
+
+        return MetricsDict(
+            train=metrics, validation=metrics, test=metrics, predict=metrics
+        )
 
     def _build_model(self):
         import torch
@@ -75,7 +95,8 @@ class FusionNNModelForImageClassification(FusionNNModel):
         self.loss_fn_eval = torch.nn.CrossEntropyLoss()
 
         # setup mixup function
-        if self.training_args.cutmixup_args is not None:
+        self.mixup_fn = None
+        if self._supports_cutmix and self.training_args.cutmixup_args is not None:
             self.mixup_fn = self.training_args.cutmixup_args.get_fn(
                 num_classes=self.num_labels, smoothing=self.training_args.smoothing
             )
@@ -92,22 +113,15 @@ class FusionNNModelForImageClassification(FusionNNModel):
             self.loss_fn_train = torch.nn.CrossEntropyLoss()
         self.loss_fn_eval = torch.nn.CrossEntropyLoss()
 
-    @abstractmethod
-    def _build_classification_model(self):
-        pass
-
     def training_step(self, engine, batch, tb_logger, **kwargs) -> None:
-        assert DataKeys.LABEL in batch, "Label must be passed for training"
+        assert self._label_key in batch, "Label must be passed for training"
 
         # get data
-        image, label = batch[DataKeys.IMAGE], batch[DataKeys.LABEL]
-
-        # apply mixup if required
-        if self.mixup_fn is not None:
-            image, label = self.mixup_fn(image, label)
+        input = self._prepare_input(engine, batch, tb_logger, **kwargs)
+        label = self._prepare_label(engine, batch, tb_logger, **kwargs)
 
         # compute logits
-        logits = self(image)
+        logits = self(input)
 
         # compute loss
         loss = self.loss_fn_train(logits, label)
@@ -117,7 +131,7 @@ class FusionNNModelForImageClassification(FusionNNModel):
             return {
                 DataKeys.LOSS: loss,
                 DataKeys.LOGITS: logits,
-                DataKeys.LABEL: label,
+                self._label_key: label,
             }
         else:
             return (loss, logits, label)
@@ -131,13 +145,14 @@ class FusionNNModelForImageClassification(FusionNNModel):
         stage: TrainingStage = TrainingStage.test,
         **kwargs,
     ) -> None:
-        assert DataKeys.LABEL in batch, "Label must be passed for evaluation"
+        assert self._label_key in batch, "Label must be passed for evaluation"
 
         # get data
-        image, label = batch[DataKeys.IMAGE], batch[DataKeys.LABEL]
+        input = self._prepare_input(engine, batch, tb_logger, **kwargs)
+        label = self._prepare_label(engine, batch, tb_logger, **kwargs)
 
         # compute logits
-        logits = self(image)
+        logits = self(input)
 
         # compute loss
         loss = self.loss_fn_eval(logits, label)
@@ -147,17 +162,17 @@ class FusionNNModelForImageClassification(FusionNNModel):
             return {
                 DataKeys.LOSS: loss,
                 DataKeys.LOGITS: logits,
-                DataKeys.LABEL: label,
+                self._label_key: label,
             }
         else:
             return (loss, logits, label)
 
     def predict_step(self, engine, batch, tb_logger, **kwargs) -> None:
         # get data
-        image = batch[DataKeys.IMAGE]
+        input = self._prepare_input(engine, batch, tb_logger, **kwargs)
 
         # compute logits
-        logits = self(image)
+        logits = self(input)
 
         # return outputs
         if self.config.return_dict:
@@ -167,37 +182,32 @@ class FusionNNModelForImageClassification(FusionNNModel):
         else:
             return (logits,)
 
-    def forward(self, image):
-        # compute logits
-        output = self.model(image)
+    def forward(self, input):
+        if isinstance(input, dict):
+            # compute logits
+            output = self.model(**input)
+        else:
+            output = self.model(input)
         if isinstance(output, torch.Tensor):  # usually timm returns a tensor directly
             return output
         elif is_dataclass(output):  # usually huggingface returns a dataclass
             return getattr(output, "logits")
 
+    @abstractmethod
+    def _build_classification_model(self):
+        pass
+
+    @abstractmethod
+    def _prepare_input(self, engine, batch, tb_logger, **kwargs):
+        pass
+
+    @abstractmethod
+    def _prepare_label(self, engine, batch, tb_logger, **kwargs):
+        pass
+
+    @abstractmethod
     def get_data_collators(
         self,
         data_key_type_map: Optional[dict] = None,
     ) -> CollateFnDict:
-        import torch
-
-        from torchfusion.core.data.utilities.containers import CollateFnDict
-        from torchfusion.core.models.utilities.data_collators import (
-            BatchToTensorDataCollator,
-        )
-
-        if data_key_type_map is None:
-            data_key_type_map = {
-                DataKeys.IMAGE: torch.float,
-                DataKeys.LABEL: torch.long,
-            }
-        else:
-            data_key_type_map[DataKeys.IMAGE] = torch.float
-            data_key_type_map[DataKeys.LABEL] = torch.long
-
-        collate_fn = BatchToTensorDataCollator(
-            data_key_type_map=data_key_type_map,
-        )
-
-        # initialize the data collators for bert grid based word classification
-        return CollateFnDict(train=collate_fn, validation=collate_fn, test=collate_fn)
+        pass

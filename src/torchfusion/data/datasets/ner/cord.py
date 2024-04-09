@@ -230,7 +230,7 @@ class CORD(FusionNERDataset):
                 {
                     DataKeys.WORDS: words,
                     DataKeys.WORD_BBOXES: bboxes,
-                    DataKeys.LABEL: [self.config.ner_labels.index(l) for l in labels],
+                    DataKeys.LABEL: [self.ner_labels.index(l) for l in labels],
                     DataKeys.IMAGE_FILE_PATH: image_path,
                     # we don't load all images here to save memory
                 }

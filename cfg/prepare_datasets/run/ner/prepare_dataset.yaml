@@ -13,6 +13,7 @@ args:
   data_args:
     num_proc: 1
     dataset_config_name: ${dataset_config_name}
+    cache_file_name: default_${segment_level_layout}
     train_preprocess_augs: null
     eval_preprocess_augs: null
     train_realtime_augs:
@@ -42,6 +43,7 @@ args:
           key:
             - image
     dataset_kwargs:
+      segment_level_layout: ${segment_level_layout}
       tokenizer_config: 
         name: HuggingfaceTokenizer
         kwargs: 
@@ -65,3 +67,4 @@ dataset_config_name: default
 realtime_image_size_x: 1024
 realtime_image_size_y: 1024
 visualize: true
+segment_level_layout: False

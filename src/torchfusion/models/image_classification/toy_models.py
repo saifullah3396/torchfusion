@@ -1,18 +1,19 @@
 """ Base Model class for the any model from Timm Repository. """
 
-
 from dataclasses import dataclass
 
 import torch.nn.functional as F
 from torch import nn
 
 from torchfusion.core.models.args.fusion_model_config import FusionModelConfig
-from torchfusion.core.models.image_classification.fusion_nn_model import FusionNNModelForImageClassification
+from torchfusion.core.models.image_classification.fusion_nn_model import (
+    FusionNNModelForImageClassification,
+)
 
 
 class ToyModelForCifar10Classification(FusionNNModelForImageClassification):
     @dataclass
-    class Config(FusionModelConfig):
+    class Config(FusionNNModelForImageClassification.Config):
         pass
 
     def _build_classification_model(self):
