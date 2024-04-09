@@ -59,7 +59,7 @@ class DataKeys:
     PAGE_BBOXES = "page_bboxes"
 
 
-class MetricKeys:
+class SupportedMetricKeys:
     ACCURACY = "accuracy"
     PRECISION = "precision"
     RECALL = "recall"

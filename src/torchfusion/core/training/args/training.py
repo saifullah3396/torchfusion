@@ -1,12 +1,16 @@
 from dataclasses import dataclass, field
 from typing import List, Mapping, Optional, Union
 
+from torchfusion.core.args.args_base import ClassInitializerArgs
 from torchfusion.core.training.args.cutmix import CutmixupArguments
 from torchfusion.core.training.args.early_stopping import EarlyStoppingArguments
 from torchfusion.core.training.args.ema import ModelEmaArguments
 from torchfusion.core.training.args.model_checkpoint import ModelCheckpointArguments
 from torchfusion.core.training.optim.args import OptimizerArguments
-from torchfusion.core.training.sch.args import LRSchedulerArguments, WDSchedulerArguments
+from torchfusion.core.training.sch.args import (
+    LRSchedulerArguments,
+    WDSchedulerArguments,
+)
 
 
 @dataclass
@@ -67,7 +71,7 @@ class TrainingArguments:
 
     # whether to run eval on startup
     visualize_on_start: bool = False
-    
+
     # Minimum training epochs for eval
     min_train_epochs_for_best: Optional[int] = 1
 
@@ -106,11 +110,16 @@ class TrainingArguments:
     # Model checkpoint related arguments
     model_checkpoint_config: ModelCheckpointArguments = field(
         default_factory=lambda: ModelCheckpointArguments(),
-        metadata={"help": "ModelCheckpoint configuration that defines the saving strategy " "of model checkpoints."},
+        metadata={
+            "help": "ModelCheckpoint configuration that defines the saving strategy "
+            "of model checkpoints."
+        },
     )
 
     # Early stopping config
-    early_stopping_args: EarlyStoppingArguments = field(default_factory=lambda: EarlyStoppingArguments())
+    early_stopping_args: EarlyStoppingArguments = field(
+        default_factory=lambda: EarlyStoppingArguments()
+    )
 
     # Label smooth amount. Applies if > 0
     smoothing: float = 0.0
@@ -121,7 +130,9 @@ class TrainingArguments:
     )
 
     # EMA related arguments if required
-    model_ema_args: ModelEmaArguments = field(default_factory=lambda: ModelEmaArguments())
+    model_ema_args: ModelEmaArguments = field(
+        default_factory=lambda: ModelEmaArguments()
+    )
 
     # Whether to use ema for validation
     use_ema_for_val: bool = False
@@ -145,6 +156,16 @@ class TrainingArguments:
     wd_schedulers: Optional[Mapping[str, WDSchedulerArguments]] = field(
         default_factory=lambda: {"default": WDSchedulerArguments()},
         metadata={"help": "Weight decay scheduler."},
+    )
+
+    # Metrics arguments
+    metric_args: List[Optional[ClassInitializerArgs]] = field(
+        default=[
+            {"name": "accuracy", "kwargs": {}},
+            {"name": "precision", "kwargs": {}},
+            {"name": "recall", "kwargs": {}},
+            {"name": "f1", "kwargs": {}},
+        ]
     )
 
     # test run

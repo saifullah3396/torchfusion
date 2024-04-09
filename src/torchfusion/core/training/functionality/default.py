@@ -14,18 +14,18 @@ from typing import (
     Union,
     cast,
 )
-from ignite.engine import Events
-from ignite.handlers.checkpoint import BaseSaveHandler, DiskSaver
-from ignite.handlers import Checkpoint
 
 import torch
 from ignite.contrib.handlers import TensorboardLogger
-from ignite.engine import Engine, EventEnum
+from ignite.engine import Engine, EventEnum, Events
+from ignite.handlers import Checkpoint
+from ignite.handlers.checkpoint import BaseSaveHandler, DiskSaver
 from torch.utils.data import DataLoader
 
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.training.fusion_opt_manager import FusionOptimizerManager
+from torchfusion.core.training.metrics.factory import MetricsFactory
 from torchfusion.core.training.sch.schedulers.warmup import (
     create_lr_scheduler_with_warmup,
 )
@@ -715,7 +715,12 @@ class DefaultTrainingFunctionality:
         if stage == TrainingStage.train and not args.training_args.eval_training:
             return
 
-        if model.metrics[stage] is not None:
+        labels = model.torch_model.labels if hasattr(model, "labels") else None
+        metrics = MetricsFactory.initialize_stage_metrics(
+            args.training_args.metric_args, args.model_args, labels=labels
+        )
+
+        if metrics[stage] is not None:
             for k, metric in model.metrics[stage].items():
                 metric().attach(
                     engine, f"{stage}/{k}" if prefix == "" else f"{prefix}/{stage}/{k}"
@@ -809,7 +814,9 @@ class DefaultTrainingFunctionality:
                         warmup_start_value=0.0,
                         warmup_duration=warmup_duration,
                     )
-                    training_engine.add_event_handler(OptimizerEvents.OPTIMIZER_STEP_CALLED, sch)
+                    training_engine.add_event_handler(
+                        OptimizerEvents.OPTIMIZER_STEP_CALLED, sch
+                    )
 
                     # update scheduler in dict
                     training_sch_manager.lr_schedulers[k] = sch
@@ -875,7 +882,7 @@ class DefaultTrainingFunctionality:
         validation_engine: Optional[Engine] = None,
         do_val: bool = True,
         checkpoint_state_dict_extras: dict = {},
-        checkpoint_class=Checkpoint
+        checkpoint_class=Checkpoint,
     ):
         # setup checkpoint saving if required
         if args.training_args.enable_checkpointing:
@@ -972,7 +979,9 @@ class DefaultTrainingFunctionality:
                             load_state_dict.pop(k)
 
                 checkpoint_class.load_objects(
-                    to_load=load_state_dict, checkpoint=resume_checkpoint, strict=False,
+                    to_load=load_state_dict,
+                    checkpoint=resume_checkpoint,
+                    strict=False,
                 )
 
         if (
@@ -1207,7 +1216,7 @@ class DefaultTrainingFunctionality:
         val_dataloader: Optional[DataLoader] = None,
         do_val: bool = True,
         checkpoint_state_dict_extras: dict = {},
-        checkpoint_class=Checkpoint
+        checkpoint_class=Checkpoint,
     ) -> None:
         import ignite.distributed as idist
 
@@ -1300,7 +1309,7 @@ class DefaultTrainingFunctionality:
             validation_engine=validation_engine,
             do_val=do_val,
             checkpoint_state_dict_extras=checkpoint_state_dict_extras,
-            checkpoint_class=checkpoint_class
+            checkpoint_class=checkpoint_class,
         )
 
         if idist.get_rank() == 0 and tb_logger is not None:
@@ -1414,9 +1423,6 @@ class DefaultTrainingFunctionality:
 
         import ignite.distributed as idist
         from ignite.engine import Events
-
-        # configure model checkpoint_state_dict
-        model_checkpoint_config = args.training_args.model_checkpoint_config
 
         # configure test engine
         cls.configure_metrics(

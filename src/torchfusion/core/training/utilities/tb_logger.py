@@ -7,7 +7,7 @@ import torch
 from ignite.contrib.handlers.tensorboard_logger import OutputHandler, TensorboardLogger
 from ignite.engine import Engine, EventEnum
 
-from torchfusion.core.constants import MetricKeys
+from torchfusion.core.constants import SupportedMetricKeys
 
 
 class CustomOutputHandler(OutputHandler):
@@ -20,7 +20,9 @@ class CustomOutputHandler(OutputHandler):
         state_attributes: Optional[List[str]] = None,
         class_labels: Optional[List[str]] = None,
     ):
-        super().__init__(tag, metric_names, output_transform, global_step_transform, state_attributes)
+        super().__init__(
+            tag, metric_names, output_transform, global_step_transform, state_attributes
+        )
         self._class_labels = class_labels
 
     def _setup_output_metrics_state_attrs(
@@ -53,7 +55,12 @@ class CustomOutputHandler(OutputHandler):
             metrics_state_attrs.update(output_dict)
 
         if self.state_attributes is not None:
-            metrics_state_attrs.update({name: getattr(engine.state, name, None) for name in self.state_attributes})
+            metrics_state_attrs.update(
+                {
+                    name: getattr(engine.state, name, None)
+                    for name in self.state_attributes
+                }
+            )
 
         # type: Dict[Any, Union[str, float, numbers.Number]]
         metrics_state_attrs_dict = OrderedDict()
@@ -77,10 +84,12 @@ class CustomOutputHandler(OutputHandler):
             else:
                 if isinstance(value, str) and log_text:
                     metrics_state_attrs_dict[key_tf(self.tag, name)] = value
-                elif MetricKeys.CONFUSION_MATRIX in name:
+                elif SupportedMetricKeys.CONFUSION_MATRIX in name:
                     metrics_state_attrs_dict[key_tf(self.tag, name)] = value
                 else:
-                    warnings.warn(f"Logger output_handler can not log metrics value type {type(value)}")
+                    warnings.warn(
+                        f"Logger output_handler can not log metrics value type {type(value)}"
+                    )
         return metrics_state_attrs_dict
 
     def __call__(
@@ -90,7 +99,9 @@ class CustomOutputHandler(OutputHandler):
         event_name: Union[str, EventEnum],
     ) -> None:
         if not isinstance(logger, TensorboardLogger):
-            raise RuntimeError("Handler 'OutputHandler' works only with TensorboardLogger")
+            raise RuntimeError(
+                "Handler 'OutputHandler' works only with TensorboardLogger"
+            )
 
         metrics = self._setup_output_metrics_state_attrs(engine, key_tuple=False)
 
@@ -103,7 +114,7 @@ class CustomOutputHandler(OutputHandler):
 
         accuracy = None
         for key, value in metrics.items():
-            if MetricKeys.ACCURACY in key:
+            if SupportedMetricKeys.ACCURACY in key:
                 accuracy = value
 
         for key, value in metrics.items():
@@ -116,7 +127,7 @@ class CustomOutputHandler(OutputHandler):
             #         img = plot_confusion_matrix(value, self._class_labels, accuracy=accuracy)
             #         logger.writer.add_image(key, img.transpose(2, 0, 1), global_step=global_step)
             # else:
-            if MetricKeys.CONFUSION_MATRIX not in key:
+            if SupportedMetricKeys.CONFUSION_MATRIX not in key:
                 logger.writer.add_scalar(key, value, global_step)
 
 
