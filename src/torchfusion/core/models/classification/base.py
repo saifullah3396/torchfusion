@@ -5,7 +5,7 @@ from typing import Any, Optional
 import torch
 from datasets.features import Sequence
 
-from torchfusion.core.constants import DataKeys, MetricKeys
+from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.args.data_args import DataArguments
 from torchfusion.core.data.utilities.containers import CollateFnDict, MetricsDict
 from torchfusion.core.models.args.fusion_model_config import FusionModelConfig
@@ -55,36 +55,6 @@ class BaseFusionNNModelForClassification(FusionNNModel):
     @property
     def num_labels(self):
         return len(self.labels)
-
-    def init_metrics(self):
-        from ignite.metrics import Accuracy, Precision, Recall
-
-        def output_transform(output):
-            return output[DataKeys.LOGITS], output[self._label_key]
-
-        def f1_score():
-            # use ignite arthematics of metrics to compute f1 score
-            # unnecessary complication
-            precision = Precision(output_transform=output_transform)
-            recall = Recall(output_transform=output_transform)
-            return (precision * recall * 2 / (precision + recall)).mean()
-
-        metrics = {
-            MetricKeys.ACCURACY: lambda: Accuracy(
-                output_transform=output_transform,
-            ),
-            MetricKeys.PRECISION: lambda: Precision(
-                output_transform=output_transform,
-            ),
-            MetricKeys.RECALL: lambda: Recall(
-                output_transform=output_transform,
-            ),
-            MetricKeys.F1: lambda: f1_score,
-        }
-
-        return MetricsDict(
-            train=metrics, validation=metrics, test=metrics, predict=metrics
-        )
 
     def _build_model(self):
         import torch

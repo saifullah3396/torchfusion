@@ -4,16 +4,15 @@ from typing import Any
 
 import torch
 
-from torchfusion.core.constants import DataKeys, MetricKeys
+from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.args.data_args import DataArguments
 from torchfusion.core.data.text_utils.data_collators import SequenceDataCollator
-from torchfusion.core.data.utilities.containers import CollateFnDict, MetricsDict
+from torchfusion.core.data.utilities.containers import CollateFnDict
 from torchfusion.core.models.args.model_args import ModelArguments
 from torchfusion.core.models.classification.base import (
     BaseFusionNNModelForClassification,
 )
 from torchfusion.core.training.args.training import TrainingArguments
-from torchfusion.core.training.metrics.seqeval import create_seqeval_metric
 from torchfusion.core.training.utilities.constants import TrainingStage
 
 
@@ -39,37 +38,6 @@ class FusionNNModelForTokenClassification(BaseFusionNNModelForClassification):
             supports_cutmix=False,
             label_key=DataKeys.LABEL,
             **kwargs,
-        )
-
-    def init_metrics(self):
-        def output_transform(output):
-            return output[DataKeys.LOGITS].argmax(dim=2), output[self._label_key]
-
-        metrics = {
-            MetricKeys.ACCURACY: lambda: create_seqeval_metric(
-                self.labels,
-                fn="accuracy",
-                output_transform=output_transform,
-            ),
-            MetricKeys.PRECISION: lambda: create_seqeval_metric(
-                self.labels,
-                fn="precision",
-                output_transform=output_transform,
-            ),
-            MetricKeys.RECALL: lambda: create_seqeval_metric(
-                self.labels,
-                fn="recall",
-                output_transform=output_transform,
-            ),
-            MetricKeys.F1: lambda: create_seqeval_metric(
-                self.labels,
-                fn="f1",
-                output_transform=output_transform,
-            ),
-        }
-
-        return MetricsDict(
-            train=metrics, validation=metrics, test=metrics, predict=metrics
         )
 
     @abstractmethod
