@@ -58,9 +58,22 @@ class ModelFactory:
         Initialize the model
         """
 
-        model_args = args.model_args
-        model_class = ModelFactory.get_fusion_nn_model_class(model_args)
-        model = wrapper_class(args=args, model_class=model_class, **model_kwargs)
+        model = wrapper_class(args=args, **model_kwargs)
+        if load_checkpoint_if_available:
+            checkpoint = (
+                args.model_args.pretrained_checkpoint
+                if checkpoint is None
+                else checkpoint
+            )
+            checkpoint_state_dict_key = args.model_args.checkpoint_state_dict_key
+            setup_checkpoint(
+                model.torch_model,
+                checkpoint=checkpoint,
+                checkpoint_state_dict_key=checkpoint_state_dict_key,
+                strict=strict,
+            )
+
+        return model
         if load_checkpoint_if_available:
             setup_checkpoint(model, model_args, checkpoint=checkpoint, strict=strict)
 

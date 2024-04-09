@@ -60,9 +60,6 @@ class FusionNNModel(nn.Module):
     def config(self) -> FusionModelConfig:
         return self._model_args.config
 
-    def init_metrics(self):
-        return MetricsDict()
-
     def build_model(self):
         self._build_model()
 

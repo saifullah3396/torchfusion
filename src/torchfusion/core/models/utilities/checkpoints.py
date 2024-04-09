@@ -86,15 +86,12 @@ def replace_keys(checkpoint, key: str, replacement: str):
 
 
 def setup_checkpoint(
-    model: Union[FusionModel, FusionNNModel],
-    model_args: ModelArguments,
+    model: FusionNNModel,
     checkpoint: Optional[str] = None,
+    checkpoint_state_dict_key: str = DEFAULT_STATE_DICT_KEY,
     strict: bool = True,
 ):
     logger = get_logger()
-    checkpoint = model_args.pretrained_checkpoint if checkpoint is None else checkpoint
-    if checkpoint is None:
-        return model
 
     if not str(checkpoint).startswith("http"):
         checkpoint = Path(checkpoint)
@@ -102,7 +99,7 @@ def setup_checkpoint(
             logger.warning(
                 f"Checkpoint not found, cannot load weights from {checkpoint}."
             )
-            return model
+            return
 
     logger.info(
         f"Loading model from checkpoint file [{checkpoint}] with strict [{strict}]"
@@ -110,7 +107,7 @@ def setup_checkpoint(
     load_from_checkpoint(
         model,
         checkpoint_path=checkpoint,
-        checkpoint_state_dict_key=model_args.checkpoint_state_dict_key,
+        checkpoint_state_dict_key=checkpoint_state_dict_key,
         strict=strict,
     )
 
@@ -123,7 +120,7 @@ def load_checkpoint(checkpoint_path: Union[str, Path]):
 
 
 def load_from_checkpoint(
-    model: Any,
+    model: FusionNNModel,
     checkpoint_path: Union[str, Path],
     checkpoint_state_dict_key: str,
     strict: bool = True,

@@ -1,6 +1,5 @@
 """ PyTorch module that defines the base model for training/testing etc. """
 
-
 from __future__ import annotations
 
 from typing import Any, Dict, Optional
@@ -13,6 +12,7 @@ from torch.nn.parallel import DataParallel, DistributedDataParallel
 
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.constants import DataKeys
+from torchfusion.core.models.factory import ModelFactory
 from torchfusion.core.models.fusion_nn_model import FusionNNModel
 from torchfusion.core.models.utilities.ddp_model_proxy import ModuleProxyWrapper
 from torchfusion.core.models.utilities.general import batch_norm_to_group_norm
@@ -25,60 +25,58 @@ class FusionModel:
     def __init__(
         self,
         args: FusionArguments,
-        model_class: FusionNNModel,
         tb_logger: Optional[TensorboardLogger] = None,
         dataset_features: Optional[dict] = None,
     ):
         super().__init__()
 
-        import ignite.distributed as idist
-
         # initialize arguments
         self._args = args
-        self._logger = get_logger()
         self._tb_logger = tb_logger
+        self._dataset_features = dataset_features
+
+        # ema parameters
         self._ema_handler = None
         self._ema_activated = False
         self._stored_parameters = None
 
+        # build model
+        self._nn_model = self._build_model()
+
+        # initialize logger
+        self._logger = get_logger()
+
+    def _build_model(self):
         # models sometimes download pretrained checkpoints when initializing. Only download it on rank 0
         if idist.get_rank() > 0:  # stop all ranks > 0
             idist.barrier()
 
-        if args.model_args.model_task in [
+        if self._args.model_args.model_task in [
             "image_classification",
             "sequence_classification",
             "token_classification",
         ]:
-            if DataKeys.LABEL not in dataset_features:
+            if DataKeys.LABEL not in self._dataset_features:
                 raise ValueError(
                     "class_labels are required in dataset_features for image_classification tasks."
                 )
 
-        self._nn_model = model_class(
-            model_args=args.model_args,
-            data_args=args.data_args,
-            training_args=args.training_args,
-            dataset_features=dataset_features,
+        model_class = ModelFactory.get_fusion_nn_model_class(self._args.model_args)
+        nn_model = model_class(
+            model_args=self._args.model_args,
+            data_args=self._args.data_args,
+            training_args=self._args.training_args,
+            dataset_features=self._dataset_features,
         )
 
         # build model
-        self._nn_model.build_model()
-
-        # initialize metrics
-        self._metrics = self._nn_model.init_metrics()
+        nn_model.build_model()
 
         # wait for rank 0 to download checkpoints
         if idist.get_rank() == 0:
             idist.barrier()
 
-    @property
-    def metrics(self):
-        return self._metrics
-
-    @metrics.setter
-    def metrics(self, metrics):
-        self._metrics = metrics
+        return nn_model
 
     def training_step(self, *args, **kwargs) -> None:
         if self._args.training_args.test_run:
@@ -91,16 +89,16 @@ class FusionModel:
                 else:
                     self._logger.info(f"[{key}] shape={value.shape}")
                 self._logger.info(f"[{key}] Sample input: {value[0]}")
-        if 'stage' in kwargs:
-            kwargs.pop('stage')
+        if "stage" in kwargs:
+            kwargs.pop("stage")
         return self.torch_model.training_step(*args, **kwargs)
 
     def evaluation_step(self, *args, **kwargs) -> None:
         return self.torch_model.evaluation_step(*args, **kwargs)
 
     def predict_step(self, *args, **kwargs) -> None:
-        if 'stage' in kwargs:
-            kwargs.pop('stage')
+        if "stage" in kwargs:
+            kwargs.pop("stage")
         return self.torch_model.predict_step(*args, **kwargs)
 
     def get_staged_modules(self):
@@ -254,9 +252,11 @@ class FusionModel:
         if module_requires_grad:
             module = idist.auto_model(
                 module,
-                sync_bn=False
-                if device == torch.device("cpu")
-                else self._args.training_args.sync_batchnorm,
+                sync_bn=(
+                    False
+                    if device == torch.device("cpu")
+                    else self._args.training_args.sync_batchnorm
+                ),
             )
             module = self.wrap_dist(module)
         else:
@@ -299,14 +299,14 @@ class FusionModel:
             if isinstance(self._ema_handler, dict):
                 for key, ema_handler in self._ema_handler.items():
                     checkpoint_state_dict[f"ema_model_{key}"] = ema_handler.ema_model
-                    checkpoint_state_dict[
-                        f"ema_momentum_scheduler_{key}"
-                    ] = ema_handler.momentum_scheduler
+                    checkpoint_state_dict[f"ema_momentum_scheduler_{key}"] = (
+                        ema_handler.momentum_scheduler
+                    )
             else:
                 checkpoint_state_dict["ema_model"] = self._ema_handler.ema_model
-                checkpoint_state_dict[
-                    "ema_momentum_scheduler"
-                ] = self._ema_handler.momentum_scheduler
+                checkpoint_state_dict["ema_momentum_scheduler"] = (
+                    self._ema_handler.momentum_scheduler
+                )
 
         # add additional information from the underlying model if needed
         checkpoint_state_dict = {
@@ -315,6 +315,3 @@ class FusionModel:
         }
 
         return checkpoint_state_dict
-
-    def on_load_checkpoint(self, checkpoint: Dict[str, Any], strict: bool = True):
-        return self.torch_model.on_load_checkpoint(checkpoint, strict=strict)
