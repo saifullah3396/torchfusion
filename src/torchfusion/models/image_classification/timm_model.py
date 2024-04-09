@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 import timm
 
 from torchfusion.core.models.args.fusion_model_config import FusionModelConfig
-from torchfusion.core.models.image_classification.fusion_nn_model import (
+from torchfusion.core.models.classification.image import (
     FusionNNModelForImageClassification,
 )
 

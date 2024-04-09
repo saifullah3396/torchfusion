@@ -6,7 +6,7 @@ from torch import nn
 from transformers import AutoConfig, AutoModelForImageClassification
 
 from torchfusion.core.models.args.fusion_model_config import FusionModelConfig
-from torchfusion.core.models.image_classification.fusion_nn_model import (
+from torchfusion.core.models.classification.image import (
     FusionNNModelForImageClassification,
 )
 
