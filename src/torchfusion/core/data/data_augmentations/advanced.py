@@ -16,8 +16,7 @@ from torchvision import transforms
 from torchfusion.core.args.args_base import ClassInitializerArgs
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.data_augmentations.transforms import SquarePad
-from torchfusion.core.data.factory.data_augmentation import \
-    DataAugmentationFactory
+from torchfusion.core.data.factory.data_augmentation import DataAugmentationFactory
 
 from .base import DataAugmentation
 from .distortions import Solarization
