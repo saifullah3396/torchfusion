@@ -2,7 +2,7 @@ name: kl_autoencoder
 model_task: image_generation
 cache_dir: ${oc.env:TORCH_FUSION_CACHE_DIR}/pretrained/
 pretrained: True
-pretrained_checkpoint: null
+checkpoint: null
 checkpoint_state_dict_key: model
 convert_bn_to_gn: false
 config:

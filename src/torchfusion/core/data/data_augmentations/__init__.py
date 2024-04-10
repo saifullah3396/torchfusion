@@ -25,6 +25,7 @@ _import_structure = {
         "BarlowTwins",
         "MultiCrop",
         "BinarizationAug",
+        "Cifar10Aug",
         # "TwinDocs",
     ],
     "blur": [

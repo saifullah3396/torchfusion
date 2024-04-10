@@ -32,11 +32,15 @@ class FusionModelForImageClassification(FusionModelForClassification):
         return batch[self._LABEL_KEY]
 
     def _build_classification_model(
-        self, checkpoint: Optional[str] = None, strict: bool = False
+        self,
+        checkpoint: Optional[str] = None,
+        strict: bool = False,
+        model_constructor: Optional[dict] = None,
+        model_constructor_args: Optional[dict] = None,
     ):
         model_constructor = ModelConstructorFactory.create(
-            name=self.config.model_constructor,
-            kwargs=self.config.model_constructor_args,
+            name=model_constructor,
+            kwargs=model_constructor_args,
         )
         assert isinstance(
             model_constructor,
@@ -50,7 +54,7 @@ class FusionModelForImageClassification(FusionModelForClassification):
             f"Model constructor must be of type TransformersModelConstructor. "
             f"Got {type(model_constructor)}"
         )
-        return model_constructor(self.num_labels)
+        return model_constructor(self.num_labels, checkpoint=checkpoint, strict=strict)
 
     def get_data_collators(
         self,

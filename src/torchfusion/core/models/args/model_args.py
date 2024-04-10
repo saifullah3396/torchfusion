@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from torchfusion.core.args.args_base import ArgumentsBase
+from torchfusion.core.models.args.kd_args import KnowledgeDistillationArguments
 from torchfusion.utilities.module_import import ModuleLazyImporter
 
 
@@ -63,6 +64,12 @@ class ModelArguments(ArgumentsBase):
     model_config: dict = field(
         default_factory=lambda: {},
         metadata={"help": "The model configuration."},
+    )
+    kd_args: Optional[KnowledgeDistillationArguments] = field(
+        default=None,
+        metadata={
+            "help": "Knowledge distillation arguments. If None, no distillation is performed."
+        },
     )
 
     def __post_init__(self):

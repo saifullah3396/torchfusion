@@ -133,6 +133,50 @@ class PreprocessAug(DataAugmentation):
 
 
 @dataclass
+class Cifar10Aug(DataAugmentation):
+    """
+    Defines a basic image augmentation for CIFAR10 dataset classification.
+    """
+
+    mean: Union[float, List[float]] = (0.4914, 0.4822, 0.4465)
+    std: Union[float, List[float]] = (0.247, 0.243, 0.261)
+    pad_size: int = 4
+    crop_size: int = 32
+    train: bool = False
+
+    def __str__(self):
+        return str(self._aug)
+
+    def _initialize_aug(self):
+        if self.train:
+            return transforms.Compose(
+                [
+                    transforms.Pad(self.pad_size, padding_mode="reflect"),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.RandomCrop(self.crop_size),
+                    transforms.ToTensor(),
+                    transforms.Normalize(np.array(self.mean), np.array(self.std)),
+                ]
+            )
+        else:
+            return transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                    transforms.Normalize(np.array(self.mean), np.array(self.std)),
+                ]
+            )
+
+    def __post_init__(self):
+        self._aug = self._initialize_aug()
+
+    def __call__(self, sample):
+        if isinstance(sample, list):
+            return [self._aug(s) for s in sample]
+        else:
+            return self._aug(sample)
+
+
+@dataclass
 class BasicImageAug(DataAugmentation):
     """
     Defines a basic image augmentation for image classification.

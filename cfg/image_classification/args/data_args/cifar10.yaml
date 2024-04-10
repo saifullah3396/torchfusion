@@ -3,45 +3,15 @@ dataset_dir: ${oc.env:DATA_ROOT_DIR}/images/cifar10/
 train_preprocess_augs: null 
 eval_preprocess_augs: null
 train_realtime_augs:
-  - name: BasicImageAug
+  - name: Cifar10Aug
     kwargs:
-      gray_to_rgb: True
-      normalize: True
-      mean:
-        - 0.4914
-        - 0.4822
-        - 0.4465
-      std:
-        - 0.2023
-        - 0.1994
-        - 0.2010
-      rescale_strategy:
-        name: Rescale
-        kwargs:
-          size:
-            - 32
-            - 32
+      train: true
       key:
         - image
 eval_realtime_augs:
-  - name: BasicImageAug
+  - name: Cifar10Aug
     kwargs:
-      gray_to_rgb: True
-      normalize: True
-      mean:
-        - 0.4914
-        - 0.4822
-        - 0.4465
-      std:
-        - 0.2023
-        - 0.1994
-        - 0.2010
-      rescale_strategy:
-        name: Rescale
-        kwargs:
-          size:
-            - 32
-            - 32
+      train: false
       key:
         - image
 train_val_sampler:

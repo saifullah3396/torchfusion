@@ -1,58 +1,55 @@
 from __future__ import annotations
 
-from abc import abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
 
 import torch
-
-from torchfusion.core.data.text_utils.data_collators import SequenceDataCollator
-from torchfusion.core.models.args.model_args import ModelArguments
-from torchfusion.core.models.classification.base import (
-    BaseFusionNNModelForClassification,
-)
-
-if TYPE_CHECKING:
-    from torchfusion.core.data.args.data_args import DataArguments
-    from torchfusion.core.training.args.training import TrainingArguments
-    from torchfusion.core.data.utilities.containers import CollateFnDict
+from matplotlib.transforms import Transform
+from transformers import AutoConfig, AutoModelForSequenceClassification
 
 from torchfusion.core.constants import DataKeys
+from torchfusion.core.data.text_utils.data_collators import SequenceDataCollator
+from torchfusion.core.data.utilities.containers import CollateFnDict
+from torchfusion.core.models.classification.base import FusionModelForClassification
+from torchfusion.core.models.constructors.factory import ModelConstructorFactory
+from torchfusion.core.models.constructors.transformers import (
+    TransformersModelConstructor,
+)
+from torchfusion.models.utilities import (
+    find_layer_in_model,
+    freeze_layers,
+    freeze_layers_by_name,
+)
 
 
-class FusionNNModelForSequenceClassification(BaseFusionNNModelForClassification):
+class FusionModelForSequenceClassification(FusionModelForClassification):
+    _SUPPORTS_CUTMIX = True
+    _SUPPORTS_KD = True
+    _LABEL_KEY = DataKeys.LABEL
+
     @dataclass
-    class Config(BaseFusionNNModelForClassification.Config):
+    class Config(FusionModelForClassification.Config):
         use_bbox: bool = True
         use_image: bool = True
 
-    def __init__(
-        self,
-        model_args: ModelArguments,
-        data_args: DataArguments,
-        training_args: TrainingArguments,
-        dataset_features: Any,
-        **kwargs,
-    ):
-        super().__init__(
-            model_args=model_args,
-            data_args=data_args,
-            training_args=training_args,
-            dataset_features=dataset_features,
-            supports_cutmix=False,
-            label_key=DataKeys.LABEL,
-            **kwargs,
-        )
-
-    @abstractmethod
     def _build_classification_model(self):
-        pass
+        model_constructor = ModelConstructorFactory.create(
+            name=self.config.model_constructor,
+            kwargs=self.config.model_constructor_args,
+        )
+        assert isinstance(
+            model_constructor,
+            (TransformersModelConstructor),
+        ), (
+            f"Model constructor must be of type TransformersModelConstructor. "
+            f"Got {type(model_constructor)}"
+        )
+        return model_constructor(self.num_labels, checkpoint=checkpoint, strict=strict)
 
     def _prepare_input(self, engine, batch, tb_logger, **kwargs):
         inputs = dict(
             input_ids=batch[DataKeys.TOKEN_IDS],
             attention_mask=batch[DataKeys.ATTENTION_MASKS],
-            labels=batch[self._label_key],
+            labels=batch[self._LABEL_KEY],
         )
 
         if self.config.use_image:
@@ -63,7 +60,7 @@ class FusionNNModelForSequenceClassification(BaseFusionNNModelForClassification)
         return inputs
 
     def _prepare_label(self, engine, batch, tb_logger, **kwargs):
-        return batch[self._label_key]
+        return batch[self._LABEL_KEY]
 
     def get_data_collators(self, data_key_type_map=None) -> CollateFnDict:
         collate_fn_class = SequenceDataCollator
@@ -72,13 +69,13 @@ class FusionNNModelForSequenceClassification(BaseFusionNNModelForClassification)
                 DataKeys.TOKEN_IDS: torch.long,
                 DataKeys.TOKEN_TYPE_IDS: torch.long,
                 DataKeys.ATTENTION_MASKS: torch.long,
-                self._label_key: torch.long,
+                self._LABEL_KEY: torch.long,
             }
         else:
             data_key_type_map[DataKeys.TOKEN_IDS] = torch.long
             data_key_type_map[DataKeys.TOKEN_TYPE_IDS] = torch.long
             data_key_type_map[DataKeys.ATTENTION_MASKS] = torch.long
-            data_key_type_map[self._label_key] = torch.long
+            data_key_type_map[self._LABEL_KEY] = torch.long
 
         if self.model_args.config.use_bbox:
             data_key_type_map[DataKeys.TOKEN_BBOXES] = torch.long

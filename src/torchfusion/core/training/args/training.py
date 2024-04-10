@@ -2,10 +2,10 @@ from dataclasses import dataclass, field
 from typing import List, Mapping, Optional, Union
 
 from torchfusion.core.args.args_base import ClassInitializerArgs
+from torchfusion.core.models.args.kd_args import KnowledgeDistillationArguments
 from torchfusion.core.training.args.cutmix import CutmixupArguments
 from torchfusion.core.training.args.early_stopping import EarlyStoppingArguments
 from torchfusion.core.training.args.ema import ModelEmaArguments
-from torchfusion.core.training.args.kd_args import KnowledgeDistillationArguments
 from torchfusion.core.training.args.model_checkpoint import ModelCheckpointArguments
 from torchfusion.core.training.optim.args import OptimizerArguments
 from torchfusion.core.training.sch.args import (
@@ -167,14 +167,6 @@ class TrainingArguments:
             {"name": "recall", "kwargs": {}},
             {"name": "f1", "kwargs": {}},
         ]
-    )
-
-    # knowledge distillation arguments
-    kd_args: Optional[KnowledgeDistillationArguments] = field(
-        default=None,
-        metadata={
-            "help": "Knowledge distillation arguments. If None, no distillation is performed."
-        },
     )
 
     # test run

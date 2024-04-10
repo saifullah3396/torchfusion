@@ -34,9 +34,17 @@ class LRSchedulerFactory:
             return scheduler
 
         if scheduler_args.name == LRSchedulerType.STEP_LR:  # tested
-            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, **scheduler_args.params)
+            scheduler = torch.optim.lr_scheduler.StepLR(
+                optimizer, **scheduler_args.params
+            )
+        elif scheduler_args.name == LRSchedulerType.MULTI_STEP_LR:  # tested
+            scheduler = torch.optim.lr_scheduler.MultiStepLR(
+                optimizer, **scheduler_args.params
+            )
         elif scheduler_args.name == LRSchedulerType.EXPONENTIAL_LR:  # tested
-            scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, **scheduler_args.params)
+            scheduler = torch.optim.lr_scheduler.ExponentialLR(
+                optimizer, **scheduler_args.params
+            )
         elif scheduler_args.name == LRSchedulerType.REDUCE_LR_ON_PLATEAU:  # tested
             scheduler = ReduceLROnPlateauScheduler(optimizer, **scheduler_args.params)
         elif scheduler_args.name == LRSchedulerType.LAMBDA_LR:
@@ -49,7 +57,8 @@ class LRSchedulerFactory:
                         return float(current_step) / float(max(1, num_warmup_steps))
                     return max(
                         0.0,
-                        float(num_training_steps - current_step) / float(max(1, num_training_steps - num_warmup_steps)),
+                        float(num_training_steps - current_step)
+                        / float(max(1, num_training_steps - num_warmup_steps)),
                     )
 
                 lambda_fn = lr_lambda
@@ -65,7 +74,9 @@ class LRSchedulerFactory:
                     optimizer, num_training_steps // num_epochs, **scheduler_args.params
                 )
         elif scheduler_args.name == LRSchedulerType.CYCLIC_LR:  # not tested
-            scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, **scheduler_args.params)
+            scheduler = torch.optim.lr_scheduler.CyclicLR(
+                optimizer, **scheduler_args.params
+            )
         elif scheduler_args.name == LRSchedulerType.POLYNOMIAL_DECAY_LR:  # not tested
             from torchfusion.core.training.sch.schedulers.poly_decay_lr import (
                 PolyDecayLR,
@@ -73,10 +84,16 @@ class LRSchedulerFactory:
 
             params = copy(scheduler_args.params)
             max_decay_steps = params.pop("max_decay_steps")
-            max_decay_steps = num_training_steps if max_decay_steps == -1 else max_decay_steps
-            scheduler = PolyDecayLR(optimizer, max_decay_steps=max_decay_steps, **params)
+            max_decay_steps = (
+                num_training_steps if max_decay_steps == -1 else max_decay_steps
+            )
+            scheduler = PolyDecayLR(
+                optimizer, max_decay_steps=max_decay_steps, **params
+            )
         else:
-            raise ValueError(f"Learning rate scheduler with the name [{scheduler_args.name}] is not supported!")
+            raise ValueError(
+                f"Learning rate scheduler with the name [{scheduler_args.name}] is not supported!"
+            )
 
         return scheduler
 
@@ -124,7 +141,11 @@ class WdSchedulerFactory:
                 group_name = group["name"]
                 initial_wd = group["weight_decay"]
 
-                if group_name == target_group_name or target_group_name == "all" and initial_wd > 0:
+                if (
+                    group_name == target_group_name
+                    or target_group_name == "all"
+                    and initial_wd > 0
+                ):
                     if scheduler_args.name == WDSchedulerType.COSINE:
                         from torchfusion.core.training.sch.schedulers.poly_decay_lr import (
                             CosineScheduler,

@@ -61,7 +61,7 @@ class FusionModelForTokenClassification(FusionModelForClassification):
             f"Model constructor must be of type TransformersModelConstructor. "
             f"Got {type(model_constructor)}"
         )
-        return model_constructor(self.num_labels)
+        return model_constructor(self.num_labels, checkpoint=checkpoint, strict=strict)
 
     def _build_model(self, checkpoint: Optional[str] = None, strict: bool = False):
         return self._build_classification_model()

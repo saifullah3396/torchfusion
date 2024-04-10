@@ -15,8 +15,7 @@ from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.models.args.fusion_model_config import FusionModelConfig
-from torchfusion.core.models.utilities.ddp_model_proxy import \
-    ModuleProxyWrapper
+from torchfusion.core.models.utilities.ddp_model_proxy import ModuleProxyWrapper
 from torchfusion.core.models.utilities.general import batch_norm_to_group_norm
 from torchfusion.core.training.args.ema import FusionEMAHandler
 from torchfusion.core.training.utilities.constants import TrainingStage
@@ -229,7 +228,7 @@ class FusionModel:
         self,
         module: nn.Module,
         device="gpu",
-    ) -> Union[nn.Module, FusionNNModel]:
+    ) -> Union[nn.Module, FusionModel]:
         self._logger.info(f"Putting {type(module)} to {device}.")
         module_requires_grad = False
         for p in module.parameters():

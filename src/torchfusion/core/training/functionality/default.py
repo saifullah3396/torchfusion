@@ -747,7 +747,7 @@ class DefaultTrainingFunctionality:
             ParamScheduler,
             ReduceLROnPlateauScheduler,
         )
-        from torch.optim.lr_scheduler import ExponentialLR, StepLR
+        from torch.optim.lr_scheduler import ExponentialLR, MultiStepLR, StepLR
 
         for k, inner_sch in training_sch_manager.lr_schedulers.items():
             if inner_sch is None:
@@ -830,7 +830,7 @@ class DefaultTrainingFunctionality:
                     sch = inner_sch
 
                 # update scheduler in dict
-                if isinstance(inner_sch, (StepLR, ExponentialLR)):
+                if isinstance(inner_sch, (StepLR, MultiStepLR, ExponentialLR)):
                     training_engine.add_event_handler(Events.EPOCH_STARTED, sch)
                 elif isinstance(inner_sch, ReduceLROnPlateauScheduler):
                     # inner_sch.trainer = training_engine
