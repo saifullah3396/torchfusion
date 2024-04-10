@@ -16,7 +16,6 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.init import kaiming_normal_
 
 # This file describes the architecture of the wide residual network (Zagoruyko et al., https://arxiv.org/abs/1605.07146)
 # used for the experiment. We note that this implementation of wide residual network was inspired by the author's
@@ -24,13 +23,6 @@ from torch.nn.init import kaiming_normal_
 
 # Hyper-parameters used for training the wide residual network in its official implementation. See
 # https://github.com/szagoruyko/wide-residual-networks.
-
-BATCH_SIZE = 128
-LEARNING_RATE = 1e-1
-MOMENTUM = 0.9
-WEIGHT_DECAY = 0.0005
-LEARNING_RATE_DECAY_MILESTONES = [60, 120, 160]
-LEARNING_RATE_DECAY_FACTOR = 0.9
 
 
 def conv1x1(in_channels, out_channels, stride=1):
