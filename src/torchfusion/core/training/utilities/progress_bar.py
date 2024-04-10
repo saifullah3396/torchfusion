@@ -28,7 +28,9 @@ class TqdmLogFormatter(object):
         return self._logger
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
-        for handler, formatter in zip(self._logger.handlers, self.__original_formatters):
+        for handler, formatter in zip(
+            self._logger.handlers, self.__original_formatters
+        ):
             handler.terminator = "\n"
             handler.setFormatter(formatter)
 
@@ -54,7 +56,9 @@ class FusionProgressBar(ProgressBar):
         metric_names: Optional[Union[str, List[str]]] = None,
         output_transform: Optional[Callable] = None,
         event_name: Union[Events, CallableEventWithFilter] = Events.ITERATION_COMPLETED,
-        closing_event_name: Union[Events, CallableEventWithFilter] = Events.EPOCH_COMPLETED,
+        closing_event_name: Union[
+            Events, CallableEventWithFilter
+        ] = Events.EPOCH_COMPLETED,
         state_attributes: Optional[List[str]] = None,
         optimizers: Optional[dict] = None,
         optimizer_params: Optional[List[str]] = ["lr"],
@@ -63,14 +67,18 @@ class FusionProgressBar(ProgressBar):
         desc = self.tqdm_kwargs.get("desc", None)
 
         if event_name not in engine._allowed_events:
-            raise ValueError(f"Logging event {event_name.name} is not in allowed events for this engine")
+            raise ValueError(
+                f"Logging event {event_name.name} is not in allowed events for this engine"
+            )
 
         if isinstance(closing_event_name, CallableEventWithFilter):
             if closing_event_name.filter is not None:
                 raise ValueError("Closing Event should not be a filtered event")
 
         if not close_on_write and not self._compare_lt(event_name, closing_event_name):
-            raise ValueError(f"Logging event {event_name} should be called before closing event {closing_event_name}")
+            raise ValueError(
+                f"Logging event {event_name} should be called before closing event {closing_event_name}"
+            )
 
         log_handler = _FusionOutputHandler(
             desc,
@@ -104,7 +112,9 @@ class _FusionOutputHandler(_OutputHandler):
         description: str,
         metric_names: Optional[Union[str, List[str]]] = None,
         output_transform: Optional[Callable] = None,
-        closing_event_name: Union[Events, CallableEventWithFilter] = Events.EPOCH_COMPLETED,
+        closing_event_name: Union[
+            Events, CallableEventWithFilter
+        ] = Events.EPOCH_COMPLETED,
         state_attributes: Optional[List[str]] = None,
         optimizers: Optional[dict] = None,
         optimizer_params: Optional[List[str]] = ["lr"],
@@ -123,7 +133,9 @@ class _FusionOutputHandler(_OutputHandler):
         self.post_fix_max_length = post_fix_max_length
         self.close_on_write = close_on_write
 
-    def __call__(self, engine: Engine, logger: ProgressBar, event_name: Union[str, Events]) -> None:
+    def __call__(
+        self, engine: Engine, logger: ProgressBar, event_name: Union[str, Events]
+    ) -> None:
         pbar_total = self.get_max_number_events(event_name, engine)
         if logger.pbar is None:
             logger._reset(pbar_total=pbar_total)
@@ -133,9 +145,13 @@ class _FusionOutputHandler(_OutputHandler):
 
         desc = self.tag or default_desc
         if not self.close_on_write:
-            max_num_of_closing_events = self.get_max_number_events(self.closing_event_name, engine)
+            max_num_of_closing_events = self.get_max_number_events(
+                self.closing_event_name, engine
+            )
             if max_num_of_closing_events and max_num_of_closing_events > 1:
-                global_step = engine.state.get_event_attrib_value(self.closing_event_name)
+                global_step = engine.state.get_event_attrib_value(
+                    self.closing_event_name
+                )
                 desc += f" [{global_step}/{max_num_of_closing_events}]"
         logger.pbar.set_description(desc)  # type: ignore[attr-defined]
 
@@ -146,6 +162,7 @@ class _FusionOutputHandler(_OutputHandler):
 
             metrics[key] = value
 
+        # this is incredibly expensive don't do this
         # if self.optimizers is not None:
         #     for k, opt in self.optimizers.items():
         #         for param_name in self.optimizer_params:
@@ -162,6 +179,13 @@ class _FusionOutputHandler(_OutputHandler):
         #                 max_param_name = f"opt/{k}/max/{param_name}"
         #                 metrics[min_param_name] = float(min_param)
         #                 metrics[max_param_name] = float(max_param)
+        # simply get the metric
+        if self.optimizers is not None:
+            for k, opt in self.optimizers.items():
+                for param_name in self.optimizer_params:
+                    metrics[f"opt/{k}/{param_name}"] = float(
+                        opt.param_groups[-1][param_name]
+                    )
 
         if hasattr(engine.state, "ema_momentum"):
             metrics["ema/mom"] = engine.state.ema_momentum
@@ -169,7 +193,9 @@ class _FusionOutputHandler(_OutputHandler):
         renamed_metrics = {}
         for name, value in metrics.items():
             # make short name
-            new_name = "/".join([s[: self.post_fix_max_length] for s in name.split("/")])
+            new_name = "/".join(
+                [s[: self.post_fix_max_length] for s in name.split("/")]
+            )
             renamed_metrics[new_name] = value
 
         if renamed_metrics:
