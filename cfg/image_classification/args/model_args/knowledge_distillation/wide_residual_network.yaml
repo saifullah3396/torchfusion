@@ -27,6 +27,7 @@ kd_args:
     init_args: 
       depth: 40
       width: 2
+      drop_rate: 0.0
     pretrained: True
     checkpoint: null
     checkpoint_state_dict_key: state_dict
