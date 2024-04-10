@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import copy
 import io
-import json
 import os
 import pickle
 import sys
@@ -32,7 +31,6 @@ from torchfusion.core.data.utilities.containers import CollateFnDict, Transforms
 from torchfusion.core.data.utilities.data_visualization import (
     print_batch_info,
     show_batch,
-    show_images,
 )
 from torchfusion.core.data.utilities.dataset_stats import load_or_precalc_dataset_stats
 from torchfusion.core.training.utilities.constants import TrainingStage
@@ -395,7 +393,9 @@ class FusionDataModule(ABC):
                 )
                 self.val_dataset = copy.deepcopy(self.train_dataset)
 
-            if len(self.val_dataset) == 0:
+            if not use_test_set_for_val and (
+                self.val_dataset is None or len(self.val_dataset) == 0
+            ):
                 logger = get_logger()
                 logger.warning(
                     "Using train set as validation set as no validation dataset exists."
