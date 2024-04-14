@@ -11,7 +11,7 @@ class DataKeys:
     IMAGE_PATCH = "image_patch"
     GT_IMAGE_PATCH = "gt_image_patch"
     BBOX = "bbox"
-    IMAGE_RECONS = "image_reconstruction"
+    RECONS = "reconstruction"
     OCR_FILE_PATH = "ocr_file_path"
     LABEL = "label"
     PRED = "pred"

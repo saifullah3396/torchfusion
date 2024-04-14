@@ -4,3 +4,5 @@ class ModelTasks:
     token_classification = "token_classification"
     image_generation = "image_generation"
     embedding = "embedding"
+    autoencoding = "autoencoding"
+    gan = "gan"

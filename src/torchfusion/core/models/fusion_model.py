@@ -85,7 +85,7 @@ class FusionModel:
         pass
 
     @abstractmethod
-    def _eval_step(self):
+    def _evaluation_step(self):
         pass
 
     @abstractmethod
@@ -157,6 +157,11 @@ class FusionModel:
         if "stage" in kwargs:
             kwargs.pop("stage")
         return self._predict_step(*args, **kwargs)
+
+    def visualization_step(self, *args, **kwargs) -> None:
+        if "stage" in kwargs:
+            kwargs.pop("stage")
+        return self._visualization_step(*args, **kwargs)
 
     def setup_ema(self):
         if (

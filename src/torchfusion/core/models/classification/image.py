@@ -51,7 +51,12 @@ class FusionModelForImageClassification(FusionModelForClassification):
                 TimmModelConstructor,
             ),
         ), (
-            f"Model constructor must be of type TransformersModelConstructor. "
+            f"Model constructor must be of type {(
+                FusionModelConstructor,
+                TorchvisionModelConstructor,
+                TransformersModelConstructor,
+                TimmModelConstructor,
+            )}. "
             f"Got {type(model_constructor)}"
         )
         return model_constructor(self.num_labels, checkpoint=checkpoint, strict=strict)
