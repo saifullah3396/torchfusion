@@ -8,7 +8,8 @@ args:
     tasks:
       prepare_dataset:
         task_type: PrepareDataset
-        task_config: {}
+        task_config:
+          visualize: ${visualize}
   data_args:
     dataset_config_name: ${dataset_config_name}
     train_preprocess_augs: null
@@ -51,3 +52,4 @@ args:
 realtime_image_size_x: 1024
 realtime_image_size_y: 1024
 dataset_config_name: default
+visualize: False
