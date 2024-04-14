@@ -1,0 +1,39 @@
+dataset_name: Cifar10
+dataset_dir: ${oc.env:DATA_ROOT_DIR}/images/cifar10/
+dataset_cache_dir: ${args.data_args.dataset_dir}/huggingface/
+train_preprocess_augs: null 
+eval_preprocess_augs: null
+train_realtime_augs:
+  - name: Cifar10Aug
+    kwargs:
+      train: true
+      key:
+        - image
+eval_realtime_augs:
+  - name: Cifar10Aug
+    kwargs:
+      train: false
+      key:
+        - image
+train_val_sampler:
+  name: RandomSplitSampler
+  kwargs:
+    random_split_ratio: 0.8 # 0.9 train / 0.1 val
+    seed: 42
+data_loader_args:
+  per_device_train_batch_size: 32
+  per_device_eval_batch_size: 32
+  dataloader_drop_last: False
+  shuffle_data: True
+  pin_memory: True
+  dataloader_num_workers: 8
+  use_test_set_for_val: False
+  train_batch_sampler:
+    name: ""
+    kwargs: {}
+  eval_batch_sampler:
+    name: ""
+    kwargs: {}
+  max_test_samples: null
+  max_train_samples: null
+  max_val_samples: null

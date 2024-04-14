@@ -42,9 +42,14 @@ def print_batch_info(batch, tokenizer: PreTrainedTokenizerBase = None):
                 f"Batch element={key}, shape={value.shape}, type={value.dtype}\nExample: {value[0]}"
             )
         elif isinstance(value, list):
-            logger.info(
-                f"Batch element={key}, shape={len(value)}, type={type(value[0])}\nExample: {value[0]}"
-            )
+            if isinstance(value[0], (torch.Tensor, np.ndarray)):
+                logger.info(
+                    f"Batch element={key}, shape={value[0].shape}, type={value[0].dtype}\nExample: {value[0]}"
+                )
+            else:
+                logger.info(
+                    f"Batch element={key}, shape={len(value)}, type={type(value[0])}\nExample: {value[0]}"
+                )
         else:
             logger.info(f"Batch element={key}, type={type(value)}\nExample: {value}")
 

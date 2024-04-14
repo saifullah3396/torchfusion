@@ -11,4 +11,4 @@ _import_structure = {
     ],
 }
 
-ModuleLazyImporter.register_models(__name__, _import_structure)
+ModuleLazyImporter.register_fusion_models(__name__, _import_structure)

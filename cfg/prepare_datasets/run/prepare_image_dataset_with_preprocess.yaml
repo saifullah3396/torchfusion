@@ -13,6 +13,9 @@ args:
     num_proc: 4
     dataset_config_name: ${dataset_config_name}
     cache_file_name: ${image_size_x}x${image_size_y}
+    data_loader_args:
+      per_device_train_batch_size: 4
+      per_device_eval_batch_size: 4
     train_preprocess_augs:
       - name: PreprocessAug
         kwargs:
