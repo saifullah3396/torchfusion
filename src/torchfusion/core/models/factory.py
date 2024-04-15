@@ -4,7 +4,7 @@ Defines the factory for TrainValSampler class and its children.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Type
+from typing import TYPE_CHECKING, List, Optional, Type
 
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.models.args.model_args import ModelArguments
@@ -72,49 +72,3 @@ class ModelFactory:
         fusion_model = model_class(args=args, **model_kwargs)
         fusion_model.build_model(checkpoint=checkpoint, strict=strict)
         return fusion_model
-
-    # @staticmethod
-    # def create_fusion_kd_model(
-    #     args: FusionArguments,
-    #     teacher_checkpoint: Optional[str] = None,
-    #     student_checkpoint: Optional[str] = None,
-    #     strict: bool = False,
-    #     wrapper_class=FusionKDModel,
-    #     load_checkpoint_if_available: bool = True,
-    #     **model_kwargs,
-    # ) -> FusionKDModel:
-    #     """
-    #     Initialize the model
-    #     """
-
-    #     model = wrapper_class(
-    #         args=args,
-    #         teacher_model_class=ModelFactory.get_fusion_nn_model_class(
-    #             args.teacher_model_args
-    #         ),
-    #         student_model_class=ModelFactory.get_fusion_nn_model_class(
-    #             args.student_model_args
-    #         ),
-    #         **model_kwargs,
-    #     )
-    #     if load_checkpoint_if_available:
-    #         teacher_checkpoint = (
-    #             args.teacher_model_args.checkpoint
-    #             if teacher_checkpoint is None
-    #             else teacher_checkpoint
-    #         )
-    #         checkpoint_state_dict_key = args.model_args.checkpoint_state_dict_key
-    #         setup_checkpoint(
-    #             model.torch_teacher_model,
-    #             teacher_model_args,
-    #             checkpoint=teacher_checkpoint,
-    #             strict=strict,
-    #         )
-    #         setup_checkpoint(
-    #             model.torch_student_model,
-    #             student_model_args,
-    #             checkpoint=student_checkpoint,
-    #             strict=strict,
-    #         )
-
-    #     return model

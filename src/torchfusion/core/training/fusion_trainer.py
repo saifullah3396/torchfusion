@@ -12,30 +12,33 @@ from torch.utils.data import Subset
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.data.data_augmentations.general import DictTransform
 from torchfusion.core.data.factory.batch_sampler import BatchSamplerFactory
-from torchfusion.core.data.factory.data_augmentation import DataAugmentationFactory
-from torchfusion.core.data.factory.train_val_sampler import TrainValSamplerFactory
+from torchfusion.core.data.factory.data_augmentation import \
+    DataAugmentationFactory
+from torchfusion.core.data.factory.train_val_sampler import \
+    TrainValSamplerFactory
 from torchfusion.core.data.utilities.containers import TransformsDict
 from torchfusion.core.models.fusion_model import FusionModel
-from torchfusion.core.training.functionality.default import DefaultTrainingFunctionality
-from torchfusion.core.training.functionality.diffusion import (
-    DiffusionTrainingFunctionality,
-)
-from torchfusion.core.training.functionality.gan import GANTrainingFunctionality
+from torchfusion.core.training.functionality.default import \
+    DefaultTrainingFunctionality
+from torchfusion.core.training.functionality.diffusion import \
+    DiffusionTrainingFunctionality
+from torchfusion.core.training.functionality.gan import \
+    GANTrainingFunctionality
 from torchfusion.core.training.fusion_opt_manager import FusionOptimizerManager
-from torchfusion.core.training.fusion_sch_manager import FusionSchedulersManager
+from torchfusion.core.training.fusion_sch_manager import \
+    FusionSchedulersManager
 from torchfusion.core.training.utilities.constants import TrainingStage
-from torchfusion.core.training.utilities.general import (
-    TransformsWrapper,
-    initialize_torch,
-    setup_logging,
-)
+from torchfusion.core.training.utilities.general import (TransformsWrapper,
+                                                         initialize_torch,
+                                                         setup_logging)
 from torchfusion.utilities.dataclasses.dacite_wrapper import from_dict
 from torchfusion.utilities.logging import get_logger
 
 if TYPE_CHECKING:
     import torch
 
-    from torchfusion.core.data.data_modules.fusion_data_module import FusionDataModule
+    from torchfusion.core.data.data_modules.fusion_data_module import \
+        FusionDataModule
     from torchfusion.core.models.fusion_model import FusionModel
 
 
@@ -160,9 +163,8 @@ class FusionTrainer:
 
         import ignite.distributed as idist
 
-        from torchfusion.core.data.data_modules.fusion_data_module import (
-            FusionDataModule,
-        )
+        from torchfusion.core.data.data_modules.fusion_data_module import \
+            FusionDataModule
 
         logger = get_logger()
         logger.info("Setting up datamodule...")

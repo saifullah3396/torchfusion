@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import ignite.distributed as idist
 import torch
@@ -77,7 +77,11 @@ class FusionModel:
         return self._args.training_args
 
     @abstractmethod
-    def _build_model(self):
+    def _build_model(
+        self,
+        checkpoint: Optional[str] = None,
+        strict: bool = False,
+    ):
         pass
 
     @abstractmethod
@@ -108,7 +112,11 @@ class FusionModel:
             "default": list(self.torch_model.parameters()),
         }
 
-    def build_model(self, checkpoint: Optional[str] = None, strict: bool = False):
+    def build_model(
+        self,
+        checkpoint: Optional[str] = None,
+        strict: bool = False,
+    ):
         from torchfusion.core.models.factory import ModelFactory
 
         # models sometimes download pretrained checkpoints when initializing. Only download it on rank 0
@@ -126,7 +134,7 @@ class FusionModel:
                 )
 
         # build the underlying nn model
-        self._torch_model = self._build_model(checkpoint, strict)
+        self._torch_model = self._build_model(checkpoint=checkpoint, strict=strict)
         assert self._torch_model is not None and isinstance(
             self._torch_model, nn.Module
         ), "Child class must return a torch nn.Module on self._build_model()"
