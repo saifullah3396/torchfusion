@@ -1,3 +1,4 @@
+from torchfusion.core.models.constructors.diffusers import DiffusersModelConstructor
 from torchfusion.core.models.constructors.fusion import FusionModelConstructor
 from torchfusion.core.models.constructors.timm import TimmModelConstructor
 from torchfusion.core.models.constructors.torchvision import TorchvisionModelConstructor
@@ -18,6 +19,8 @@ class ModelConstructorFactory:
             model_constructor_class = TorchvisionModelConstructor
         elif name == "timm":
             model_constructor_class = TimmModelConstructor
+        elif name == "diffusers":
+            model_constructor_class = DiffusersModelConstructor
         else:
             raise ValueError(f"Model constructor type [{name}] not supported.")
 

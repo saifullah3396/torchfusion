@@ -11,7 +11,8 @@ args:
         kwargs:
           fid_stats: /home/ataraxia/Datasets/documents/tobacco3482/fid_stats/train-2782-stats.pth
   data_args:
-    compute_dataset_statistics: False
+    compute_dataset_statistics: True
+    dataset_statistics_n_samples: 2782
     dataset_config_name: ${dataset_config_name}
     num_proc: 4
     cache_file_name: ${image_size_x}x${image_size_y}
@@ -66,8 +67,7 @@ args:
     data_loader_args:
       per_device_train_batch_size: ${bs}
       per_device_eval_batch_size: ${bs}
-      max_train_samples: 50
-
+      max_train_samples: 2782
   analyzer_args:
     analyzer_output_dir: ${oc.env:TORCH_FUSION_OUTPUT_DIR}/analyzer/
     model_checkpoints: null
@@ -76,6 +76,13 @@ args:
         task_type: ImageReconstruction
         task_config:
           data_split: train
+  model_args:
+    model_config:
+      model_constructor_args:
+        checkpoint: ${checkpoint}
+        checkpoint_state_dict_key: ${checkpoint_state_dict_key}
+        checkpoint_filtered_keys:
+          - vae.
 
 bs: 8
 image_size_x: 1024 # preprocess size
@@ -84,3 +91,5 @@ realtime_image_size_x: 256
 realtime_image_size_y: 256
 dataset_config_name: default
 with_amp_inference: False
+checkpoint: null
+checkpoint_state_dict_key: state_dict
