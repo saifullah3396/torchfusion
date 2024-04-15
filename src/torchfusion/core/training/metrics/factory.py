@@ -130,7 +130,13 @@ class MetricsFactory:
             )
 
             def output_transform(output):
-                return output[DataKeys.IMAGE], output[DataKeys.RECONS]
+                # FID takes the output:
+                #   train, test = output
+                # train refers to the predictions, and test refers to the target dataset statistics
+
+                # pred, real or fake, real,
+                # Do not send image first!!
+                return output[DataKeys.RECONS], output[DataKeys.IMAGE]
 
             # pytorch_fid model
             dims = 2048

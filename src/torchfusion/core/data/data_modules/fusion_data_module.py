@@ -214,8 +214,7 @@ class FusionDataModule(ABC):
         if self._compute_dataset_statistics:
             self._logger.info(
                 "You have set args.data_args.compute_dataset_statistics=True. "
-                "This will compute the FID stats for this dataset and exit. "
-                "For normal behavior set compute_dataset_statistics=False"
+                "This will compute the FID stats for this dataset. "
             )
             # for computing statistics, we always use evaluation transforms instead of train ones
             dataset._transforms = self._realtime_transforms["test"]
@@ -228,8 +227,7 @@ class FusionDataModule(ABC):
                 stats_filename=self._stats_filename,
                 logger=self._logger,
             )
-            self._logger.info("Dataset statistics computed successfully. Exiting...")
-            exit()
+            self._logger.info("Dataset statistics computed successfully.")
 
         return dataset
 
@@ -269,8 +267,7 @@ class FusionDataModule(ABC):
         if self._compute_dataset_statistics:
             self._logger.info(
                 "You have set args.data_args.compute_dataset_statistics=True. "
-                "This will compute the FID stats for this dataset and exit. "
-                "For normal behavior set compute_dataset_statistics=False"
+                "This will compute the FID stats for this dataset. "
             )
             # for computing statistics, we always use evaluation transforms instead of train ones
             dataset._transforms = self._realtime_transforms["test"]
@@ -283,8 +280,7 @@ class FusionDataModule(ABC):
                 stats_filename=self._stats_filename,
                 logger=self._logger,
             )
-            self._logger.info("Dataset statistics computed successfully. Exiting...")
-            exit()
+            self._logger.info("Dataset statistics computed successfully")
 
         return dataset
 

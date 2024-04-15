@@ -2,6 +2,7 @@ import warnings
 from pathlib import Path
 from typing import Callable, Optional, Sequence, Union
 
+import numpy as np
 import torch
 from ignite.metrics.gan.utils import InceptionModel, _BaseInceptionMetric
 from ignite.metrics.metric import reinit__is_reduced, sync_all_reduce
@@ -21,13 +22,27 @@ class WrapperInceptionV3(nn.Module):
     def __init__(self, fid_incv3):
         super().__init__()
         self.fid_incv3 = fid_incv3
+        self.logger = get_logger()
+        self.warned = False
 
     @torch.no_grad()
     def forward(self, x):
         if x.shape[1] == 1:
             x = x.repeat(1, 3, 1, 1)
-        # assert(x.min() >= 0.)
-        # assert(x.max() <= 1.0)
+
+        # if the image is in range -1 to 1 we convert it to 0 to 1
+        if x.min() < 0 and x.max() > 1:
+            if not self.warned:
+                self.logger.warning(
+                    f"WrapperInceptionV3 for FID computation assumes an input image is in the range -1 to 1. Converting it to 0 to 1. Actual range = [{x.min()}, {x.max()}]"
+                )
+                self.warned = True
+            x = (x / 2 + 0.5).clamp(0, 1)
+
+        # inception model inputs must be images in range 0 to 1
+        assert x.min() >= 0.0
+        assert x.max() <= 1.0
+
         y = self.fid_incv3(x)
         y = y[0]
         y = y[:, :, 0, 0]
@@ -137,46 +152,52 @@ class FID(_BaseInceptionMetric):
 
     @reinit__is_reduced
     def reset(self) -> None:
-        if self._ckpt_path is not None and self._ckpt_path.exists():
-            ckpt = torch.load(self._ckpt_path)
-            self._train_sigma = ckpt["train_sigma"]
-            self._train_total = ckpt["train_total"]
-            self._train_num_examples = ckpt["num_examples"]
-        else:
-            self._train_sigma = torch.zeros(
-                (self._num_features, self._num_features),
-                dtype=torch.float64,
-                device=self._device,
-            )
-            self._train_total = torch.zeros(
-                self._num_features, dtype=torch.float64, device=self._device
-            )
-
-        self._test_sigma = torch.zeros(
+        self._train_sigma = torch.zeros(
             (self._num_features, self._num_features),
             dtype=torch.float64,
             device=self._device,
         )
 
-        self._test_total = torch.zeros(
+        self._train_total = torch.zeros(
             self._num_features, dtype=torch.float64, device=self._device
         )
+
+        if self._ckpt_path is not None and self._ckpt_path.exists():
+            ckpt = torch.load(self._ckpt_path)
+            self._test_sigma = ckpt["test_sigma"]
+            self._test_total = ckpt["test_total"]
+            self._test_num_examples = ckpt["num_examples"]
+
+            assert self._test_sigma.shape == (self._num_features, self._num_features)
+            assert self._test_total.shape == (self._num_features,)
+        else:
+            self._test_sigma = torch.zeros(
+                (self._num_features, self._num_features),
+                dtype=torch.float64,
+                device=self._device,
+            )
+
+            self._test_total = torch.zeros(
+                self._num_features, dtype=torch.float64, device=self._device
+            )
         self._num_examples: int = 0
 
         super(FID, self).reset()
 
     @reinit__is_reduced
     def update(self, output: Sequence[torch.Tensor]) -> None:
+        # train features are the predicted features, test features refer to the real features from original dataset
+        # in case they are precomputed, the test features are loaded from the file and the train features are predicted
+        # by the generative model
         train, test = output
+        train_features = self._extract_features(train)
 
-        test_features = self._extract_features(test)
-
-        # Updates the mean and covariance for the test features
-        for features in test_features:
-            self._online_update(features, self._test_total, self._test_sigma)
+        # Updates the mean and covariance for the train features
+        for features in train_features:
+            self._online_update(features, self._train_total, self._train_sigma)
 
         if self._ckpt_path is None:
-            train_features = self._extract_features(train)
+            test_features = self._extract_features(test)
 
             if (
                 train_features.shape[0] != test_features.shape[0]
@@ -188,25 +209,26 @@ class FID(_BaseInceptionMetric):
                     """
                 )
 
-            # Updates the mean and covariance for the train features
-            for features in train_features:
-                self._online_update(features, self._train_total, self._train_sigma)
-        self._num_examples += test_features.shape[0]
+            # Updates the mean and covariance for the test features
+            for features in test_features:
+                self._online_update(features, self._test_total, self._test_sigma)
+
+        self._num_examples += train_features.shape[0]
 
     @sync_all_reduce(
-        "_num_examples", "_train_total", "_test_total", "_train_sigma", "_test_sigma"
+        "_num_examples", "_test_total", "_train_total", "_test_sigma", "_train_sigma"
     )
     def compute(self) -> float:
-        if self._num_examples != self._train_num_examples:
+        if self._num_examples != self._test_num_examples:
             self._logger.warning(
-                f"The number of examples used in evaluation {self._num_examples} are not equal to the number of examples in dataset statistics {self._train_num_examples}."
+                f"The number of examples used in evaluation {self._num_examples} are not equal to the number of examples in dataset statistics {self._test_num_examples}."
                 f"Max validation used for FID are set by args.data_args.data_loader_args.max_val_samples. "
                 f"The total samples usied for original fid statistics computation are set by: args.data_args.dataset_statistics_n_samples."
             )
 
         fid = fid_score(
             mu1=self._train_total / self._num_examples,
-            mu2=self._test_total / self._num_examples,
+            mu2=self._test_total / self._test_num_examples,
             sigma1=self._get_covariance(self._train_sigma, self._train_total),
             sigma2=self._get_covariance(self._test_sigma, self._test_total),
             eps=self._eps,
@@ -214,7 +236,7 @@ class FID(_BaseInceptionMetric):
 
         if torch.isnan(torch.tensor(fid)) or torch.isinf(torch.tensor(fid)):
             warnings.warn(
-                "The product of covariance of train and test features is out of bounds."
+                "The product of covariance of test and train features is out of bounds."
             )
 
         return fid
@@ -291,15 +313,15 @@ class FIDSaver(_BaseInceptionMetric):
     def reset(self) -> None:
         if self._ckpt_path is not None and self._ckpt_path.exists():
             ckpt = torch.load(self._ckpt_path)
-            self._train_sigma = ckpt["train_sigma"]
-            self._train_total = ckpt["train_total"]
+            self._test_sigma = ckpt["test_sigma"]
+            self._test_total = ckpt["test_total"]
         else:
-            self._train_sigma = torch.zeros(
+            self._test_sigma = torch.zeros(
                 (self._num_features, self._num_features),
                 dtype=torch.float64,
                 device=self._device,
             )
-            self._train_total = torch.zeros(
+            self._test_total = torch.zeros(
                 self._num_features, dtype=torch.float64, device=self._device
             )
         self._num_examples: int = 0
@@ -308,24 +330,24 @@ class FIDSaver(_BaseInceptionMetric):
 
     @reinit__is_reduced
     def update(self, output: Sequence[torch.Tensor]) -> None:
-        train = output
+        test = output
 
-        train_features = self._extract_features(train)
+        test_features = self._extract_features(test)
 
-        # Updates the mean and covariance for the train features
-        for features in train_features:
-            self._online_update(features, self._train_total, self._train_sigma)
+        # Updates the mean and covariance for the test features
+        for features in test_features:
+            self._online_update(features, self._test_total, self._test_sigma)
 
-        self._num_examples += train_features.shape[0]
+        self._num_examples += test_features.shape[0]
 
-    @sync_all_reduce("_num_examples", "_train_total", "_train_sigma")
+    @sync_all_reduce("_num_examples", "_test_total", "_test_sigma")
     def compute(self) -> float:
         if not self._ckpt_path.parent.exists():
             self._ckpt_path.parent.mkdir(parents=True, exist_ok=True)
         torch.save(
             {
-                "train_sigma": self._train_sigma,
-                "train_total": self._train_total,
+                "test_sigma": self._test_sigma,
+                "test_total": self._test_total,
                 "num_examples": self._num_examples,
             },
             self._ckpt_path,

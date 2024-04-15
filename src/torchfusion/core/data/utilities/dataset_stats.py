@@ -60,6 +60,7 @@ def load_or_precalc_dataset_stats(
 
     # wrapper model to pytorch_fid model
     wrapper_model = WrapperInceptionV3(model)
+    wrapper_model.requires_grad_(False)
     wrapper_model.eval()
     metric = FIDSaver(
         num_features=dims,

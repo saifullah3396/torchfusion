@@ -1,15 +1,15 @@
 import copy
+import pickle
 from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
 import numpy as np
+import tqdm
 from datadings.reader import MsgpackReader as MsgpackFileReader
 from datasets.arrow_dataset import DatasetInfoMixin
 from datasets.info import DatasetInfo
 from datasets.splits import NamedSplit
 from datasets.utils import logging
 from torch.utils.data import Dataset
-import tqdm
-import pickle
 
 from torchfusion.core.constants import DataKeys
 
@@ -31,7 +31,7 @@ class MsgpackBasedDataset(Dataset, DatasetInfoMixin):
         split: Optional[NamedSplit] = None,
         fingerprint: Optional[str] = None,
         transforms: Optional[Callable] = None,
-        load_data_into_ram: bool = False
+        load_data_into_ram: bool = False,
     ):
         info = info.copy() if info is not None else DatasetInfo()
         DatasetInfoMixin.__init__(self, info=info, split=split)
@@ -80,8 +80,8 @@ class MsgpackBasedDataset(Dataset, DatasetInfoMixin):
         else:
             sample = self.get_sample(index)
 
-        if 'data' in sample:
-            sample = pickle.loads(sample['data'])
+        if "data" in sample:
+            sample = pickle.loads(sample["data"])
 
         for key, value in sample.items():
             if key in self.features and hasattr(self.features[key], "decode_example"):
@@ -113,6 +113,9 @@ class MsgpackBasedDataset(Dataset, DatasetInfoMixin):
             return
         return [d._close() for d in self._data]
 
+    def close(self):
+        self._close()
+
 
 class MsgpackBasedTorchDataset(Dataset):
     """A mix of torch dataset and huggingface dataset info backed by a msgpack file or a list of msgpack files.
@@ -125,7 +128,7 @@ class MsgpackBasedTorchDataset(Dataset):
         split: str,
         info: Optional[DatasetInfo] = None,
         transforms: Optional[Callable] = None,
-        load_data_into_ram: bool = False
+        load_data_into_ram: bool = False,
     ):
         self._data = msgpack_readers
         self.split = split
@@ -167,8 +170,8 @@ class MsgpackBasedTorchDataset(Dataset):
         else:
             sample = self.get_sample(index)
 
-        if 'data' in sample:
-            sample = pickle.loads(sample['data'])
+        if "data" in sample:
+            sample = pickle.loads(sample["data"])
 
         # apply transforms
         if self._transforms is not None:
@@ -189,3 +192,6 @@ class MsgpackBasedTorchDataset(Dataset):
         if self._data_is_loaded:
             return
         return [d._close() for d in self._data]
+
+    def close(self):
+        self._close()
