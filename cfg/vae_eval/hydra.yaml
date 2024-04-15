@@ -1,0 +1,14 @@
+defaults:
+  - args/general_args: default
+  - args/training_args: default
+  - _self_
+
+hydra:
+  run:
+    dir: ${args.analyzer_args.analyzer_output_dir}/${args.model_args.model_task}/${args.data_args.dataset_name}_${resolve_dir_name:${args.model_args.model_directory_name}}/ #${dir_name_from_overrides:${hydra.overrides}}
+  sweep:
+    dir: ${args.analyzer_args.analyzer_output_dir}/${args.model_args.model_task}/
+    subdir: ${args.data_args.dataset_name}_${args.model_args.name}_${resolve_dir_name:${args.model_args.config.model_type}}/${dir_name_from_overrides:${hydra.overrides}}
+  output_subdir: hydra
+  job:
+    chdir: False

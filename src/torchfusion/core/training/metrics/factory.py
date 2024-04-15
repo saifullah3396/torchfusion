@@ -1,10 +1,15 @@
+from pathlib import Path
+
+import ignite.distributed as idist
 from ignite.metrics import Accuracy, Precision, Recall
 
 from torchfusion.core.args.args_base import ClassInitializerArgs
 from torchfusion.core.constants import DataKeys, MetricKeys
 from torchfusion.core.data.utilities.containers import MetricsDict
 from torchfusion.core.models.fusion_model import FusionModel
+from torchfusion.core.models.tasks import ModelTasks
 from torchfusion.core.training.metrics.seqeval import create_seqeval_metric
+from torchfusion.utilities.logging import get_logger
 
 
 def f1_score(output_transform):
@@ -32,7 +37,13 @@ class MetricsFactory:
     @staticmethod
     def initialize_stage_metrics(metric_args, model_task, labels=None):
         metrics = {}
+        logger = get_logger()
+        logger.info(f"Initializing metrics with config: {metric_args}")
         for metric_config in metric_args:
+            assert isinstance(metric_config, ClassInitializerArgs), (
+                f"Metric config must be of type {ClassInitializerArgs}. "
+                f"Got {type(metric_config)}"
+            )
             metrics[metric_config.name] = MetricsFactory.create_metric(
                 metric_config.name,
                 metric_config.kwargs,
@@ -46,6 +57,7 @@ class MetricsFactory:
 
     @staticmethod
     def create_metric(metric_name: str, metric_kwargs: dict, model_task: str, labels):
+        logger = get_logger()
         if model_task in ["image_classification", "sequence_classification"]:
             if metric_name not in [
                 MetricKeys.ACCURACY,
@@ -102,4 +114,48 @@ class MetricsFactory:
                 labels,
                 fn=metric_name,
                 output_transform=output_transform,
+            )
+
+        elif model_task in [ModelTasks.autoencoding, ModelTasks.gan]:
+            if metric_name not in [MetricKeys.FID]:
+                raise ValueError(
+                    f"Metric {metric_name} not supported for model task {model_task}"
+                )
+
+            from pytorch_fid.inception import InceptionV3
+
+            from torchfusion.core.training.metrics.fid_metric import (
+                FID,
+                WrapperInceptionV3,
+            )
+
+            def output_transform(output):
+                return output[DataKeys.IMAGE], output[DataKeys.RECONS]
+
+            # pytorch_fid model
+            dims = 2048
+            block_idx = InceptionV3.BLOCK_INDEX_BY_DIM[dims]
+            model = InceptionV3([block_idx])
+
+            # wrapper model to pytorch_fid model
+            wrapper_model = WrapperInceptionV3(model)
+            wrapper_model.requires_grad_(False)
+            wrapper_model.eval()
+
+            # get fid path
+            assert (
+                "fid_stats" in metric_kwargs
+            ), "fid stats path must be provided for the fid metric. You can compute it using args.data_args.compute_dataset_statistics=True"
+
+            fid_stats = Path(metric_kwargs["fid_stats"])
+            assert fid_stats.exists(), f"fid stats file {fid_stats} does not exist"
+            logger.info(f"Using fid statistics from fid stats file: {fid_stats}")
+
+            # here we only need validation
+            return lambda: FID(
+                num_features=dims,
+                feature_extractor=wrapper_model,
+                output_transform=output_transform,
+                ckpt_path=fid_stats,
+                device=idist.get_rank(),
             )

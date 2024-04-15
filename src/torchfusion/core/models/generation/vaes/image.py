@@ -14,7 +14,9 @@ from torchfusion.core.models.constructors.factory import ModelConstructorFactory
 from torchfusion.core.models.constructors.fusion import FusionModelConstructor
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.models.generation.aes.base import FusionModelForAutoEncoding
-from torchfusion.core.models.generation.vaes.base import FusionModelForVariationalAutoEncoding
+from torchfusion.core.models.generation.vaes.base import (
+    FusionModelForVariationalAutoEncoding,
+)
 from torchfusion.core.models.utilities.data_collators import BatchToTensorDataCollator
 from torchfusion.core.training.utilities.constants import TrainingStage
 
@@ -47,10 +49,7 @@ class FusionModelForVariationalImageAutoEncoding(FusionModelForVariationalAutoEn
                 DiffusersModelConstructor,
             ),
         ), (
-            f"Model constructor must be of type {(
-                FusionModelConstructor,
-                DiffusersModelConstructor,
-            )}. "
+            f"Model constructor must be of type {(FusionModelConstructor,DiffusersModelConstructor,)}. "
             f"Got {type(model_constructor)}"
         )
         return model_constructor(checkpoint=checkpoint, strict=strict)
@@ -70,7 +69,9 @@ class FusionModelForVariationalImageAutoEncoding(FusionModelForVariationalAutoEn
         reconstruction, posterior = self._model_forward(input)
 
         # save images
-        generated_samples = self.torch_model.decode(torch.randn_like(posterior.sample())).sample
+        generated_samples = self.torch_model.decode(
+            torch.randn_like(posterior.sample())
+        ).sample
 
         # step
         global_step = (

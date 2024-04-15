@@ -1,7 +1,7 @@
 dataset_name: RvlCdip
 dataset_config_name: tobacco3482_excluded
 dataset_dir: ${oc.env:DATA_ROOT_DIR}/documents/rvlcdip
-dataset_cache_dir: ${args.data_args.dataset_dir}/huggingface/
+dataset_cache_dir: /netscratch/saifullah/cache/huggingface/
 cache_file_name: 1024x1024
 use_auth_token: True
 train_preprocess_augs:

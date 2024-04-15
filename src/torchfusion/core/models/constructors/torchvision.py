@@ -15,7 +15,10 @@ class TorchvisionModelConstructor(ModelConstructor):
             "image_classification",
         ], f"Task {self.model_task} not supported for TorchvisionModelConstructor."
 
-    def _init_model(self, num_labels: int) -> torch.Any:
+    def _init_model(
+        self,
+        **kwargs,
+    ) -> torch.Any:
         os.environ["TORCH_HOME"] = self.cache_dir
         model = torch.hub.load(
             "pytorch/vision:v0.10.0",
@@ -26,23 +29,25 @@ class TorchvisionModelConstructor(ModelConstructor):
             **self.init_args,
         )
 
-        if self.model_name == "alexnet":
-            model.classifier[6] = torch.nn.Linear(
-                model.classifier[6].in_features, num_labels
-            )
-        elif self.model_name == "vgg16":
-            model.classifier[6] = torch.nn.Linear(
-                model.classifier[6].in_features, num_labels
-            )
-        elif self.model_name == "resnet50":
-            model.fc = torch.nn.Linear(model.fc.in_features, num_labels)
-        elif self.model_name == "inception_v3":
-            model.fc = torch.nn.Linear(model.fc.in_features, num_labels)
-        elif self.model_name == "googlenet":
-            model.fc = torch.nn.Linear(model.fc.in_features, num_labels)
-        else:
-            raise ValueError(
-                f"No classification head replacer defined for the model {self.model_name}."
-            )
+        if "num_labels" in kwargs:
+            num_labels = kwargs["num_labels"]
+            if self.model_name == "alexnet":
+                model.classifier[6] = torch.nn.Linear(
+                    model.classifier[6].in_features, num_labels
+                )
+            elif self.model_name == "vgg16":
+                model.classifier[6] = torch.nn.Linear(
+                    model.classifier[6].in_features, num_labels
+                )
+            elif self.model_name == "resnet50":
+                model.fc = torch.nn.Linear(model.fc.in_features, num_labels)
+            elif self.model_name == "inception_v3":
+                model.fc = torch.nn.Linear(model.fc.in_features, num_labels)
+            elif self.model_name == "googlenet":
+                model.fc = torch.nn.Linear(model.fc.in_features, num_labels)
+            else:
+                raise ValueError(
+                    f"No classification head replacer defined for the model {self.model_name}."
+                )
 
         return model

@@ -4,7 +4,8 @@ from pathlib import Path
 import torch
 import torch.nn.functional as F
 from einops import rearrange, repeat
-from ignite.engine import Engine
+from ignite.contrib.handlers.tqdm_logger import ProgressBar
+from ignite.engine import Engine, Events
 from pytorch_fid.inception import InceptionV3
 from torch.utils.data import DataLoader
 
@@ -43,9 +44,13 @@ def load_or_precalc_dataset_stats(
             logger.info(f"Dataset stats cache {ckpt_path} already exists.")
         return
 
+    assert (
+        DataKeys.IMAGE in dataset[0]
+    ), f"Dataset must have image key {DataKeys.IMAGE} to compute dataset stats."
+
     # log shape info
     logger.info(
-        f"Computing dataset stats for images of shape: {dataset[0][DataKeys.IMAGE].shape}",
+        f"Computing dataset stats for images of shape: {dataset[0][DataKeys.IMAGE].shape} with {n_samples} samples.",
     )
 
     # pytorch_fid model
@@ -79,6 +84,11 @@ def load_or_precalc_dataset_stats(
         collate_fn=PassThroughCollator(),
     )
     metric.attach(default_evaluator, "fid")
+    ProgressBar(
+        desc="Evaluating dataset FID stats",
+    ).attach(
+        default_evaluator,
+    )
     default_evaluator.run(dl, epoch_length=num_batches)
     if logger is not None:
         logger.info(f"Dataset stats cached to {ckpt_path} for future use.")

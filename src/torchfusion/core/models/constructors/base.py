@@ -46,12 +46,11 @@ class ModelConstructor:
 
     def __call__(
         self,
-        *args: Any,
         checkpoint: Optional[str] = None,
         strict: bool = False,
         **kwargs: Any,
     ) -> Any:
-        model = self._init_model(*args, **kwargs)
+        model = self._init_model(**kwargs)
         if checkpoint is None:
             checkpoint = self.checkpoint
 

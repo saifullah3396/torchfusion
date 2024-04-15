@@ -10,8 +10,8 @@ _import_structure = {
     "generate_metrics": [
         "GenerateMetrics",
     ],
-    "generate_reconstruction_samples": [
-        "GenerateReconstructionSamples",
+    "image_reconstruction": [
+        "ImageReconstruction",
     ],
     "generate_vae_features": [
         "GenerateVAEFeatures",

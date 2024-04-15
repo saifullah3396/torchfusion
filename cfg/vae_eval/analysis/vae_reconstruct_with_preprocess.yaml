@@ -1,0 +1,86 @@
+# @package _global_
+defaults:
+  - /args/model_args: "???"
+  - /args/data_args: "???"
+
+args:
+  training_args:
+    with_amp_inference: ${with_amp_inference}
+    metric_args:
+      - name: fid
+        kwargs:
+          fid_stats: /home/ataraxia/Datasets/documents/tobacco3482/fid_stats/train-2782-stats.pth
+  data_args:
+    compute_dataset_statistics: False
+    dataset_config_name: ${dataset_config_name}
+    num_proc: 4
+    cache_file_name: ${image_size_x}x${image_size_y}
+    train_preprocess_augs:
+      - name: PreprocessAug
+        kwargs:
+          rescale_size:
+            - ${image_size_x}
+            - ${image_size_y}
+          key: image
+    eval_preprocess_augs:
+      - name: PreprocessAug
+        kwargs:
+          rescale_size:
+            - ${image_size_x}
+            - ${image_size_y}
+          key: image
+    train_realtime_augs:
+      - name: BasicImageAug
+        kwargs:
+          gray_to_rgb: True
+          normalize: True
+          mean:
+            - 0.5
+          std:
+            - 0.5
+          rescale_strategy:
+            name: Rescale
+            kwargs:
+              size:
+                - ${realtime_image_size_y}
+                - ${realtime_image_size_x}
+          key:
+            - image
+    eval_realtime_augs:
+      - name: BasicImageAug
+        kwargs:
+          gray_to_rgb: True
+          normalize: True
+          mean:
+            - 0.5
+          std:
+            - 0.5
+          rescale_strategy:
+            name: Rescale
+            kwargs:
+              size:
+                - ${realtime_image_size_y}
+                - ${realtime_image_size_x}
+          key:
+            - image
+    data_loader_args:
+      per_device_train_batch_size: ${bs}
+      per_device_eval_batch_size: ${bs}
+      max_train_samples: 50
+
+  analyzer_args:
+    analyzer_output_dir: ${oc.env:TORCH_FUSION_OUTPUT_DIR}/analyzer/
+    model_checkpoints: null
+    tasks:
+      vae-eval:
+        task_type: ImageReconstruction
+        task_config:
+          data_split: train
+
+bs: 8
+image_size_x: 1024 # preprocess size
+image_size_y: 1024 # preprocess size
+realtime_image_size_x: 256
+realtime_image_size_y: 256
+dataset_config_name: default
+with_amp_inference: False

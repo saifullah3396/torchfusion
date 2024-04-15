@@ -163,9 +163,9 @@ class FusionModelForVariationalAutoEncoding(FusionModel):
     ):
         if isinstance(input, dict):
             # compute logits
-            posterior = self.torch_model.encode(**input)
+            posterior = self.torch_model.encode(**input).latent_dist
         else:
-            posterior = self.torch_model.encode(input)
+            posterior = self.torch_model.encode(input).latent_dist
         if sample_posterior:
             z = posterior.sample(generator=generator)
         else:

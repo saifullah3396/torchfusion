@@ -3,8 +3,17 @@ from __future__ import annotations
 import math
 from functools import partial
 from pathlib import Path
-from typing import (TYPE_CHECKING, Any, Callable, Mapping, Optional, Sequence,
-                    Tuple, Union, cast)
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    cast,
+)
 
 import torch
 from ignite.contrib.handlers import TensorboardLogger
@@ -17,8 +26,9 @@ from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.training.fusion_opt_manager import FusionOptimizerManager
 from torchfusion.core.training.metrics.factory import MetricsFactory
-from torchfusion.core.training.sch.schedulers.warmup import \
-    create_lr_scheduler_with_warmup
+from torchfusion.core.training.sch.schedulers.warmup import (
+    create_lr_scheduler_with_warmup,
+)
 from torchfusion.core.training.utilities.constants import TrainingStage
 from torchfusion.core.training.utilities.general import empty_cuda_cache
 from torchfusion.core.training.utilities.progress_bar import TqdmToLogger
@@ -28,8 +38,7 @@ if TYPE_CHECKING:
     import torch
 
     from torchfusion.core.models.fusion_model import FusionModel
-    from torchfusion.core.training.fusion_sch_manager import \
-        FusionSchedulersManager
+    from torchfusion.core.training.fusion_sch_manager import FusionSchedulersManager
 
 
 def log_training_metrics(logger, epoch, elapsed, tag, metrics):
@@ -283,8 +292,7 @@ class DefaultTrainingFunctionality:
             from ignite.utils import convert_tensor
             from torch.cuda.amp import autocast
 
-            from torchfusion.core.training.utilities.constants import \
-                TrainingStage
+            from torchfusion.core.training.utilities.constants import TrainingStage
 
             # ready model for evaluation
             model.torch_model.eval()
@@ -386,8 +394,7 @@ class DefaultTrainingFunctionality:
             import torch
             from ignite.utils import convert_tensor
 
-            from torchfusion.core.training.utilities.constants import \
-                TrainingStage
+            from torchfusion.core.training.utilities.constants import TrainingStage
 
             # ready model for evaluation
             model.torch_model.eval()
@@ -414,6 +421,54 @@ class DefaultTrainingFunctionality:
                 )
 
         return Engine(test_step)
+
+    @classmethod
+    def initialize_visualization_engine(
+        cls,
+        args: FusionArguments,
+        model: FusionModel,
+        training_engine: Engine,
+        output_dir: str,
+        device: Optional[Union[str, torch.device]] = torch.device("cpu"),
+        tb_logger: TensorboardLogger = None,
+    ) -> Callable:
+        from ignite.engine import Engine
+
+        # get related arguments
+        non_blocking = args.training_args.non_blocking_tensor_conv
+
+        def visualization_step(
+            engine: Engine, batch: Sequence[torch.Tensor]
+        ) -> Union[Any, Tuple[torch.Tensor]]:
+            """
+            Define the model evaluation update step
+            """
+
+            import torch
+            from ignite.utils import convert_tensor
+            from torch.cuda.amp import autocast
+
+            from torchfusion.core.training.utilities.constants import TrainingStage
+
+            # ready model for evaluation
+            model.torch_model.eval()
+
+            with torch.no_grad():
+                with autocast(enabled=args.training_args.with_amp_inference):
+                    # put batch to device
+                    batch = convert_tensor(
+                        batch, device=device, non_blocking=non_blocking
+                    )
+
+                    # forward pass
+                    return model.visualization_step(
+                        engine=engine,
+                        training_engine=training_engine,
+                        batch=batch,
+                        tb_logger=tb_logger,
+                    )
+
+        return Engine(visualization_step)
 
     @classmethod
     def _get_batches_per_epoch(cls, args, train_dataloader):
@@ -715,10 +770,14 @@ class DefaultTrainingFunctionality:
         )
 
         if metrics[stage] is not None:
+            logger = get_logger()
             for k, metric in metrics[stage].items():
-                metric().attach(
-                    engine, f"{stage}/{k}" if prefix == "" else f"{prefix}/{stage}/{k}"
-                )
+                if metric is not None:
+                    logger.info(f"Attaching metric {k} for stage={stage}")
+                    metric().attach(
+                        engine,
+                        f"{stage}/{k}" if prefix == "" else f"{prefix}/{stage}/{k}",
+                    )
 
     @classmethod
     def configure_lr_schedulers(
@@ -734,8 +793,11 @@ class DefaultTrainingFunctionality:
             return
 
         from ignite.engine import Events
-        from ignite.handlers import (LRScheduler, ParamScheduler,
-                                     ReduceLROnPlateauScheduler)
+        from ignite.handlers import (
+            LRScheduler,
+            ParamScheduler,
+            ReduceLROnPlateauScheduler,
+        )
         from torch.optim.lr_scheduler import ExponentialLR, MultiStepLR, StepLR
 
         for k, inner_sch in training_sch_manager.lr_schedulers.items():
@@ -941,8 +1003,9 @@ class DefaultTrainingFunctionality:
         if args.training_args.resume_from_checkpoint:
             import torch
 
-            from torchfusion.core.training.utilities.general import \
-                find_resume_checkpoint
+            from torchfusion.core.training.utilities.general import (
+                find_resume_checkpoint,
+            )
 
             logger = get_logger()
 
@@ -1044,8 +1107,7 @@ class DefaultTrainingFunctionality:
     ):
         from ignite.engine import Events
 
-        from torchfusion.core.training.utilities.progress_bar import \
-            FusionProgressBar
+        from torchfusion.core.training.utilities.progress_bar import FusionProgressBar
 
         # redirect tqdm output to logger
         tqdm_to_logger = TqdmToLogger(get_logger())
@@ -1193,6 +1255,62 @@ class DefaultTrainingFunctionality:
             )
 
     @classmethod
+    def attach_visualizer(
+        cls,
+        model: FusionModel,
+        args: FusionArguments,
+        training_engine: Engine,
+        visualization_engine: Engine,
+        train_dataloader: DataLoader,
+        val_dataloader: DataLoader,
+    ):
+        from ignite.engine import Events
+
+        if (
+            val_dataloader is None
+        ):  # we need this for tasks that require validation run for generating stuff
+            data = torch.arange(
+                0, args.data_args.data_loader_args.per_device_eval_batch_size
+            )
+            val_dataloader = DataLoader(
+                data,
+                batch_size=args.data_args.data_loader_args.per_device_eval_batch_size,
+            )
+
+        @torch.no_grad()
+        def visualize(engine):
+            # prepare model for validation
+            model.update_ema_for_stage(stage=TrainingStage.visualization)
+
+            visualization_engine.run(
+                val_dataloader, max_epochs=1, epoch_length=1
+            )  # only run for one batch
+
+            # prepare model for training again
+            model.update_ema_for_stage(stage=TrainingStage.train)
+
+        if args.training_args.visualize_every_n_epochs >= 1:
+            cond = Events.EPOCH_COMPLETED(
+                every=args.training_args.visualize_every_n_epochs
+            )
+            cond = cond | Events.COMPLETED
+            if args.training_args.visualize_on_start:
+                cond = cond | Events.STARTED
+            training_engine.add_event_handler(cond, visualize)
+        else:
+            steps_per_epoch = cls._get_steps_per_epoch(args, train_dataloader)
+            cond = Events.ITERATION_COMPLETED(
+                every=int(args.training_args.visualize_every_n_epochs * steps_per_epoch)
+            )
+            cond = cond | Events.COMPLETED
+            if args.training_args.visualize_on_start:
+                cond = cond | Events.STARTED
+            training_engine.add_event_handler(
+                cond,
+                visualize,
+            )
+
+    @classmethod
     def configure_training_engine(
         cls,
         args: FusionArguments,
@@ -1332,8 +1450,7 @@ class DefaultTrainingFunctionality:
         from ignite.engine import Events
         from ignite.handlers import Checkpoint
 
-        from torchfusion.core.training.utilities.general import \
-            find_test_checkpoint
+        from torchfusion.core.training.utilities.general import find_test_checkpoint
 
         # configure model checkpoint_state_dict
         model_checkpoint_config = args.training_args.model_checkpoint_config
@@ -1516,6 +1633,25 @@ class DefaultTrainingFunctionality:
             val_dataloader=val_dataloader,
             do_val=do_val,
             checkpoint_state_dict_extras=checkpoint_state_dict_extras,
+        )
+
+        # visualization_engine is just another evaluation engine
+        visualization_engine = cls.initialize_visualization_engine(
+            args=args,
+            model=model,
+            training_engine=training_engine,
+            output_dir=output_dir,
+            device=device,
+            tb_logger=tb_logger,
+        )
+
+        cls.attach_visualizer(
+            args=args,
+            model=model,
+            training_engine=training_engine,
+            visualization_engine=visualization_engine,
+            train_dataloader=train_dataloader,
+            val_dataloader=val_dataloader,
         )
 
         return training_engine, validation_engine

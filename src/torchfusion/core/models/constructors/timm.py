@@ -15,11 +15,11 @@ class TimmModelConstructor(ModelConstructor):
             "image_classification",
         ], f"Task {self.model_task} not supported for TimmModelConstructor."
 
-    def _init_model(self, num_labels: int) -> torch.Any:
+    def _init_model(self, **kwargs) -> torch.Any:
         return timm.create_model(
             self.model_name,
             pretrained=self.pretrained,
             # cache_dir=self.cache_dir, # does not take cache_dir
-            num_classes=num_labels,
+            **kwargs,
             **self.init_args,
         )

@@ -109,6 +109,7 @@ class FID(_BaseInceptionMetric):
 
         self._ckpt_path = Path(ckpt_path)
         self._eps = 1e-6
+        self._logger = get_logger()
 
         super(FID, self).__init__(
             num_features=num_features,
@@ -196,10 +197,12 @@ class FID(_BaseInceptionMetric):
         "_num_examples", "_train_total", "_test_total", "_train_sigma", "_test_sigma"
     )
     def compute(self) -> float:
-        # assert (
-        #     self._num_examples == self._train_num_examples
-        # ), "The number of examples used in evaluation are not equal to the number of examples in dataset statistics"
-        print(self._num_examples, self._train_num_examples)
+        if self._num_examples != self._train_num_examples:
+            self._logger.warning(
+                f"The number of examples used in evaluation {self._num_examples} are not equal to the number of examples in dataset statistics {self._train_num_examples}."
+                f"Max validation used for FID are set by args.data_args.data_loader_args.max_val_samples. "
+                f"The total samples usied for original fid statistics computation are set by: args.data_args.dataset_statistics_n_samples."
+            )
 
         fid = fid_score(
             mu1=self._train_total / self._num_examples,

@@ -516,22 +516,25 @@ class CompVisAutoEncoder(nn.Module):
         self.image_size = image_size
         self.scaling_factor = scaling_factor
 
+        # build model
+        self._build_model()
+
     def _build_enc_dec(self, encoder: bool = True):
         model_class = Encoder if encoder else Decoder
         return model_class(
-            ch=self.config.model_channels,
-            out_ch=self.config.out_channels,
-            ch_mult=self.config.channel_mults,
-            num_res_blocks=self.config.num_res_blocks,
-            attn_resolutions=self.config.attn_resolutions,
-            dropout=self.config.dropout,
-            in_channels=self.config.in_channels,
-            resamp_with_conv=self.config.resamp_with_conv,
-            resolution=self.config.image_size,
-            z_channels=self.config.z_channels,
-            double_z=self.config.double_z,
-            use_linear_attn=self.config.use_linear_attn,
-            attn_type=self.config.attn_type,
+            ch=self.model_channels,
+            out_ch=self.out_channels,
+            ch_mult=self.channel_mults,
+            num_res_blocks=self.num_res_blocks,
+            attn_resolutions=self.attn_resolutions,
+            dropout=self.dropout,
+            in_channels=self.in_channels,
+            resamp_with_conv=self.resamp_with_conv,
+            resolution=self.image_size,
+            z_channels=self.z_channels,
+            double_z=self.double_z,
+            use_linear_attn=self.use_linear_attn,
+            attn_type=self.attn_type,
         )
 
     def _build_model(self):
@@ -541,12 +544,8 @@ class CompVisAutoEncoder(nn.Module):
         # pass init params to Decoder
         self.decoder = self._build_enc_dec(encoder=False)
 
-        self.quant_conv = nn.Conv2d(
-            2 * self.config.z_channels, 2 * self.config.embed_dim, 1
-        )
-        self.post_quant_conv = nn.Conv2d(
-            self.config.embed_dim, self.config.z_channels, 1
-        )
+        self.quant_conv = nn.Conv2d(2 * self.z_channels, 2 * self.embed_dim, 1)
+        self.post_quant_conv = nn.Conv2d(self.embed_dim, self.z_channels, 1)
 
         self.use_slicing = False
         self.use_tiling = False

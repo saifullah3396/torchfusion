@@ -162,10 +162,10 @@ class TrainingArguments:
     # Metrics arguments
     metric_args: List[Optional[ClassInitializerArgs]] = field(
         default_factory=lambda: [
-            {"name": "accuracy", "kwargs": {}},
-            {"name": "precision", "kwargs": {}},
-            {"name": "recall", "kwargs": {}},
-            {"name": "f1", "kwargs": {}},
+            ClassInitializerArgs(name="accuracy", kwargs={}),
+            ClassInitializerArgs(name="precision", kwargs={}),
+            ClassInitializerArgs(name="recall", kwargs={}),
+            ClassInitializerArgs(name="f1", kwargs={}),
         ]
     )
 

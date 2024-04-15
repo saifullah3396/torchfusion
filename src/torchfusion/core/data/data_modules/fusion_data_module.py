@@ -167,8 +167,10 @@ class FusionDataModule(ABC):
             self._logger.warning(
                 "You wish to compute dataset_statistics with features_path given. "
                 "This is not possible. Skipping dataset_statistics computation. "
-                "To compute dataset_statistics run the same command without features_path."
+                "To compute dataset_statistics with args.data_args.compute_dataset_statistics=True"
+                "run the same command without features_path provided."
             )
+            exit()
 
         msgpack_readers = []
         for file in os.listdir(self._features_path):
@@ -210,6 +212,11 @@ class FusionDataModule(ABC):
         )
 
         if self._compute_dataset_statistics:
+            self._logger.info(
+                "You have set args.data_args.compute_dataset_statistics=True. "
+                "This will compute the FID stats for this dataset and exit. "
+                "For normal behavior set compute_dataset_statistics=False"
+            )
             # for computing statistics, we always use evaluation transforms instead of train ones
             dataset._transforms = self._realtime_transforms["test"]
             load_or_precalc_dataset_stats(
@@ -221,6 +228,8 @@ class FusionDataModule(ABC):
                 stats_filename=self._stats_filename,
                 logger=self._logger,
             )
+            self._logger.info("Dataset statistics computed successfully. Exiting...")
+            exit()
 
         return dataset
 
@@ -258,6 +267,11 @@ class FusionDataModule(ABC):
         dataset = msgpack_dataset
 
         if self._compute_dataset_statistics:
+            self._logger.info(
+                "You have set args.data_args.compute_dataset_statistics=True. "
+                "This will compute the FID stats for this dataset and exit. "
+                "For normal behavior set compute_dataset_statistics=False"
+            )
             # for computing statistics, we always use evaluation transforms instead of train ones
             dataset._transforms = self._realtime_transforms["test"]
             load_or_precalc_dataset_stats(
@@ -269,6 +283,8 @@ class FusionDataModule(ABC):
                 stats_filename=self._stats_filename,
                 logger=self._logger,
             )
+            self._logger.info("Dataset statistics computed successfully. Exiting...")
+            exit()
 
         return dataset
 

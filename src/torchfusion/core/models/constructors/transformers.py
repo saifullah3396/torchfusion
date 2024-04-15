@@ -40,7 +40,7 @@ class TransformersModelConstructor(ModelConstructor):
                 self.encoder_layer_name is not None
             ), "Please provide the encoder encoder_layer_name to unfreeze last N layers of."
 
-    def _init_model(self, num_labels: int) -> torch.Any:
+    def _init_model(self, **kwargs) -> torch.Any:
         if self.model_task == ModelTasks.sequence_classification:
             initializer_class = AutoModelForSequenceClassification
         elif self.model_task == ModelTasks.token_classification:
@@ -51,8 +51,11 @@ class TransformersModelConstructor(ModelConstructor):
             raise ValueError(f"Task {self.model_task} not supported.")
 
         if initializer_class == AutoModelForTokenClassification:
+            assert (
+                "num_labels" in kwargs
+            ), "num_labels must be provided for token classification."
             kwargs = dict(
-                num_labels=num_labels,
+                num_labels=kwargs["num_labels"],
                 return_dict=True,
             )
 
@@ -82,8 +85,13 @@ class TransformersModelConstructor(ModelConstructor):
             )
 
         if initializer_class == AutoModelForImageClassification:
+            assert (
+                "num_labels" in kwargs
+            ), "num_labels must be provided for token classification."
             # reset the classifier head to match the labels
-            model.classifier = torch.nn.Linear(model.classifier.in_features, num_labels)
+            model.classifier = torch.nn.Linear(
+                model.classifier.in_features, kwargs["num_labels"]
+            )
 
         if self.n_frozen_encoder_layers > 0:
             encoder_layer = find_layer_in_model(model, self.encoder_layer_name)

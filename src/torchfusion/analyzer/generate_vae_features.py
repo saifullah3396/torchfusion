@@ -2,15 +2,17 @@
 Defines the feature attribution generation task.
 """
 
-from dataclasses import dataclass
 import io
+import pickle
+from dataclasses import dataclass
 from typing import Optional, Type, Union
-import numpy as np
+
 import ignite.distributed as idist
+import numpy as np
 import torch
 from datadings.writer import FileWriter
 from ignite.engine import CallableEventWithFilter, Engine, Events, EventsList
-import pickle
+
 from torchfusion.core.analyzer.tasks.base import AnalyzerTask
 from torchfusion.core.analyzer.tasks.base_config import AnalyzerTaskConfig
 from torchfusion.core.constants import DataKeys
@@ -80,7 +82,9 @@ class VAEFeaturesEvaluator:
         self,
         engine: Engine,
         name: str = "attr_map",
-        event: Union[str, Events, CallableEventWithFilter, EventsList] = Events.ITERATION_COMPLETED,
+        event: Union[
+            str, Events, CallableEventWithFilter, EventsList
+        ] = Events.ITERATION_COMPLETED,
     ) -> None:
         if not hasattr(engine.state, name):
             setattr(engine.state, name, None)
@@ -92,59 +96,29 @@ class GenerateVAEFeatures(AnalyzerTask):
     class Config(AnalyzerTaskConfig):
         pass
 
-    def setup(self, task_name: str):
-        super().setup(task_name=task_name)
-
-    def _setup_model(
-        self,
-        summarize: bool = False,
-        stage: TrainingStage = TrainingStage.train,
-        dataset_features: Optional[dict] = None,
-        checkpoint: Optional[str] = None,
-        strict: bool = False,
-        wrapper_class: Type[FusionModel] = FusionModel,
-    ) -> FusionModel:
-        """
-        Initializes the model for training.
-        """
-        from torchfusion.core.models.factory import ModelFactory
-
-        self._logger.info("Setting up model...")
-
-        # setup model
-        model = ModelFactory.create_fusion_model(
-            self._args,
-            checkpoint=checkpoint,
-            tb_logger=self._tb_logger,
-            dataset_features=dataset_features,
-            strict=strict,
-            wrapper_class=wrapper_class,
-        )
-        model.setup_model(stage=stage)
-
-        # generate model summary
-        if summarize:
-            model.summarize_model()
-
-        return model
-
     def run(self):
         logger = get_logger()
 
         # get data collator required for the model
         stage = TrainingStage.get(self._config.data_split)
         collate_fns = CollateFnDict(
-            train=BatchToTensorDataCollator(), validation=BatchToTensorDataCollator(), test=BatchToTensorDataCollator()
+            train=BatchToTensorDataCollator(),
+            validation=BatchToTensorDataCollator(),
+            test=BatchToTensorDataCollator(),
         )
         self._data_loader.collate_fn = collate_fns[stage]
 
         if self._args.analyzer_args.model_checkpoints is None:
-            self._args.analyzer_args.model_checkpoints = [(self._args.model_args.name, None)]
+            self._args.analyzer_args.model_checkpoints = [
+                (self._args.model_args.name, None)
+            ]
 
         for model_name, checkpoint in self._args.analyzer_args.model_checkpoints:
             # set output file
             if idist.get_world_size() > 1:
-                output_file = self._output_dir / f"{stage}_features_{idist.get_rank()}.msgpack"
+                output_file = (
+                    self._output_dir / f"{stage}_features_{idist.get_rank()}.msgpack"
+                )
             else:
                 output_file = self._output_dir / f"{stage}_features.msgpack"
 
@@ -163,11 +137,19 @@ class GenerateVAEFeatures(AnalyzerTask):
             # model._nn_model = model._nn_model.module.module
             logger.info(f"Writing output to file: {output_file}")
             with FileWriter(output_file, overwrite=True) as writer:
-                prediction_engine = self._setup_prediction_engine(model, convert_to_tensor=["image"])
+                prediction_engine = self._setup_prediction_engine(
+                    model, convert_to_tensor=["image"]
+                )
                 prediction_engine.register_events(EVENT_KEY)
 
-                evaluator = VAEFeaturesEvaluator(self._args.data_args.dataset_dir, writer)
-                evaluator.attach(prediction_engine, name=EVALUATOR_KEY, event=Events.ITERATION_COMPLETED)
+                evaluator = VAEFeaturesEvaluator(
+                    self._args.data_args.dataset_dir, writer
+                )
+                evaluator.attach(
+                    prediction_engine,
+                    name=EVALUATOR_KEY,
+                    event=Events.ITERATION_COMPLETED,
+                )
                 prediction_engine.run(self._data_loader)
 
             self._tb_logger.close()

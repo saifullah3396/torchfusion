@@ -7,8 +7,10 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 import ignite.distributed as idist
+from torch.utils.data import Subset
 
 from torchfusion.core.analyzer.tasks.base_config import AnalyzerTaskConfig
 from torchfusion.core.args.args import FusionArguments
@@ -17,9 +19,12 @@ from torchfusion.core.data.data_modules.fusion_data_module import FusionDataModu
 from torchfusion.core.data.factory.data_augmentation import DataAugmentationFactory
 from torchfusion.core.data.factory.train_val_sampler import TrainValSamplerFactory
 from torchfusion.core.data.utilities.containers import CollateFnDict, TransformsDict
+from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.models.utilities.data_collators import PassThroughCollator
 from torchfusion.core.training.functionality.default import DefaultTrainingFunctionality
-from torchfusion.core.training.functionality.diffusion import DiffusionTrainingFunctionality
+from torchfusion.core.training.functionality.diffusion import (
+    DiffusionTrainingFunctionality,
+)
 from torchfusion.core.training.functionality.gan import GANTrainingFunctionality
 from torchfusion.core.training.utilities.constants import TrainingStage
 from torchfusion.core.training.utilities.general import (
@@ -96,11 +101,9 @@ class AnalyzerTask(ABC):
         )
 
     def _setup_trainer_functionality(self):
-        if self._args.model_args.config.required_training_functionality == "gan":
+        if self._args.model_args.required_training_functionality == "gan":
             return GANTrainingFunctionality
-        elif (
-            self._args.model_args.config.required_training_functionality == "diffusion"
-        ):
+        elif self._args.model_args.required_training_functionality == "diffusion":
             return DiffusionTrainingFunctionality
         else:
             return DefaultTrainingFunctionality
@@ -267,6 +270,54 @@ class AnalyzerTask(ABC):
 
         return test_engine
 
+    def _setup_model(
+        self,
+        summarize: bool = False,
+        setup_for_train: bool = True,
+        dataset_features: Optional[dict] = None,
+        checkpoint: Optional[str] = None,
+        strict: bool = False,
+    ) -> FusionModel:
+        """
+        Initializes the model for training.
+        """
+        from torchfusion.core.models.factory import ModelFactory
+
+        self._logger.info("Setting up model...")
+
+        # setup model
+        model = ModelFactory.create_fusion_model(
+            self._args,
+            checkpoint=checkpoint,
+            tb_logger=self._tb_logger,
+            dataset_features=dataset_features,
+            strict=strict,
+        )
+
+        model.setup_model(setup_for_train=setup_for_train)
+
+        # generate model summary
+        if summarize:
+            model.summarize_model()
+
+        return model
+
+    def _get_dataset_info(self):
+        if self._datamodule.train_dataset is not None:
+            return (
+                self._datamodule.train_dataset.dataset.info
+                if isinstance(self._datamodule.train_dataset, Subset)
+                else self._datamodule.train_dataset.info
+            )
+        elif self._datamodule.test_dataset is not None:
+            return (
+                self._datamodule.test_dataset.dataset.info
+                if isinstance(self._datamodule.test_dataset, Subset)
+                else self._datamodule.test_dataset.info
+            )
+        else:
+            raise ValueError("No dataset found in datamodule.")
+
     def setup(self, task_name: str):
         # setup training
         self._setup_analysis(task_name)
@@ -275,12 +326,15 @@ class AnalyzerTask(ABC):
         self._trainer_functionality = self._setup_trainer_functionality()
 
         # setup datamodule
-        stage = TrainingStage.get(self._config.data_split)
         self._datamodule = self._setup_datamodule(stage=None)
+
+    def setup_dataloader(self, collate_fns: CollateFnDict):
+        self._datamodule._collate_fns = collate_fns
+        stage = TrainingStage.get(self._config.data_split)
 
         # setup dataloaders
         if stage == TrainingStage.train:
-            self._data_loader = self._datamodule.train_dataloader(
+            return self._datamodule.train_dataloader(
                 self._args.data_args.data_loader_args.per_device_eval_batch_size,
                 dataloader_num_workers=self._args.data_args.data_loader_args.dataloader_num_workers,
                 pin_memory=self._args.data_args.data_loader_args.pin_memory,
@@ -288,13 +342,13 @@ class AnalyzerTask(ABC):
                 dataloader_drop_last=False,
             )
         elif stage == TrainingStage.validation:
-            self._data_loader = self._datamodule.val_dataloader(
+            return self._datamodule.val_dataloader(
                 self._args.data_args.data_loader_args.per_device_eval_batch_size,
                 dataloader_num_workers=self._args.data_args.data_loader_args.dataloader_num_workers,
                 pin_memory=self._args.data_args.data_loader_args.pin_memory,
             )
         else:
-            self._data_loader = self._datamodule.test_dataloader(
+            return self._datamodule.test_dataloader(
                 self._args.data_args.data_loader_args.per_device_eval_batch_size,
                 dataloader_num_workers=self._args.data_args.data_loader_args.dataloader_num_workers,
                 pin_memory=self._args.data_args.data_loader_args.pin_memory,
