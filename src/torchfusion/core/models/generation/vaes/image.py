@@ -1,6 +1,5 @@
 import math
-from abc import abstractmethod
-from dataclasses import dataclass, is_dataclass
+from dataclasses import dataclass
 from typing import Optional
 
 import ignite.distributed as idist
@@ -12,12 +11,9 @@ from torchfusion.core.data.utilities.containers import CollateFnDict
 from torchfusion.core.models.constructors.diffusers import DiffusersModelConstructor
 from torchfusion.core.models.constructors.factory import ModelConstructorFactory
 from torchfusion.core.models.constructors.fusion import FusionModelConstructor
-from torchfusion.core.models.fusion_model import FusionModel
-from torchfusion.core.models.generation.aes.base import FusionModelForAutoEncoding
 from torchfusion.core.models.generation.vaes.base import (
     FusionModelForVariationalAutoEncoding,
 )
-from torchfusion.core.models.utilities.data_collators import BatchToTensorDataCollator
 from torchfusion.core.training.utilities.constants import TrainingStage
 
 
@@ -29,7 +25,11 @@ class FusionModelForVariationalImageAutoEncoding(FusionModelForVariationalAutoEn
         kl_weight: float = 0.000001
 
     def _prepare_input(self, engine, batch, tb_logger, **kwargs):
-        return batch[DataKeys.IMAGE]
+        image = batch[DataKeys.IMAGE]
+        assert (
+            image.min() >= -1 and image.max() <= 1
+        ), "Image must be normalized between -1 and 1 for Autoencoder"
+        return image
 
     def _build_autoencoder(
         self,
@@ -53,6 +53,37 @@ class FusionModelForVariationalImageAutoEncoding(FusionModelForVariationalAutoEn
             f"Got {type(model_constructor)}"
         )
         return model_constructor(checkpoint=checkpoint, strict=strict)
+
+    def _training_step(self, engine, batch, tb_logger, **kwargs) -> None:
+        outputs = super()._training_step(engine, batch, tb_logger, **kwargs)
+        if self.model_args.return_dict:
+            return {**outputs, DataKeys.IMAGE: batch[DataKeys.IMAGE]}
+        else:
+            return (*outputs, batch[DataKeys.IMAGE])
+
+    def _evaluation_step(
+        self,
+        engine,
+        training_engine,
+        batch,
+        tb_logger,
+        stage: TrainingStage = TrainingStage.test,
+        **kwargs,
+    ) -> None:
+        outputs = super()._evaluation_step(
+            engine, training_engine, batch, tb_logger, stage=stage, **kwargs
+        )
+        if self.model_args.return_dict:
+            return {**outputs, DataKeys.IMAGE: batch[DataKeys.IMAGE]}
+        else:
+            return (*outputs, batch[DataKeys.IMAGE])
+
+    def _predict_step(self, engine, batch, tb_logger, **kwargs) -> None:
+        outputs = super()._predict_step(engine, batch, tb_logger, **kwargs)
+        if self.model_args.return_dict:
+            return {**outputs, DataKeys.IMAGE: batch[DataKeys.IMAGE]}
+        else:
+            return (*outputs, batch[DataKeys.IMAGE])
 
     def _visualization_step(
         self,
