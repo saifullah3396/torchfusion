@@ -88,6 +88,7 @@ def setup_checkpoint(
     checkpoint: Optional[str] = None,
     checkpoint_state_dict_key: str = DEFAULT_STATE_DICT_KEY,
     strict: bool = True,
+    filtered_keys: Optional[List[str]] = None,
 ):
     logger = get_logger()
 
@@ -107,6 +108,7 @@ def setup_checkpoint(
         checkpoint_path=checkpoint,
         checkpoint_state_dict_key=checkpoint_state_dict_key,
         strict=strict,
+        filtered_keys=filtered_keys,
     )
 
 
@@ -122,6 +124,7 @@ def load_from_checkpoint(
     checkpoint_path: Union[str, Path],
     checkpoint_state_dict_key: str,
     strict: bool = True,
+    filtered_keys: Optional[List[str]] = None,
 ):
 
     # create logger
@@ -160,9 +163,13 @@ def load_from_checkpoint(
             cleaned_checkpoint = checkpoint[DEFAULT_STATE_DICT_KEY]
 
     # remove some keys that might have been prepended due to training in ddp
-    cleaned_checkpoint = filter_keys(cleaned_checkpoint, keys=["_wrapped_model."])
-    cleaned_checkpoint = filter_keys(cleaned_checkpoint, keys=["_module."])
-    cleaned_checkpoint = filter_keys(cleaned_checkpoint, keys=["module."])
+    filtered_keys += ["_wrapped_model.", "_module", "module"]
+    logger.info(f"Filtering Following keys from the checkppoint: {filtered_keys}")
+    for key in filtered_keys:
+        cleaned_checkpoint = filter_keys(cleaned_checkpoint, keys=[key])
+
+    # custom filtered keys
+    cleaned_checkpoint = filter_keys(cleaned_checkpoint, keys=filtered_keys)
 
     # now loda the checkpoint
     keys = model.load_state_dict(cleaned_checkpoint, strict=strict)

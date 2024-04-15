@@ -1,11 +1,8 @@
-import math
 from abc import abstractmethod
-from dataclasses import dataclass, is_dataclass
+from dataclasses import dataclass
 from typing import Optional
 
-import ignite.distributed as idist
 import torch
-import torchvision
 
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.utilities.containers import CollateFnDict
@@ -30,7 +27,11 @@ class FusionModelForVariationalAutoEncoding(FusionModel):
     ):
         pass
 
-    def _build_model(self, checkpoint: Optional[str] = None, strict: bool = False):
+    def _build_model(
+        self,
+        checkpoint: Optional[str] = None,
+        strict: bool = False,
+    ):
         model = self._build_autoencoder(
             checkpoint=checkpoint,
             strict=strict,

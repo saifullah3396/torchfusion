@@ -43,7 +43,11 @@ class FusionModelForKLAEGAN(FusionModel):
             "disc": list(self.loss.discriminator.parameters()),
         }
 
-    def _build_model(self, checkpoint: Optional[str] = None, strict: bool = False):
+    def _build_model(
+        self,
+        checkpoint: Optional[str] = None,
+        strict: bool = False,
+    ):
         model = self._build_autoencoder(
             checkpoint=checkpoint,
             strict=strict,

@@ -1,25 +1,16 @@
-from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Optional
 
 import torch
 
 from torchfusion.core.constants import DataKeys
-from torchfusion.core.data.args.data_args import DataArguments
 from torchfusion.core.data.text_utils.data_collators import SequenceDataCollator
 from torchfusion.core.data.utilities.containers import CollateFnDict
-from torchfusion.core.models.args.model_args import ModelArguments
 from torchfusion.core.models.classification.base import FusionModelForClassification
 from torchfusion.core.models.constructors.factory import ModelConstructorFactory
 from torchfusion.core.models.constructors.transformers import (
     TransformersModelConstructor,
 )
-from torchfusion.core.models.utilities.knowledge_distillation import (
-    EnsembleKnowledgeTransferLoss,
-    GaussianLoss,
-    TemperatureScaledKLDivLoss,
-)
-from torchfusion.core.training.args.training import TrainingArguments
 from torchfusion.core.training.utilities.constants import TrainingStage
 
 
@@ -48,7 +39,9 @@ class FusionModelForTokenClassification(FusionModelForClassification):
         return batch[self._LABEL_KEY]
 
     def _build_classification_model(
-        self, checkpoint: Optional[str] = None, strict: bool = False
+        self,
+        checkpoint: Optional[str] = None,
+        strict: bool = False,
     ):
         model_constructor = ModelConstructorFactory.create(
             name=self.config.model_constructor,
@@ -63,8 +56,12 @@ class FusionModelForTokenClassification(FusionModelForClassification):
         )
         return model_constructor(self.num_labels, checkpoint=checkpoint, strict=strict)
 
-    def _build_model(self, checkpoint: Optional[str] = None, strict: bool = False):
-        return self._build_classification_model()
+    def _build_model(
+        self,
+        checkpoint: Optional[str] = None,
+        strict: bool = False,
+    ):
+        return self._build_classification_model(checkpoint=checkpoint, strict=strict)
 
     def _training_step(self, engine, batch, tb_logger, **kwargs) -> None:
         assert self._LABEL_KEY in batch, "Label must be passed for training"

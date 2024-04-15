@@ -1,7 +1,6 @@
 import os
 from dataclasses import dataclass, field
-from tabnanny import check
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from pyparsing import abstractmethod
 
@@ -23,6 +22,10 @@ class ModelConstructor:
     checkpoint_state_dict_key: str = field(
         default="state_dict",
         metadata={"help": "The state dict key for checkpoint"},
+    )
+    checkpoint_filtered_keys: List[str] = field(
+        default_factory=lambda: [],
+        metadata={"help": "The keys filtered from the checkpoint"},
     )
 
     # assigned from model_args
@@ -56,7 +59,11 @@ class ModelConstructor:
 
         if checkpoint is not None:
             setup_checkpoint(
-                model, checkpoint, self.checkpoint_state_dict_key, strict=strict
+                model,
+                checkpoint,
+                self.checkpoint_state_dict_key,
+                strict=strict,
+                filtered_keys=self.checkpoint_filtered_keys,
             )
 
         return model

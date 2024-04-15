@@ -57,7 +57,11 @@ class FusionModelForClassification(FusionModel):
     ):
         pass
 
-    def _build_model(self, checkpoint: Optional[str] = None, strict: bool = False):
+    def _build_model(
+        self,
+        checkpoint: Optional[str] = None,
+        strict: bool = False,
+    ):
         model = self._build_classification_model(
             checkpoint=checkpoint,
             strict=strict,
