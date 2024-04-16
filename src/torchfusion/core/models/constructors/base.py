@@ -27,10 +27,9 @@ class ModelConstructor:
         default_factory=lambda: [],
         metadata={"help": "The keys filtered from the checkpoint"},
     )
-
-    # assigned from model_args
-    model_task: str = field(
-        default="image_classification",
+    # task of internal model can be different. This is task of torch model not of outer task model
+    model_task: Optional[str] = field(
+        default=None,
         metadata={"help": "Training task for which the model is loaded."},
     )
     cache_dir: str = field(

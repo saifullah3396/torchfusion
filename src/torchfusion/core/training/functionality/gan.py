@@ -46,7 +46,7 @@ class GANTrainingFunctionality(DefaultTrainingFunctionality):
         # make sure that optimizers are set up for generator and discriminator
         assert "gen" in opt_manager.optimizers.keys()
         assert "disc" in opt_manager.optimizers.keys()
-        model_params = model.torch_model.get_param_groups()
+        model_params = model.get_param_groups()
         assert "gen" in model_params.keys()
         assert "disc" in model_params.keys()
 
@@ -80,7 +80,7 @@ class GANTrainingFunctionality(DefaultTrainingFunctionality):
                 opt.zero_grad()
 
             # get auto encoder output with loss
-            outputs = model.torch_model.training_step(
+            outputs = model.training_step(
                 engine=engine, batch=batch, tb_logger=tb_logger, gan_stage=gan_stage
             )
 
@@ -101,7 +101,7 @@ class GANTrainingFunctionality(DefaultTrainingFunctionality):
                 # perform gradient clipping if needed
                 if args.training_args.enable_grad_clipping:
                     torch.nn.utils.clip_grad_norm_(
-                        model.torch_model.get_param_groups()[key],
+                        model.get_param_groups()[key],
                         args.training_args.max_grad_norm,
                     )
 
@@ -147,7 +147,7 @@ class GANTrainingFunctionality(DefaultTrainingFunctionality):
                         scaler.unscale_(opt)
 
                         torch.nn.utils.clip_grad_norm_(
-                            model.torch_model.get_param_groups()[key],
+                            model.get_param_groups()[key],
                             args.training_args.max_grad_norm,
                         )
 
@@ -161,7 +161,7 @@ class GANTrainingFunctionality(DefaultTrainingFunctionality):
                     if args.training_args.enable_grad_clipping:
                         # Since the gradients of optimizer's assigned params are unscaled, clips as usual:
                         torch.nn.utils.clip_grad_norm_(
-                            model.torch_model.parameters(),
+                            model.parameters(),
                             args.training_args.max_grad_norm,
                         )
 
