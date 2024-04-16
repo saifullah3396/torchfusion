@@ -6,15 +6,19 @@ from typing import Optional
 import ignite.distributed as idist
 import torch
 import torchvision
+from torch import nn
 
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.utilities.containers import CollateFnDict
+from torchfusion.core.models.constructors.diffusers import DiffusersModelConstructor
+from torchfusion.core.models.constructors.factory import ModelConstructorFactory
+from torchfusion.core.models.constructors.fusion import FusionModelConstructor
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.models.generation.gans.lpips import LPIPSWithDiscriminator
 from torchfusion.core.training.utilities.constants import GANStage, TrainingStage
 
 
-class FusionModelForKLAEGAN(FusionModel):
+class FusionModelForVAEGAN(FusionModel):
     @dataclass
     class Config(FusionModel.Config):
         loss: str = "l2"
@@ -23,7 +27,13 @@ class FusionModelForKLAEGAN(FusionModel):
         disc_weight: float = 0.5
         perceptual_weight: float = 1.0
 
-    @abstractmethod
+    def _prepare_input(self, engine, batch, tb_logger, **kwargs):
+        image = batch[DataKeys.IMAGE]
+        assert (
+            image.min() >= -1 and image.max() <= 1
+        ), "Image must be normalized between -1 and 1 for Autoencoder"
+        return image
+
     def _build_autoencoder(
         self,
         checkpoint: Optional[str] = None,
@@ -31,16 +41,30 @@ class FusionModelForKLAEGAN(FusionModel):
         model_constructor: Optional[dict] = None,
         model_constructor_args: Optional[dict] = None,
     ):
-        pass
+        model_constructor = ModelConstructorFactory.create(
+            name=model_constructor,
+            kwargs=model_constructor_args,
+        )
+        assert isinstance(
+            model_constructor,
+            (
+                FusionModelConstructor,
+                DiffusersModelConstructor,
+            ),
+        ), (
+            f"Model constructor must be of type {(FusionModelConstructor,DiffusersModelConstructor,)}. "
+            f"Got {type(model_constructor)}"
+        )
+        return model_constructor(checkpoint=checkpoint, strict=strict)
 
     @abstractmethod
     def get_last_layer(self):
-        return self.torch_model.decoder.conv_out.weight
+        return self.torch_model.vae.decoder.conv_out.weight
 
     def get_param_groups(self):
         return {
-            "gen": list(self.torch_model.parameters()),
-            "disc": list(self.loss.discriminator.parameters()),
+            "gen": list(self.torch_model.vae.parameters()),
+            "disc": list(self.torch_model.loss.discriminator.parameters()),
         }
 
     def _build_model(
@@ -48,7 +72,7 @@ class FusionModelForKLAEGAN(FusionModel):
         checkpoint: Optional[str] = None,
         strict: bool = False,
     ):
-        model = self._build_autoencoder(
+        vae = self._build_autoencoder(
             checkpoint=checkpoint,
             strict=strict,
             model_constructor=self.config.model_constructor,
@@ -56,20 +80,29 @@ class FusionModelForKLAEGAN(FusionModel):
         )
 
         # make sure the underlying model got an encode and decode method
-        assert hasattr(model, "encode")
-        assert hasattr(model, "decode")
-        assert hasattr(model, "encoder")
-        assert hasattr(model, "decoder")
+        assert hasattr(vae, "encode")
+        assert hasattr(vae, "decode")
+        assert hasattr(vae, "encoder")
+        assert hasattr(vae, "decoder")
 
-        self.loss = LPIPSWithDiscriminator(
+        loss = LPIPSWithDiscriminator(
             disc_start=self.config.disc_start,
             kl_weight=self.config.kl_weight,
             disc_weight=self.config.disc_weight,
-            disc_in_channels=self.vae.decoder.conv_out.out_channels,
+            disc_in_channels=vae.decoder.conv_out.out_channels,
         )
 
+        class VAEGAN(nn.Module):
+            def __init__(self, vae, loss):
+                super().__init__()
+                self.vae = vae
+                self.loss = loss
+
+            def forward(self, input):
+                pass
+
         # this return model is torch_model
-        return model
+        return VAEGAN(vae=vae, loss=loss)
 
     def _compute_loss(
         self,
@@ -81,7 +114,7 @@ class FusionModelForKLAEGAN(FusionModel):
     ):
         # train teh generator or discriminator depending upon the stage
         if gan_stage == GANStage.train_gen:
-            loss, logged_outputs = self.loss(
+            loss, logged_outputs = self.torch_model.loss(
                 inputs=input,
                 reconstructions=reconstruction,
                 posteriors=posterior,
@@ -91,7 +124,7 @@ class FusionModelForKLAEGAN(FusionModel):
             )
 
         elif gan_stage == GANStage.train_disc:
-            loss, logged_outputs = self.loss(
+            loss, logged_outputs = self.torch_model.loss(
                 inputs=input,
                 reconstructions=reconstruction,
                 posteriors=posterior,
@@ -121,14 +154,20 @@ class FusionModelForKLAEGAN(FusionModel):
         )
 
         # return outputs
-        if self.config.return_dict:
+        if self.model_args.return_dict:
             return {
                 DataKeys.LOSS: loss,
-                DataKeys.RECONS: reconstruction,
                 **logged_outputs,
+                DataKeys.RECONS: reconstruction,
+                DataKeys.IMAGE: input,
             }
         else:
-            return (loss, reconstruction, *list(logged_outputs.values()))
+            return (
+                loss,
+                *list(logged_outputs.values()),
+                reconstruction,
+                input,
+            )
 
     def _evaluation_step(
         self,
@@ -169,13 +208,20 @@ class FusionModelForKLAEGAN(FusionModel):
         output = dict(**log_dict_gen, **log_dict_disc)
 
         # return outputs
-        if self.config.return_dict:
+        if self.model_args.return_dict:
             return {
-                DataKeys.RECONS: reconstruction,
                 **output,
+                DataKeys.RECONS: reconstruction,
+                DataKeys.POSTERIOR: posterior,
+                DataKeys.IMAGE: input,
             }
         else:
-            return (reconstruction, output["ae_loss"])
+            return (
+                output["ae_loss"],
+                reconstruction,
+                posterior,
+                input,
+            )
 
     def _predict_step(self, engine, batch, tb_logger, **kwargs) -> None:
         # get data
@@ -184,21 +230,18 @@ class FusionModelForKLAEGAN(FusionModel):
         # compute logits
         reconstruction, posterior = self._model_forward(input)
 
-        # # save images
-        generated_samples = self.vae.decode(posterior.sample())
-
         # return outputs
         if self.model_args.return_dict:
             return {
                 DataKeys.RECONS: reconstruction,
-                DataKeys.GEN_SAMPLES: generated_samples,
                 DataKeys.POSTERIOR: posterior,
+                DataKeys.IMAGE: input,
             }
         else:
             return (
                 reconstruction,
-                generated_samples,
                 posterior,
+                input,
             )
 
     def _visualization_step(
@@ -269,23 +312,37 @@ class FusionModelForKLAEGAN(FusionModel):
     ):
         if isinstance(input, dict):
             # compute logits
-            posterior = self.torch_model.encode(**input)
+            posterior = self.torch_model.vae.encode(**input).latent_dist
         else:
-            posterior = self.torch_model.encode(input)
+            posterior = self.torch_model.vae.encode(input).latent_dist
         if sample_posterior:
             z = posterior.sample(generator=generator)
         else:
             z = posterior.mode()
-        reconstruction = self.torch_model.decode(z).sample
+        reconstruction = self.torch_model.vae.decode(z).sample
         return reconstruction, posterior
 
-    @abstractmethod
-    def _prepare_input(self, engine, batch, tb_logger, **kwargs):
-        return batch[DataKeys.IMAGE]
-
-    @abstractmethod
     def get_data_collators(
         self,
         data_key_type_map: Optional[dict] = None,
     ) -> CollateFnDict:
-        pass
+        import torch
+
+        from torchfusion.core.data.utilities.containers import CollateFnDict
+        from torchfusion.core.models.utilities.data_collators import (
+            BatchToTensorDataCollator,
+        )
+
+        if data_key_type_map is None:
+            data_key_type_map = {
+                DataKeys.IMAGE: torch.float,
+            }
+        else:
+            data_key_type_map[DataKeys.IMAGE] = torch.float
+
+        collate_fn = BatchToTensorDataCollator(
+            data_key_type_map=data_key_type_map,
+        )
+
+        # initialize the data collators for bert grid based word classification
+        return CollateFnDict(train=collate_fn, validation=collate_fn, test=collate_fn)

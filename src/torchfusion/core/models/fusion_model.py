@@ -265,12 +265,18 @@ class FusionModel:
 
         return module
 
+    def nn_modules(self):
+        return {k: v for k, v in self.__dict__.items() if isinstance(v, nn.Module)}
+
     def summarize_model(self):
         from torchinfo import summary
 
         logger = get_logger()
 
-        logger.info(summary(self.torch_model, verbose=0, depth=4))
+        # get all nn modules in self
+        for k, v in self.nn_modules().items():
+            logger.info(f"Model component [{k}]:")
+            logger.info(summary(v, verbose=0, depth=2))
 
     def get_checkpoint_state_dict(self) -> None:
         """
