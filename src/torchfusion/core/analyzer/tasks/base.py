@@ -20,6 +20,7 @@ from torchfusion.core.data.factory.data_augmentation import DataAugmentationFact
 from torchfusion.core.data.factory.train_val_sampler import TrainValSamplerFactory
 from torchfusion.core.data.utilities.containers import CollateFnDict, TransformsDict
 from torchfusion.core.models.fusion_model import FusionModel
+from torchfusion.core.models.tasks import ModelTasks
 from torchfusion.core.models.utilities.data_collators import PassThroughCollator
 from torchfusion.core.training.functionality.default import DefaultTrainingFunctionality
 from torchfusion.core.training.functionality.diffusion import (
@@ -101,9 +102,9 @@ class AnalyzerTask(ABC):
         )
 
     def _setup_trainer_functionality(self):
-        if self._args.model_args.required_training_functionality == "gan":
+        if self._args.model_args.model_task == ModelTasks.gan:
             return GANTrainingFunctionality
-        elif self._args.model_args.required_training_functionality == "diffusion":
+        elif self._args.model_args.model_task == ModelTasks.diffusion:
             return DiffusionTrainingFunctionality
         else:
             return DefaultTrainingFunctionality
@@ -304,19 +305,13 @@ class AnalyzerTask(ABC):
 
     def _get_dataset_info(self):
         if self._datamodule.train_dataset is not None:
-            return (
-                self._datamodule.train_dataset.dataset.info
-                if isinstance(self._datamodule.train_dataset, Subset)
-                else self._datamodule.train_dataset.info
-            )
+            dataset = self._datamodule.train_dataset._dataset
         elif self._datamodule.test_dataset is not None:
-            return (
-                self._datamodule.test_dataset.dataset.info
-                if isinstance(self._datamodule.test_dataset, Subset)
-                else self._datamodule.test_dataset.info
-            )
+            dataset = self._datamodule.test_dataset._dataset
         else:
             raise ValueError("No dataset found in datamodule.")
+
+        return dataset.dataset.info if isinstance(dataset, Subset) else dataset.info
 
     def setup(self, task_name: str):
         # setup training
