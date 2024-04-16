@@ -29,9 +29,6 @@ class DataArguments:
     # Name of the cache file
     cache_file_name: str = field(default="default")
 
-    # Whether to use caching
-    enable_caching: bool = field(default=True)
-
     # whether to compute fid stats
     compute_dataset_statistics: bool = field(default=False)
 
@@ -43,9 +40,6 @@ class DataArguments:
 
     # Number of processes to use for processing data for cache
     num_proc: int = field(default=4)
-
-    # Whether to stream dataset (for hf)
-    streaming: bool = field(default=False)
 
     # Whether dataset auth token is required
     use_auth_token: bool = field(default=False)
