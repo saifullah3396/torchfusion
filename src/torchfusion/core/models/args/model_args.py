@@ -28,10 +28,6 @@ class ModelArguments(ArgumentsBase):
         default="image_classification",
         metadata={"help": "Training task for which the model is loaded."},
     )
-    required_training_functionality: str = field(
-        default="default",
-        metadata={"help": "The required functionality for the model."},
-    )
     cache_dir: str = field(
         default=os.environ.get("TORCH_FUSION_CACHE_DIR", "./cache/") + "/pretrained/",
         metadata={"help": "The location to store pretrained or cached models."},
@@ -95,7 +91,8 @@ class ModelArguments(ArgumentsBase):
         if self.model_config is None:
             raise ValueError("Model configuration is required to initialize the model.")
 
-        self.model_config["model_constructor_args"]["model_task"] = self.model_task
+        if "model_task" not in self.model_config["model_constructor_args"]:
+            self.model_config["model_constructor_args"]["model_task"] = self.model_task
         self.model_config["model_constructor_args"]["cache_dir"] = self.cache_dir
         self.model_config = from_dict(
             data_class=config_class,
