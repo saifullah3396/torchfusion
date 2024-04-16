@@ -15,5 +15,11 @@ arraylength=${#datasets[@]}
 for ((i = 0; i < ${arraylength}; i++)); do
     # for docVQA only cv_microsoft has "common_format", all else fail
     echo "$i: creating dataset[${datasets[$i]}] with train_strategy[${train_strategies[$i]}], max_seq_length[${max_seq_lengths[$i]}] and ocr_engine[${ocr_engines[$i]}]"
-    $SCRIPT_DIR/../../../../scripts/analyze.sh -c prepare_datasets +run=multipurpose/prepare_due_benchmark_with_preprocess args/data_args=multipurpose/due_benchmark dataset_config_name=${datasets[$i]} max_encoder_length=${max_seq_lengths[$i]} train_strategy=${train_strategies[$i]} ocr_engine=${ocr_engines[$i]}
+    $SCRIPT_DIR/../../../../scripts/analyze.sh -c \
+        prepare_datasets \
+        +run=multipurpose/prepare_due_benchmark_with_preprocess \
+        args/data_args=datasets/multipurpose/due_benchmark \
+        dataset_config_name=${datasets[$i]} \
+        max_encoder_length=${max_seq_lengths[$i]} \
+        train_strategy=${train_strategies[$i]} ocr_engine=${ocr_engines[$i]}
 done
