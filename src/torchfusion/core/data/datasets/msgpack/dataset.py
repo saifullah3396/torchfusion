@@ -1,6 +1,6 @@
 import copy
 import pickle
-from typing import TYPE_CHECKING, Callable, List, Optional, Union
+from typing import TYPE_CHECKING, Callable, List, Optional, Sequence, Union
 
 import numpy as np
 import tqdm
@@ -30,7 +30,6 @@ class MsgpackBasedDataset(Dataset, DatasetInfoMixin):
         info: Optional[DatasetInfo] = None,
         split: Optional[NamedSplit] = None,
         fingerprint: Optional[str] = None,
-        transforms: Optional[Callable] = None,
         load_data_into_ram: bool = False,
     ):
         info = info.copy() if info is not None else DatasetInfo()
@@ -41,7 +40,6 @@ class MsgpackBasedDataset(Dataset, DatasetInfoMixin):
         self._format_kwargs: dict = {}
         self._format_columns: Optional[list] = None
         self._fingerprint: str = fingerprint
-        self._transforms = transforms
         self._data_is_loaded = False
 
         # map indices from multiple readers
@@ -93,13 +91,6 @@ class MsgpackBasedDataset(Dataset, DatasetInfoMixin):
                     continue
                 sample[key] = self.features[key].decode_example(value)
 
-        # apply transforms
-        if self._transforms is not None:
-            sample = self._transforms(sample)
-
-        # assign sample index
-        sample[DataKeys.INDEX] = index
-
         return sample
 
     def __len__(self):
@@ -127,13 +118,11 @@ class MsgpackBasedTorchDataset(Dataset):
         msgpack_readers: Union[List[MsgpackFileReader], MsgpackFileReader],
         split: str,
         info: Optional[DatasetInfo] = None,
-        transforms: Optional[Callable] = None,
         load_data_into_ram: bool = False,
     ):
         self._data = msgpack_readers
         self.split = split
         self.info = copy.deepcopy(info)
-        self._transforms = transforms
         self._data_is_loaded = False
 
         # map indices from multiple readers
@@ -173,13 +162,6 @@ class MsgpackBasedTorchDataset(Dataset):
         if "data" in sample:
             sample = pickle.loads(sample["data"])
 
-        # apply transforms
-        if self._transforms is not None:
-            sample = self._transforms(sample)
-
-        # assign sample index
-        sample[DataKeys.INDEX] = index
-
         return sample
 
     def __len__(self):
@@ -195,3 +177,40 @@ class MsgpackBasedTorchDataset(Dataset):
 
     def close(self):
         self._close()
+
+
+class TransformedDataset(Dataset):
+    def __init__(
+        self,
+        dataset,
+        transforms: Optional[Callable] = None,
+    ):
+        self._dataset = dataset
+        self._transforms = transforms
+
+    def __getitem__(self, index):
+        sample = self._dataset[index]
+
+        # apply transforms
+        if self._transforms is not None:
+            sample = self._transforms(sample)
+
+        # assign sample index
+        sample[DataKeys.INDEX] = index
+
+        return sample
+
+    def __len__(self):
+        return self._dataset.__len__()
+
+    def __repr__(self):
+        return self._dataset.__repr__()
+
+    def close(self):
+        self._dataset._close()
+
+    def __getattr__(self, name):
+        try:
+            return super().__getattr__(name)
+        except AttributeError:
+            return getattr(self._dataset, name)

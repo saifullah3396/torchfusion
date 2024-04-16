@@ -17,9 +17,11 @@ from datasets import DownloadConfig
 from torch.utils.data import BatchSampler, DataLoader, Dataset
 
 from torchfusion.core.constants import DataKeys
+from torchfusion.core.data.data_augmentations.general import DictTransform
 from torchfusion.core.data.datasets.msgpack.dataset import (
     MsgpackBasedDataset,
     MsgpackBasedTorchDataset,
+    TransformedDataset,
 )
 from torchfusion.core.data.factory.dataset import DatasetFactory
 from torchfusion.core.data.text_utils.tokenizers.factory import TokenizerFactory
@@ -34,76 +36,9 @@ from torchfusion.core.data.utilities.data_visualization import (
 )
 from torchfusion.core.data.utilities.dataset_stats import load_or_precalc_dataset_stats
 from torchfusion.core.training.utilities.constants import TrainingStage
+from torchfusion.core.training.utilities.general import print_transforms
 from torchfusion.utilities.logging import get_logger
 from torchfusion.utilities.module_import import ModuleLazyImporter
-
-
-class TorchDataset(Dataset):
-    def __init__(self, dataset, transforms, info):
-        self.dataset = dataset
-        self.transforms = transforms
-        self.info = info
-
-    def __getitem__(self, index):
-        # load sample
-        sample = self.dataset.iloc[index].to_dict()
-
-        # decode image if required
-        image_load_map = {
-            DataKeys.IMAGE: DataKeys.IMAGE_FILE_PATH,
-            DataKeys.GT_IMAGE: DataKeys.GT_IMAGE_FILE_PATH,
-            DataKeys.COND_IMAGE: DataKeys.COND_IMAGE_FILE_PATH,
-        }
-
-        for image_key, path_key in image_load_map.items():
-            if image_key in sample and isinstance(sample[image_key], (bytes, str)):
-                sample[image_key] = PIL.Image.open(io.BytesIO(sample[image_key]))
-
-        # apply transforms
-        if self.transforms is not None:
-            sample = self.transforms(sample)
-
-        # assign sample index
-        sample[DataKeys.INDEX] = index
-
-        return sample
-
-    def __len__(self):
-        return len(self.dataset)
-
-
-class TorchMsgpackDataset(Dataset):
-    def __init__(self, dataset, transforms, info):
-        self.dataset = dataset
-        self.transforms = transforms
-        self.info = info
-
-    def __getitem__(self, index):
-        # load sample
-        sample = pickle.loads(self.dataset[index]["data"])
-
-        # decode image if required
-        image_load_map = {
-            DataKeys.IMAGE: DataKeys.IMAGE_FILE_PATH,
-            DataKeys.GT_IMAGE: DataKeys.GT_IMAGE_FILE_PATH,
-            DataKeys.COND_IMAGE: DataKeys.COND_IMAGE_FILE_PATH,
-        }
-
-        for image_key, path_key in image_load_map.items():
-            if image_key in sample and isinstance(sample[image_key], (bytes, str)):
-                sample[image_key] = PIL.Image.open(io.BytesIO(sample[image_key]))
-
-        # apply transforms
-        if self.transforms is not None:
-            sample = self.transforms(sample)
-
-        # assign sample index
-        sample[DataKeys.INDEX] = index
-
-        return sample
-
-    def __len__(self):
-        return len(self.dataset)
 
 
 class FusionDataModule(ABC):
@@ -160,8 +95,6 @@ class FusionDataModule(ABC):
         self._logger = get_logger()
 
     def load_features_dataset(self, dataset_class, split: str = "train"):
-        _, realtime_transforms = self._get_transforms(split)
-
         # if features are given we load dataset directly from features but still use info from original dataset
         if self._compute_dataset_statistics:
             self._logger.warning(
@@ -184,7 +117,6 @@ class FusionDataModule(ABC):
                 msgpack_readers=msgpack_readers,
                 split=split,
                 info=dataset_class._info(self._dataset_config_name),
-                transforms=realtime_transforms,
             )
         else:
             # remove 'image' info from builder.info as it has been updated by features
@@ -196,40 +128,42 @@ class FusionDataModule(ABC):
                 msgpack_readers=msgpack_readers,
                 info=builder.info,
                 split=split,
-                transforms=realtime_transforms,
             )
         return dataset
 
     def _load_torch_dataset(self, dataset_class: Type[Dataset], split: str = "train"):
-        _, realtime_transforms = self._get_transforms(split)
         dataset = dataset_class(
             config_name=self._dataset_config_name,
             data_dir=self._dataset_dir,
             cache_dir=self._dataset_cache_dir,
-            realtime_transforms=realtime_transforms,
             split=split,
             **self._dataset_kwargs,
         )
 
         if self._compute_dataset_statistics:
-            self._logger.info(
-                "You have set args.data_args.compute_dataset_statistics=True. "
-                "This will compute the FID stats for this dataset. "
-            )
-            # for computing statistics, we always use evaluation transforms instead of train ones
-            dataset._transforms = self._realtime_transforms["test"]
-            load_or_precalc_dataset_stats(
-                dataset,
-                cache_dir=Path(self._dataset_dir) / "fid_stats",
-                split=split,
-                batch_size=200,
-                dataset_statistics_n_samples=self._dataset_statistics_n_samples,
-                stats_filename=self._stats_filename,
-                logger=self._logger,
-            )
-            self._logger.info("Dataset statistics computed successfully.")
+            self._compute_dataset_statistics_fn(dataset=dataset, split=split)
 
         return dataset
+
+    def _compute_dataset_statistics_fn(self, dataset, split):
+        self._logger.info(
+            "You have set args.data_args.compute_dataset_statistics=True. "
+            "This will compute the FID stats for this dataset. "
+        )
+        # for computing statistics, we always use evaluation transforms instead of train ones
+        self._logger.info("Using following transform for computing dataset statistics:")
+        transforms = self._realtime_transforms["test"]
+        print_transforms(transforms)
+        load_or_precalc_dataset_stats(
+            TransformedDataset(dataset=dataset, transforms=transforms),
+            cache_dir=Path(self._dataset_dir) / "fid_stats",
+            split=split,
+            batch_size=200,
+            dataset_statistics_n_samples=self._dataset_statistics_n_samples,
+            stats_filename=self._stats_filename,
+            logger=self._logger,
+        )
+        self._logger.info("Dataset statistics computed successfully.")
 
     def _load_fusion_dataset(self, split: str = "train"):
         builder = self._get_builder()
@@ -246,41 +180,20 @@ class FusionDataModule(ABC):
             ),
         }
 
-        preprocess_transforms, realtime_transforms = self._get_transforms(split)
+        preprocess_transforms, _ = self._get_transforms(split)
         if preprocess_transforms and preprocess_transforms.transforms is not None:
             dataset_build_kwargs["preprocess_transforms"] = preprocess_transforms
 
         # create the dataset
         self._logger.info("Loading dataset with the following kwargs:")
         self._logger.info(dataset_build_kwargs)
-        msgpack_dataset = DatasetFactory.create(
+        dataset = DatasetFactory.create(
             self._dataset_name,
             **dataset_build_kwargs,
         )
 
-        # assign realtime transforms to msgpack dataset to be applied on runtime
-        msgpack_dataset._transforms = realtime_transforms
-
-        # set dataset
-        dataset = msgpack_dataset
-
         if self._compute_dataset_statistics:
-            self._logger.info(
-                "You have set args.data_args.compute_dataset_statistics=True. "
-                "This will compute the FID stats for this dataset. "
-            )
-            # for computing statistics, we always use evaluation transforms instead of train ones
-            dataset._transforms = self._realtime_transforms["test"]
-            load_or_precalc_dataset_stats(
-                dataset,
-                cache_dir=Path(self._dataset_dir) / "fid_stats",
-                split=split,
-                batch_size=200,
-                dataset_statistics_n_samples=self._dataset_statistics_n_samples,
-                stats_filename=self._stats_filename,
-                logger=self._logger,
-            )
-            self._logger.info("Dataset statistics computed successfully")
+            self._compute_dataset_statistics_fn(dataset=dataset, split=split)
 
         return dataset
 
@@ -397,15 +310,7 @@ class FusionDataModule(ABC):
                 self.train_dataset, self.val_dataset = self._train_val_sampler(
                     self.train_dataset
                 )
-            elif not use_test_set_for_val:
-                logger = get_logger()
-                logger.warning(
-                    "Using train set as validation set as no validation dataset exists."
-                    " If this behavior is not required set, do_val=False in config."
-                )
-                self.val_dataset = copy.deepcopy(self.train_dataset)
-
-            if not use_test_set_for_val and (
+            elif not use_test_set_for_val and (
                 self.val_dataset is None or len(self.val_dataset) == 0
             ):
                 logger = get_logger()
@@ -418,6 +323,7 @@ class FusionDataModule(ABC):
             # if max_train_samples is set get the given number of examples
             # from the dataset
             if max_train_samples is not None:
+                max_train_samples = min(max_train_samples, len(self.train_dataset))
                 self.train_dataset = Subset(
                     self.train_dataset,
                     range(0, max_train_samples),
@@ -426,6 +332,7 @@ class FusionDataModule(ABC):
             # if max_val_samples is set get the given number of examples
             # from the dataset
             if max_val_samples is not None and self.val_dataset is not None:
+                max_val_samples = min(max_val_samples, len(self.val_dataset))
                 self.val_dataset = Subset(
                     self.val_dataset,
                     range(0, max_val_samples),
@@ -444,6 +351,7 @@ class FusionDataModule(ABC):
 
                 if self.val_dataset is not None:
                     if max_val_samples is not None:
+                        max_val_samples = min(max_val_samples, len(self.val_dataset))
                         self.val_dataset = Subset(
                             self.val_dataset,
                             range(0, max_val_samples),
@@ -464,6 +372,7 @@ class FusionDataModule(ABC):
                     # if max_test_samples is set get the given number of examples
                     # from the dataset
                     if max_test_samples is not None:
+                        max_test_samples = min(max_test_samples, len(self.test_dataset))
                         self.test_dataset = Subset(
                             self.test_dataset,
                             range(0, max_test_samples),
@@ -472,7 +381,24 @@ class FusionDataModule(ABC):
                 if self.test_dataset is not None:
                     self._logger.info(f"Test set size = {len(self.test_dataset)}")
             except Exception as e:
-                self._logger.info(f"Error while loading test dataset: {e}")
+                self._logger.exception(f"Error while loading test dataset: {e}")
+
+        # assign transforms
+        if self.train_dataset is not None:
+            self.train_dataset = TransformedDataset(
+                dataset=self.train_dataset,
+                transforms=self._realtime_transforms[str(datasets.Split.TRAIN)],
+            )
+        if self.val_dataset is not None:
+            self.val_dataset = TransformedDataset(
+                dataset=self.val_dataset,
+                transforms=self._realtime_transforms[str(datasets.Split.VALIDATION)],
+            )
+        if self.test_dataset is not None:
+            self.test_dataset = TransformedDataset(
+                dataset=self.test_dataset,
+                transforms=self._realtime_transforms[str(datasets.Split.TEST)],
+            )
 
     def setup_train_dataloader(
         self,
