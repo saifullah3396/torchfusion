@@ -6,3 +6,4 @@ class ModelTasks:
     embedding = "embedding"
     autoencoding = "autoencoding"
     gan = "gan"
+    diffusion = "diffusion"
