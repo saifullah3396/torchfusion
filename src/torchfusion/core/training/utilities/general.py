@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Tuple
 
+import ignite.distributed as idist
+
 from torchfusion.core.args.args import FusionArguments
+from torchfusion.core.data.data_augmentations.general import DictTransform
 from torchfusion.utilities.logging import get_logger
 
 if TYPE_CHECKING:
@@ -235,3 +238,20 @@ class TransformsWrapper:
         for transform in self.transforms:
             sample = transform(sample)
         return sample
+
+
+def print_transform(tf):
+    logger = get_logger()
+    if idist.get_rank() == 0:
+        for idx, transform in enumerate(tf.transforms):
+            if isinstance(transform, DictTransform):
+                logger.info(f"{idx}, {transform.key}: {transform.transform}")
+            else:
+                logger.info(f"{idx}, {transform}")
+
+
+def print_transforms(tf, title):
+    logger = get_logger()
+    for split in ["train", "validation", "test"]:
+        logger.info(f"Defining [{split}] {title}:")
+        print_transform(tf[split])
