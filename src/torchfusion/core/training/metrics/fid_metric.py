@@ -31,7 +31,7 @@ class WrapperInceptionV3(nn.Module):
             x = x.repeat(1, 3, 1, 1)
 
         # if the image is in range -1 to 1 we convert it to 0 to 1
-        if x.min() < 0 and x.max() > 1:
+        if x.min() < 0 or x.max() > 1:
             if not self.warned:
                 self.logger.warning(
                     f"WrapperInceptionV3 for FID computation assumes an input image is in the range -1 to 1. Converting it to 0 to 1. Actual range = [{x.min()}, {x.max()}]"
@@ -40,8 +40,9 @@ class WrapperInceptionV3(nn.Module):
             x = (x / 2 + 0.5).clamp(0, 1)
 
         # inception model inputs must be images in range 0 to 1
-        assert x.min() >= 0.0
-        assert x.max() <= 1.0
+        assert (
+            x.min() >= 0.0 and x.max() <= 1.0
+        ), f"Input image must be in range 0 to 1. min={x.min()}, min={x.max()}"
 
         y = self.fid_incv3(x)
         y = y[0]
