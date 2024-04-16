@@ -1,6 +1,11 @@
 # @package _global_
 defaults:
   - /args/data_args: "???"
+  - override /args/data_args/train_preprocess_augs: null
+  - override /args/data_args/eval_preprocess_augs: null
+  - override /args/data_args/train_realtime_augs: basic
+  - override /args/data_args/eval_realtime_augs: basic
+  - override /args/data_args/train_val_sampler: random_split
 
 args:
   analyzer_args:
@@ -11,48 +16,14 @@ args:
         task_config:
           visualize: ${visualize}
   data_args:
+    num_proc: 4
+    dataset_config_name: ${dataset_config_name}
+    cache_file_name: no_preprocess
     data_loader_args:
       per_device_train_batch_size: 4
       per_device_eval_batch_size: 4
-    dataset_config_name: ${dataset_config_name}
-    train_preprocess_augs: null
-    eval_preprocess_augs: null
-    train_realtime_augs:
-      - name: BasicImageAug
-        kwargs:
-          gray_to_rgb: True
-          normalize: True
-          # mean:
-          #   - 0.5
-          # std:
-          #   - 0.5
-          rescale_strategy:
-            name: Rescale
-            kwargs:
-              size:
-                - ${realtime_image_size_y}
-                - ${realtime_image_size_x}
-          key:
-            - image
-    eval_realtime_augs:
-      - name: BasicImageAug
-        kwargs:
-          gray_to_rgb: True
-          normalize: True
-          # mean:
-          #   - 0.5
-          # std:
-          #   - 0.5
-          rescale_strategy:
-            name: Rescale
-            kwargs:
-              size:
-                - ${realtime_image_size_y}
-                - ${realtime_image_size_x}
-          key:
-            - image
 
-realtime_image_size_x: 1024
-realtime_image_size_y: 1024
 dataset_config_name: default
 visualize: False
+image_size_x: 224
+image_size_y: 224

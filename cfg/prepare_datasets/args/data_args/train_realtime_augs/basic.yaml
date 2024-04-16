@@ -1,0 +1,16 @@
+- name: BasicImageAug
+  kwargs:
+    gray_to_rgb: True
+    normalize: True
+    # mean:
+    #   - 0.5
+    # std:
+    #   - 0.5
+    rescale_strategy:
+      name: Rescale
+      kwargs:
+        size:
+          - ${image_size_y}
+          - ${image_size_x}
+    key:
+      - image

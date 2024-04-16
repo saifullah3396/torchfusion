@@ -1,6 +1,12 @@
 # @package _global_
 defaults:
   - /args/data_args: "???"
+  - override /args/data_args/train_preprocess_augs: null
+  - override /args/data_args/eval_preprocess_augs: null
+  - override /args/data_args/train_realtime_augs: basic
+  - override /args/data_args/eval_realtime_augs: basic
+  - override /args/data_args/train_val_sampler: random_split
+  - override /args/data_args/dataset_kwargs/tokenizer_config: layoutlmv3
 
 args:
   analyzer_args:
@@ -13,58 +19,14 @@ args:
   data_args:
     num_proc: 1
     dataset_config_name: ${dataset_config_name}
-    cache_file_name: default_${segment_level_layout}
-    train_preprocess_augs: null
-    eval_preprocess_augs: null
-    train_realtime_augs:
-      - name: BasicImageAug
-        kwargs:
-          gray_to_rgb: True
-          normalize: False # defaults to imagenet mean/std
-          rescale_strategy:
-            name: Rescale
-            kwargs:
-              size:
-                - ${realtime_image_size_x}
-                - ${realtime_image_size_y}
-          key:
-            - image
-    eval_realtime_augs:
-      - name: BasicImageAug
-        kwargs:
-          gray_to_rgb: True
-          normalize: False # defaults to imagenet mean/std
-          rescale_strategy:
-            name: Rescale
-            kwargs:
-              size:
-                - ${realtime_image_size_x}
-                - ${realtime_image_size_y}
-          key:
-            - image
+    cache_file_name: ssl=${segment_level_layout}_seq_len=${seq_len}_stride=${stride}
     dataset_kwargs:
       segment_level_layout: ${segment_level_layout}
-      tokenizer_config: 
-        name: HuggingfaceTokenizer
-        kwargs: 
-          model_name: microsoft/layoutlmv3-base
-          init_kwargs:
-            local_files_only: False
-            add_prefix_space: True
-            do_lower_case: True
-          call_kwargs:
-            add_special_tokens: True
-            padding: "max_length"
-            truncation: True
-            max_length: 512
-            stride: 128
-            pad_to_multiple_of: 8
-          # post processing padding args
-          padding_required: True
-          padding_side: right
 
 dataset_config_name: default
-realtime_image_size_x: 1024
-realtime_image_size_y: 1024
+image_size_x: 1024
+image_size_y: 1024
 visualize: true
 segment_level_layout: False
+seq_len: 512
+stride: 128
