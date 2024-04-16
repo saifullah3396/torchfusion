@@ -56,7 +56,6 @@ class FusionDataModule(ABC):
         train_val_sampler: Optional[TrainValSampler] = None,
         preprocess_batch_size: int = 100,
         dataset_kwargs: dict = {},
-        enable_caching: bool = True,
         num_proc: int = 8,
         compute_dataset_statistics: bool = False,
         dataset_statistics_n_samples: int = 50000,
@@ -80,7 +79,6 @@ class FusionDataModule(ABC):
         self._preprocess_batch_size = preprocess_batch_size
         self._dataset_kwargs = dataset_kwargs
         self._num_proc = num_proc
-        self._enable_caching = enable_caching
         self._compute_dataset_statistics = compute_dataset_statistics
         self._dataset_statistics_n_samples = dataset_statistics_n_samples
         self._stats_filename = stats_filename
