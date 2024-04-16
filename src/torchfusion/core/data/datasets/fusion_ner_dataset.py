@@ -1,10 +1,11 @@
 import dataclasses
+import typing
 from abc import abstractmethod
 from typing import Optional
 
 import datasets
 import numpy as np
-from datasets.features import Image
+from datasets.features import Features, Image
 
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.datasets.features import FusionClassLabel
@@ -28,6 +29,22 @@ class FusionNERDatasetConfig(FusionDatasetConfig):
     ner_scheme: str = "IOB"
     tokenizer_config: Optional[dict] = None
     segment_level_layout: bool = False
+
+    def create_config_id(
+        self,
+        config_kwargs: dict,
+        custom_features: typing.Optional[Features] = None,
+    ) -> str:
+        tokenizer_name = (
+            self.tokenizer_config["kwargs"]["model_name"]
+            if self.tokenizer_config["name"] == "HuggingfaceTokenizer"
+            else self.tokenizer_config["name"]
+        )
+        if self.cache_file_name is not None:
+            config_id = self.name + "-" + tokenizer_name + "-" + self.cache_file_name
+            return config_id
+        else:
+            return self.name
 
 
 class FusionNERDataset(FusionDataset):
