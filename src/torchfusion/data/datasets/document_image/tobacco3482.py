@@ -259,7 +259,7 @@ class Tobacco3482(FusionImageDataset):
 
                 output = {
                     DataKeys.IMAGE: image,
-                    DataKeys.IMAGE_FILE_PATH: image_file_path,
+                    DataKeys.IMAGE_FILE_PATH: local_image_path,
                     DataKeys.LABEL: label,
                 }
                 if self.config.load_ocr:
@@ -275,7 +275,7 @@ class Tobacco3482(FusionImageDataset):
                     ) = TesseractOCRReader(
                         ocr_file_path, conf_threshold=self.config.ocr_conf_threshold
                     ).parse()
-                yield image_file_path, output
+                yield local_image_path, output
             except Exception as exc:
                 self._logger.exception(exc)
                 continue

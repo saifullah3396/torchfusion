@@ -1,0 +1,51 @@
+# @package _global_
+defaults:
+  - /args/model_args: "???"
+  - /args/data_args: "???"
+  - override /args/data_args/train_preprocess_augs: null
+  - override /args/data_args/eval_preprocess_augs: null
+  - override /args/data_args/train_realtime_augs: basic
+  - override /args/data_args/eval_realtime_augs: basic
+
+args:
+  training_args:
+    with_amp_inference: ${with_amp_inference}
+  data_args:
+    dataset_config_name: ${dataset_config_name}
+    cache_file_name: no_preprocess
+    data_loader_args:
+      dataloader_num_workers: 0
+      per_device_train_batch_size: 4
+      per_device_eval_batch_size: 4
+  analyzer_args:
+    analyzer_output_dir: ${args.data_args.dataset_dir}/vae_features/
+    model_checkpoints: null
+    tasks:
+      save_vae_features:
+        task_type: SaveVAEFeatures
+        task_config:
+          data_split: train
+  model_args:
+    model_config:
+      model_constructor_args:
+        checkpoint: ${checkpoint}
+        checkpoint_state_dict_key: ${checkpoint_state_dict_key}
+        checkpoint_filtered_keys:
+          - vae.
+
+hydra:
+  run:
+    dir: ${args.analyzer_args.analyzer_output_dir}/${resolve_dir_name:${args.model_args.model_directory_name}}/${dir_name_from_overrides:${hydra.overrides}}
+  sweep:
+    dir: ${args.analyzer_args.analyzer_output_dir}/
+    subdir: ${args.model_args.name}_${resolve_dir_name:${args.model_args.config.model_type}}/${dir_name_from_overrides:${hydra.overrides}}
+  output_subdir: hydra
+  job:
+    chdir: False
+
+image_size_x: 256
+image_size_y: 256
+dataset_config_name: default
+with_amp_inference: False
+checkpoint: null
+checkpoint_state_dict_key: state_dict

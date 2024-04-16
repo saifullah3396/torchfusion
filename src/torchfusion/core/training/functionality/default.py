@@ -3,17 +3,8 @@ from __future__ import annotations
 import math
 from functools import partial
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import (TYPE_CHECKING, Any, Callable, Mapping, Optional, Sequence,
+                    Tuple, Union, cast)
 
 import torch
 from ignite.contrib.handlers import TensorboardLogger
@@ -26,9 +17,8 @@ from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.training.fusion_opt_manager import FusionOptimizerManager
 from torchfusion.core.training.metrics.factory import MetricsFactory
-from torchfusion.core.training.sch.schedulers.warmup import (
-    create_lr_scheduler_with_warmup,
-)
+from torchfusion.core.training.sch.schedulers.warmup import \
+    create_lr_scheduler_with_warmup
 from torchfusion.core.training.utilities.constants import TrainingStage
 from torchfusion.core.training.utilities.general import empty_cuda_cache
 from torchfusion.core.training.utilities.progress_bar import TqdmToLogger
@@ -38,7 +28,8 @@ if TYPE_CHECKING:
     import torch
 
     from torchfusion.core.models.fusion_model import FusionModel
-    from torchfusion.core.training.fusion_sch_manager import FusionSchedulersManager
+    from torchfusion.core.training.fusion_sch_manager import \
+        FusionSchedulersManager
 
 
 def log_training_metrics(logger, epoch, elapsed, tag, metrics):
@@ -292,7 +283,8 @@ class DefaultTrainingFunctionality:
             from ignite.utils import convert_tensor
             from torch.cuda.amp import autocast
 
-            from torchfusion.core.training.utilities.constants import TrainingStage
+            from torchfusion.core.training.utilities.constants import \
+                TrainingStage
 
             # ready model for evaluation
             model.torch_model.eval()
@@ -322,7 +314,7 @@ class DefaultTrainingFunctionality:
         model: FusionModel,
         device: Optional[Union[str, torch.device]] = torch.device("cpu"),
         tb_logger: TensorboardLogger = None,
-        convert_to_tensor: list = [],
+        keys_to_device: list = [],
     ) -> Callable:
         from ignite.engine import Engine
 
@@ -345,10 +337,10 @@ class DefaultTrainingFunctionality:
                 model.torch_model.half()
 
             with torch.no_grad():
-                if len(convert_to_tensor) > 0:
+                if len(keys_to_device) > 0:
                     keys = list(batch.keys())
                     for k in keys:
-                        if k in convert_to_tensor:
+                        if k in keys_to_device:
                             batch[k] = convert_tensor(
                                 batch[k], device=device, non_blocking=non_blocking
                             )
@@ -394,7 +386,8 @@ class DefaultTrainingFunctionality:
             import torch
             from ignite.utils import convert_tensor
 
-            from torchfusion.core.training.utilities.constants import TrainingStage
+            from torchfusion.core.training.utilities.constants import \
+                TrainingStage
 
             # ready model for evaluation
             model.torch_model.eval()
@@ -448,7 +441,8 @@ class DefaultTrainingFunctionality:
             from ignite.utils import convert_tensor
             from torch.cuda.amp import autocast
 
-            from torchfusion.core.training.utilities.constants import TrainingStage
+            from torchfusion.core.training.utilities.constants import \
+                TrainingStage
 
             # ready model for evaluation
             model.torch_model.eval()
@@ -793,11 +787,8 @@ class DefaultTrainingFunctionality:
             return
 
         from ignite.engine import Events
-        from ignite.handlers import (
-            LRScheduler,
-            ParamScheduler,
-            ReduceLROnPlateauScheduler,
-        )
+        from ignite.handlers import (LRScheduler, ParamScheduler,
+                                     ReduceLROnPlateauScheduler)
         from torch.optim.lr_scheduler import ExponentialLR, MultiStepLR, StepLR
 
         for k, inner_sch in training_sch_manager.lr_schedulers.items():
@@ -1003,9 +994,8 @@ class DefaultTrainingFunctionality:
         if args.training_args.resume_from_checkpoint:
             import torch
 
-            from torchfusion.core.training.utilities.general import (
-                find_resume_checkpoint,
-            )
+            from torchfusion.core.training.utilities.general import \
+                find_resume_checkpoint
 
             logger = get_logger()
 
@@ -1107,7 +1097,8 @@ class DefaultTrainingFunctionality:
     ):
         from ignite.engine import Events
 
-        from torchfusion.core.training.utilities.progress_bar import FusionProgressBar
+        from torchfusion.core.training.utilities.progress_bar import \
+            FusionProgressBar
 
         # redirect tqdm output to logger
         tqdm_to_logger = TqdmToLogger(get_logger())
@@ -1450,7 +1441,8 @@ class DefaultTrainingFunctionality:
         from ignite.engine import Events
         from ignite.handlers import Checkpoint
 
-        from torchfusion.core.training.utilities.general import find_test_checkpoint
+        from torchfusion.core.training.utilities.general import \
+            find_test_checkpoint
 
         # configure model checkpoint_state_dict
         model_checkpoint_config = args.training_args.model_checkpoint_config
@@ -1694,7 +1686,7 @@ class DefaultTrainingFunctionality:
         tb_logger,
         device,
         checkpoint_type: str = "last",
-        convert_to_tensor: list = [],
+        keys_to_device: list = [],
     ):
         # setup training engine
         prediction_engine = cls.initialize_prediction_engine(
@@ -1702,7 +1694,7 @@ class DefaultTrainingFunctionality:
             model=model,
             device=device,
             tb_logger=tb_logger,
-            convert_to_tensor=convert_to_tensor,
+            keys_to_device=keys_to_device,
         )
 
         # configure training and validation engines

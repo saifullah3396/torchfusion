@@ -1,0 +1,17 @@
+defaults:
+  - train_preprocess_augs: basic
+  - eval_preprocess_augs: basic
+  - train_realtime_augs: random_train_aug
+  - eval_realtime_augs: basic
+  - data_loader_args: default
+  
+dataset_name: Tobacco3482
+dataset_config_name: default
+dataset_dir: ${oc.env:DATA_ROOT_DIR}/documents/tobacco3482
+dataset_cache_dir: ${args.data_args.dataset_dir}/huggingface/
+cache_file_name: 1024x1024
+use_auth_token: True
+compute_dataset_statistics: False
+stats_filename: 'stats_256'
+dataset_statistics_n_samples: 2782
+train_val_sampler: null

@@ -75,73 +75,48 @@ class BatchToTensorDataCollator:
     """
 
     data_key_type_map: Optional[dict] = None
+    allow_unmapped_data: bool = False
 
     def __call__(self, features):
         batch = {}
         if isinstance(features[0], list):
             for idx, feature in enumerate(features):
                 features[idx] = {k: [dic[k] for dic in feature] for k in feature[0]}
-        if self.data_key_type_map is None:
-            for k in features[0]:
-                if isinstance(features[0][k], torch.Tensor):
-                    batch[k] = torch.stack([sample[k] for sample in features])
-                else:  # pass through otherwise
+
+        keys = features[0].keys()
+        for k in keys:
+            if k not in self.data_key_type_map.keys():
+                if self.allow_unmapped_data:
                     batch[k] = [sample[k] for sample in features]
-                # elif isinstance(features[0][k], list):
-                #     if isinstance(features[0][k][0], torch.Tensor):
-                #         batch[k] = torch.cat([torch.stack(sample[k]) for sample in features])
-                #     elif isinstance(features[0][k][0], list):
-                #         batch[k] = torch.cat([torch.tensor(sample[k]) for sample in features])
-                #     elif isinstance(features[0][k][0], str):
-                #         batch[k] = [sample[k] for sample in features]
-                #         # batch[k] = sum(batch[k], [])
-                #     else:
-                #         features_list_of_list = [sample[k] for sample in features]
-                #         seq_len = len(features_list_of_list[0])
-                #         all_sequences_equal = np.all([len(f) == seq_len for f in features_list_of_list])
-                #         if all_sequences_equal:
-                #             batch[k] = torch.tensor([sample[k] for sample in features])
-                #         else:
-                #             batch[k] = features_list_of_list
-                # elif isinstance(features[0][k], str):
-                #     batch[k] = [sample[k] for sample in features]
-                # else:
-                #     batch[k] = torch.tensor([sample[k] for sample in features])
-        else:
-            for k, dtype in self.data_key_type_map.items():
-                if isinstance(features[0][k], torch.Tensor):
-                    batch[k] = torch.stack([sample[k] for sample in features]).type(
-                        dtype
+                continue
+
+            dtype = self.data_key_type_map[k]
+            if isinstance(features[0][k], torch.Tensor):
+                batch[k] = torch.stack([sample[k] for sample in features]).type(dtype)
+            elif isinstance(features[0][k], np.ndarray):
+                batch[k] = torch.from_numpy(
+                    np.array([sample[k] for sample in features])
+                )
+            elif isinstance(features[0][k], list):
+                if isinstance(features[0][k][0], torch.Tensor):
+                    batch[k] = torch.cat(
+                        [torch.stack(sample[k]) for sample in features]
                     )
-                elif isinstance(features[0][k], np.ndarray):
-                    batch[k] = torch.from_numpy(
-                        np.array([sample[k] for sample in features])
+                elif isinstance(features[0][k][0], list):
+                    batch[k] = torch.cat(
+                        [torch.tensor(sample[k], dtype=dtype) for sample in features]
                     )
-                elif isinstance(features[0][k], list):
-                    if isinstance(features[0][k][0], torch.Tensor):
-                        batch[k] = torch.cat(
-                            [torch.stack(sample[k]) for sample in features]
-                        )
-                    elif isinstance(features[0][k][0], list):
-                        batch[k] = torch.cat(
-                            [
-                                torch.tensor(sample[k], dtype=dtype)
-                                for sample in features
-                            ]
-                        )
-                    elif isinstance(features[0][k][0], str):
-                        batch[k] = [sample[k] for sample in features]
-                        batch[k] = sum(batch[k], [])
-                    else:
-                        batch[k] = torch.tensor(
-                            [sample[k] for sample in features], dtype=dtype
-                        )
-                elif isinstance(features[0][k], str):
+                elif isinstance(features[0][k][0], str):
                     batch[k] = [sample[k] for sample in features]
+                    batch[k] = sum(batch[k], [])
                 else:
                     batch[k] = torch.tensor(
                         [sample[k] for sample in features], dtype=dtype
                     )
+            elif isinstance(features[0][k], str):
+                batch[k] = [sample[k] for sample in features]
+            else:
+                batch[k] = torch.tensor([sample[k] for sample in features], dtype=dtype)
         return batch
 
 
@@ -160,9 +135,9 @@ class BaseSequenceDataCollator:
         if DataKeys.TOKEN_IDS not in self.data_padding_dict:
             self.data_padding_dict[DataKeys.TOKEN_IDS] = self.tokenizer.pad_token_id
         if DataKeys.TOKEN_TYPE_IDS not in self.data_padding_dict:
-            self.data_padding_dict[
-                DataKeys.TOKEN_TYPE_IDS
-            ] = self.tokenizer.pad_token_type_id
+            self.data_padding_dict[DataKeys.TOKEN_TYPE_IDS] = (
+                self.tokenizer.pad_token_type_id
+            )
         if DataKeys.ATTENTION_MASKS not in self.data_padding_dict:
             self.data_padding_dict[DataKeys.ATTENTION_MASKS] = 0
         if DataKeys.TOKEN_BBOXES not in self.data_padding_dict:

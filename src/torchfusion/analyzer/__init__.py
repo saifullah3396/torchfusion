@@ -10,11 +10,11 @@ _import_structure = {
     "generate_metrics": [
         "GenerateMetrics",
     ],
-    "image_reconstruction": [
-        "ImageReconstruction",
+    "evaluate_image_reconstruction": [
+        "EvaluateImageReconstruction",
     ],
-    "generate_vae_features": [
-        "GenerateVAEFeatures",
+    "save_vae_features": [
+        "SaveVAEFeatures",
     ],
 }
 ModuleLazyImporter.register_analyzer_tasks(__name__, _import_structure)

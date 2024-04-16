@@ -18,7 +18,7 @@ from torchfusion.core.training.utilities.tb_logger import FusionTensorboardLogge
 from torchfusion.utilities.logging import get_logger
 
 
-class ImageReconstruction(AnalyzerTask):
+class EvaluateImageReconstruction(AnalyzerTask):
     @dataclass
     class Config(AnalyzerTask.Config):
         pass

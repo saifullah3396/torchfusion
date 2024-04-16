@@ -256,7 +256,7 @@ class AnalyzerTask(ABC):
 
         return test_engine
 
-    def _setup_prediction_engine(self, model, convert_to_tensor: list = []):
+    def _setup_prediction_engine(self, model, keys_to_device: list = []):
         # setup training engine
         test_engine = self._trainer_functionality.setup_prediction_engine(
             args=self._args,
@@ -265,7 +265,7 @@ class AnalyzerTask(ABC):
             output_dir=self._output_dir,
             tb_logger=self._tb_logger,
             device=self._device,
-            convert_to_tensor=convert_to_tensor,
+            keys_to_device=keys_to_device,
         )
         test_engine.logger = get_logger()
 

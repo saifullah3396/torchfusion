@@ -1,0 +1,17 @@
+defaults:
+  - train_preprocess_augs: null
+  - eval_preprocess_augs: null
+  - train_realtime_augs: augs/random_train_aug
+  - eval_realtime_augs: augs/basic
+  - dataloader_args: dataloader/default
+  
+dataset_name: IITCDIP
+dataset_config_name: default
+dataset_dir: ${oc.env:DATA_ROOT_DIR}/documents/IIT-CDIP
+dataset_cache_dir: ${args.data_args.dataset_dir}/huggingface/
+cache_file_name: ""
+use_auth_token: True
+compute_dataset_statistics: False
+stats_filename: 'stats_256'
+dataset_statistics_n_samples: 10000
+train_val_sampler: null

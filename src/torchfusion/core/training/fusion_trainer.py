@@ -12,33 +12,33 @@ from torch.utils.data import Subset
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.data.data_augmentations.general import DictTransform
 from torchfusion.core.data.factory.batch_sampler import BatchSamplerFactory
-from torchfusion.core.data.factory.data_augmentation import \
-    DataAugmentationFactory
-from torchfusion.core.data.factory.train_val_sampler import \
-    TrainValSamplerFactory
+from torchfusion.core.data.factory.data_augmentation import DataAugmentationFactory
+from torchfusion.core.data.factory.train_val_sampler import TrainValSamplerFactory
 from torchfusion.core.data.utilities.containers import TransformsDict
 from torchfusion.core.models.fusion_model import FusionModel
-from torchfusion.core.training.functionality.default import \
-    DefaultTrainingFunctionality
-from torchfusion.core.training.functionality.diffusion import \
-    DiffusionTrainingFunctionality
-from torchfusion.core.training.functionality.gan import \
-    GANTrainingFunctionality
+from torchfusion.core.models.tasks import ModelTasks
+from torchfusion.core.training.functionality.default import DefaultTrainingFunctionality
+from torchfusion.core.training.functionality.diffusion import (
+    DiffusionTrainingFunctionality,
+)
+from torchfusion.core.training.functionality.gan import GANTrainingFunctionality
 from torchfusion.core.training.fusion_opt_manager import FusionOptimizerManager
-from torchfusion.core.training.fusion_sch_manager import \
-    FusionSchedulersManager
+from torchfusion.core.training.fusion_sch_manager import FusionSchedulersManager
 from torchfusion.core.training.utilities.constants import TrainingStage
-from torchfusion.core.training.utilities.general import (TransformsWrapper,
-                                                         initialize_torch,
-                                                         setup_logging)
+from torchfusion.core.training.utilities.general import (
+    TransformsWrapper,
+    initialize_torch,
+    print_transform,
+    print_transforms,
+    setup_logging,
+)
 from torchfusion.utilities.dataclasses.dacite_wrapper import from_dict
 from torchfusion.utilities.logging import get_logger
 
 if TYPE_CHECKING:
     import torch
 
-    from torchfusion.core.data.data_modules.fusion_data_module import \
-        FusionDataModule
+    from torchfusion.core.data.data_modules.fusion_data_module import FusionDataModule
     from torchfusion.core.models.fusion_model import FusionModel
 
 
@@ -127,20 +127,6 @@ class FusionTrainer:
 
             return tf
 
-        def print_transforms(tf, title):
-            for split in ["train", "validation", "test"]:
-                if tf[split].transforms is None:
-                    continue
-                self._logger.info(f"Defining [{split}] {title}:")
-                if idist.get_rank() == 0:
-                    for idx, transform in enumerate(tf[split].transforms):
-                        if isinstance(transform, DictTransform):
-                            self._logger.info(
-                                f"{idx}, {transform.key}: {transform.transform}"
-                            )
-                        else:
-                            self._logger.info(f"{idx}, {transform}")
-
         preprocess_transforms = load_from_args(
             self._args.data_args.train_preprocess_augs,
             self._args.data_args.eval_preprocess_augs,
@@ -163,8 +149,9 @@ class FusionTrainer:
 
         import ignite.distributed as idist
 
-        from torchfusion.core.data.data_modules.fusion_data_module import \
-            FusionDataModule
+        from torchfusion.core.data.data_modules.fusion_data_module import (
+            FusionDataModule,
+        )
 
         logger = get_logger()
         logger.info("Setting up datamodule...")
@@ -277,9 +264,9 @@ class FusionTrainer:
         )
 
     def _setup_trainer_functionality(self):
-        if self._args.model_args.required_training_functionality == "gan":
+        if self._args.model_args.model_task == ModelTasks.gan:
             return GANTrainingFunctionality
-        elif self._args.model_args.required_training_functionality == "diffusion":
+        elif self._args.model_args.model_task == ModelTasks.diffusion:
             return DiffusionTrainingFunctionality
         else:
             return DefaultTrainingFunctionality
@@ -420,6 +407,22 @@ class FusionTrainer:
                 Events.ITERATION_COMPLETED, terminate_on_iteration_complete
             )
 
+        # print transforms before training run just for sanity check
+        self._logger.info("Final sanity check... Training transforms:")
+        train_transform = (
+            self._train_dataloader.dataset.dataset._transforms
+            if isinstance(self._train_dataloader.dataset, Subset)
+            else self._train_dataloader.dataset._transforms
+        )
+        print_transform(train_transform)
+        self._logger.info("Final sanity check... Validation transforms:")
+        val_transform = (
+            self._val_dataloader.dataset.dataset._transforms
+            if isinstance(self._val_dataloader.dataset, Subset)
+            else self._val_dataloader.dataset._transforms
+        )
+        print_transform(val_transform)
+
         # run training
         self._training_engine.run(
             self._train_dataloader, max_epochs=self._args.training_args.max_epochs
@@ -502,6 +505,15 @@ class FusionTrainer:
                 dataloader_num_workers=self._args.data_args.data_loader_args.dataloader_num_workers,
                 pin_memory=self._args.data_args.data_loader_args.pin_memory,
             )
+
+        # print transforms before training run just for sanity check
+        self._logger.info("Final sanity check... Testing transforms:")
+        test_transform = (
+            self._test_dataloader.dataset.dataset._transforms
+            if isinstance(self._test_dataloader.dataset, Subset)
+            else self._test_dataloader.dataset._transforms
+        )
+        print_transform(test_transform)
 
         # setup test engines for different types of model checkpoints
         output_states = {}

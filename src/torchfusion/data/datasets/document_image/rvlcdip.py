@@ -273,14 +273,13 @@ class RvlCdip(FusionImageDataset):
         for item in data:
             try:
                 local_image_path, label = item.split(" ")
-                image_file_path = str(
-                    self.image_data_path / _IMAGES_DIR / local_image_path
-                )
+                local_image_path = _IMAGES_DIR / local_image_path
+                image_file_path = str(self.image_data_path / local_image_path)
                 image = np.array(PIL.Image.open(image_file_path))
 
                 output = {
                     DataKeys.IMAGE: image,
-                    DataKeys.IMAGE_FILE_PATH: image_file_path,
+                    DataKeys.IMAGE_FILE_PATH: local_image_path,
                     DataKeys.LABEL: label,
                 }
                 if self.config.load_ocr:
