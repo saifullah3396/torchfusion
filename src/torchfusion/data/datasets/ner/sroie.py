@@ -137,7 +137,7 @@ class SROIE(FusionNERDataset):
                     DataKeys.WORDS: sample["words"],
                     DataKeys.WORD_BBOXES: boxes,
                     DataKeys.LABEL: [
-                        self.config.ner_labels.index(l) for l in sample["labels"]
+                        self.ner_labels.index(l) for l in sample["labels"]
                     ],
                     DataKeys.IMAGE_FILE_PATH: image_path,
                     # we don't load all images here to save memory
@@ -150,6 +150,8 @@ class SROIE(FusionNERDataset):
         filepath,
     ):
         data = self._load_dataset_to_pandas(filepath)
+        self._logger.info("Base dataset pandas dataframe loaded:")
+        self._logger.info(data)
         try:
             data = data.apply(convert_to_list, axis=1)
             self._update_ner_labels(data)

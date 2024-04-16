@@ -267,6 +267,10 @@ class DOCILE(FusionNERDataset):
     def _initialize_config(self):
         pass
 
+    @property
+    def ner_labels(self):
+        return self.config.ner_labels
+
     def _split_generators(self, dl_manager):
         if not self.config.synthetic:
             for dir in ["train_withImgs", "val_withImgs"]:
