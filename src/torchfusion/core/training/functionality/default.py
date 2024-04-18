@@ -834,10 +834,18 @@ class DefaultTrainingFunctionality:
 
             warmup_duration = cls._get_warmup_steps(args, train_dataloader)
             if warmup_duration > 0:
+                logger.info(
+                    f"Initialized lr scheduler {inner_sch.__class__.__name__} with warmup. "
+                )
+                logger.info(f"Warmup ratio = {args.training_args.warmup_ratio}. ")
+                logger.info(
+                    f"Number of warmup steps = {warmup_duration}. This corresponds to optimizer updates, "
+                    "not total batches in epoch and therefore its scaled by grad "
+                    f"acummulation steps = ${args.training_args.gradient_accumulation_steps}."
+                )
+
                 if isinstance(inner_sch, (StepLR, MultiStepLR)):
                     logger.info(
-                        f"Initialized lr scheduler {inner_sch.__class__.__name__} with warmup. "
-                        f"Number of warmup steps = {warmup_duration}. Warmup  epochs = {args.training_args.warmup_ratio}. "
                         "Warmup updates are triggered per optimizer steps whereas the scheduler updates are triggered per epoch."
                     )
                     sch = create_lr_scheduler_with_warmup(
@@ -868,8 +876,6 @@ class DefaultTrainingFunctionality:
                     training_sch_manager.lr_schedulers[k] = sch
                 elif isinstance(inner_sch, ReduceLROnPlateauScheduler):
                     logger.info(
-                        f"Initialized lr scheduler {inner_sch.__class__.__name__} with warmup. "
-                        f"Number of warmup steps = {warmup_duration}. Warmup  epochs = {args.training_args.warmup_ratio}. "
                         "Warmup updates are triggered per optimizer steps whereas the scheduler updates are triggered per validation step."
                     )
                     # we want warmup on steps and step_lr on epochs, so we create two events first for steps
@@ -901,8 +907,6 @@ class DefaultTrainingFunctionality:
                     training_sch_manager.lr_schedulers[k] = sch
                 else:
                     logger.info(
-                        f"Initialized lr scheduler {inner_sch.__class__.__name__} with warmup. "
-                        f"Number of warmup steps = {warmup_duration}. Warmup  epochs = {args.training_args.warmup_ratio}. "
                         "Both warmup updates and the scheduler updates are triggered per optimizer step."
                     )
                     sch = create_lr_scheduler_with_warmup(

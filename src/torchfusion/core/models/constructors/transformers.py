@@ -30,9 +30,9 @@ class TransformersModelConstructor(ModelConstructor):
 
     def __post_init__(self):
         assert self.model_task in [
-            "sequence_classification",
-            "token_classification",
-            "image_classification",
+            ModelTasks.sequence_classification,
+            ModelTasks.token_classification,
+            ModelTasks.image_classification,
         ], f"Task {self.model_task} not supported for TransformersModelConstructor."
 
         if self.n_frozen_encoder_layers > 0:
@@ -50,12 +50,18 @@ class TransformersModelConstructor(ModelConstructor):
         else:
             raise ValueError(f"Task {self.model_task} not supported.")
 
-        if initializer_class == AutoModelForTokenClassification:
-            assert (
-                "num_labels" in kwargs
-            ), "num_labels must be provided for token classification."
+        assert (
+            "num_labels" in kwargs
+        ), "num_labels must be provided for token classification."
+        num_labels = kwargs.pop("num_labels")
+
+        if initializer_class in [
+            AutoModelForSequenceClassification,
+            AutoModelForTokenClassification,
+        ]:
+            # pass labels for these but for image classification we got to update it later
             kwargs = dict(
-                num_labels=kwargs["num_labels"],
+                num_labels=num_labels,
                 return_dict=True,
             )
 
@@ -85,13 +91,8 @@ class TransformersModelConstructor(ModelConstructor):
             )
 
         if initializer_class == AutoModelForImageClassification:
-            assert (
-                "num_labels" in kwargs
-            ), "num_labels must be provided for token classification."
             # reset the classifier head to match the labels
-            model.classifier = torch.nn.Linear(
-                model.classifier.in_features, kwargs["num_labels"]
-            )
+            model.classifier = torch.nn.Linear(model.classifier.in_features, num_labels)
 
         if self.n_frozen_encoder_layers > 0:
             encoder_layer = find_layer_in_model(model, self.encoder_layer_name)

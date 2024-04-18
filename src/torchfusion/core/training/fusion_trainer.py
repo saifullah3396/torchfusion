@@ -198,6 +198,17 @@ class FusionTrainer:
         if validation_engine is not None:
             validation_engine.logger = get_logger()
             validation_engine.logger.propagate = False
+
+        self._logger.info(f"Configured Training Engine: \n")
+        self._logger.info(f"Total steps per epoch = {self.batches_per_epch}")
+        self._logger.info(
+            f"Total gradient accumulation steps per device = {self._args.training_args.gradient_accumulation_steps}"
+        )
+        self._logger.info(
+            f"Total optimizer update steps per epoch (scaled by grad accumulation steps) = {self.total_training_steps}"
+        )
+        self._logger.info(f"Total warmup steps = {self.warmup_steps}")
+        self._logger.info(f"Max epochs = {self._args.training_args.max_epochs}")
         return training_engine, validation_engine
 
     def _setup_test_engine(self, checkpoint_type: str = "last"):

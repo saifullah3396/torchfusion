@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 
 import timm
@@ -17,6 +18,9 @@ class TimmModelConstructor(ModelConstructor):
         ], f"Task {self.model_task} not supported for TimmModelConstructor."
 
     def _init_model(self, **kwargs) -> torch.Any:
+        if "num_labels" in kwargs:
+            kwargs = copy.deepcopy(kwargs)
+            kwargs["num_classes"] = kwargs.pop("num_labels")
         return timm.create_model(
             self.model_name,
             pretrained=self.pretrained,

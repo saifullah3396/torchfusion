@@ -24,8 +24,6 @@ def dir_name_from_overrides(overrides: ListConfig, filter: DictConfig) -> str:
                 break
         if output_key_for_override is not None:
             key, value = override.split("=")
-            # key = key.split(".")[-1]
-            # key = "_".join([k[:3] for k in key.split("_")])
             overrides_filtered.append(f"{output_key_for_override}={value}")
     ret: str = "_".join(overrides_filtered)
     ret = ret.replace("{", "")
