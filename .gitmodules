@@ -1,3 +1,4 @@
 [submodule "external/due_benchmark"]
 	path = external/due_benchmark
 	url = https://github.com/saifullah3396/baselines.git
+	branch = torchfusion
