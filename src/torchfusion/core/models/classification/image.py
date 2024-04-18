@@ -37,6 +37,7 @@ class FusionModelForImageClassification(FusionModelForClassification):
         strict: bool = False,
         model_constructor: Optional[dict] = None,
         model_constructor_args: Optional[dict] = None,
+        num_labels: Optional[int] = None,
     ):
         model_constructor = ModelConstructorFactory.create(
             name=model_constructor,
@@ -51,15 +52,18 @@ class FusionModelForImageClassification(FusionModelForClassification):
                 TimmModelConstructor,
             ),
         ), (
-            f"Model constructor must be of type {(
+            f"""Model constructor must be of type: {(
                 FusionModelConstructor,
                 TorchvisionModelConstructor,
                 TransformersModelConstructor,
                 TimmModelConstructor,
-            )}. "
+            )}. """
             f"Got {type(model_constructor)}"
         )
-        return model_constructor(self.num_labels, checkpoint=checkpoint, strict=strict)
+
+        return model_constructor(
+            checkpoint=checkpoint, strict=strict, num_labels=num_labels
+        )
 
     def get_data_collators(
         self,

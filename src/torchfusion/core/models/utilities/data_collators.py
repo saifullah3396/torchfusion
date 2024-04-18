@@ -112,7 +112,7 @@ class BatchToTensorDataCollator:
     """
 
     allowed_keys: Optional[list] = None
-    type_map: Optional[list] = None
+    data_key_type_map: Optional[list] = None
 
     def __call__(self, features):
         batch = {}
@@ -133,8 +133,8 @@ class BatchToTensorDataCollator:
                 "If you wish to automatically collate batch, provide keys or set allowed_keys=None"
             )
 
-        if self.type_map is not None:
-            for k, dtype in self.type_map.items():
+        if self.data_key_type_map is not None:
+            for k, dtype in self.data_key_type_map.items():
                 if k in batch:
                     batch[k] = batch[k].to(dtype)
 

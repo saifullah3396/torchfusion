@@ -83,15 +83,18 @@ class FusionModel:
         pass
 
     @abstractmethod
-    def _training_step(self):
+    def _training_step(self, *args, **kwargs):
         pass
 
     @abstractmethod
-    def _evaluation_step(self):
+    def _evaluation_step(self, *args, **kwargs):
         pass
 
     @abstractmethod
-    def _predict_step(self):
+    def _predict_step(self, *args, **kwargs):
+        pass
+
+    def _visualization_step(self, *args, **kwargs):
         pass
 
     @abstractmethod

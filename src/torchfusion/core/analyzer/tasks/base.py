@@ -53,6 +53,7 @@ class AnalyzerTask(ABC):
         self._tb_logger = None
         self._trainer_functionality = None
         self._datamodule = None
+        self._data_labels = None
         self._data_loader = None
         self._config = self._setup_config(config)
         self._logger = get_logger(hydra_config=hydra_config)
@@ -191,7 +192,7 @@ class AnalyzerTask(ABC):
         self._trainer_functionality = self._setup_trainer_functionality()
 
         # setup datamodule
-        self._datamodule = load_datamodule_from_args(
+        self._datamodule, self._data_labels = load_datamodule_from_args(
             self._args, stage=None, rank=self._rank
         )
 

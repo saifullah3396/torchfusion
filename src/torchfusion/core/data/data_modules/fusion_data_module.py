@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import copy
+import dataclasses
 import io
+import json
 import os
 import pickle
 import sys
@@ -14,7 +16,6 @@ import ignite.distributed as idist
 import PIL
 from datadings.reader import MsgpackReader as MsgpackFileReader
 from datasets import DownloadConfig
-from regex import R
 from torch.utils.data import BatchSampler, DataLoader, Dataset, Subset
 
 from torchfusion.core.constants import DataKeys
@@ -37,7 +38,10 @@ from torchfusion.core.data.utilities.data_visualization import (
 )
 from torchfusion.core.data.utilities.dataset_stats import load_or_precalc_dataset_stats
 from torchfusion.core.training.utilities.constants import TrainingStage
-from torchfusion.core.training.utilities.general import print_transforms
+from torchfusion.core.training.utilities.general import (
+    pretty_print_dict,
+    print_transforms,
+)
 from torchfusion.utilities.logging import get_logger
 from torchfusion.utilities.module_import import ModuleLazyImporter
 
@@ -184,8 +188,9 @@ class FusionDataModule(ABC):
             dataset_build_kwargs["preprocess_transforms"] = preprocess_transforms
 
         # create the dataset
-        self._logger.info("Loading dataset with the following kwargs:")
-        self._logger.info(dataset_build_kwargs)
+        self._logger.info(
+            f"Loading dataset with the following kwargs: {pretty_print_dict(dataset_build_kwargs)}"
+        )
         dataset = DatasetFactory.create(
             self._dataset_name,
             **dataset_build_kwargs,
@@ -359,6 +364,10 @@ class FusionDataModule(ABC):
                     split=str(datasets.Split.VALIDATION),
                 )
             elif self._train_val_sampler is not None:
+                self._logger.info(
+                    f"Using train/validation sampler [{self._train_val_sampler}] for splitting the "
+                    f"dataset with following arguments: {pretty_print_dict(self._train_val_sampler)}"
+                )
                 self.train_dataset, self.val_dataset = self._train_val_sampler(
                     self.train_dataset
                 )

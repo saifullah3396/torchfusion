@@ -30,7 +30,10 @@ from torchfusion.core.training.sch.schedulers.warmup import (
     create_lr_scheduler_with_warmup,
 )
 from torchfusion.core.training.utilities.constants import TrainingStage
-from torchfusion.core.training.utilities.general import empty_cuda_cache
+from torchfusion.core.training.utilities.general import (
+    empty_cuda_cache,
+    pretty_print_dict,
+)
 from torchfusion.core.training.utilities.progress_bar import TqdmToLogger
 from torchfusion.utilities.logging import get_logger
 
@@ -448,10 +451,10 @@ class DefaultTrainingFunctionality:
             from ignite.utils import convert_tensor
             from torch.cuda.amp import autocast
 
-            from torchfusion.core.training.utilities.constants import TrainingStage
-
             # ready model for evaluation
             model.torch_model.eval()
+            if args.training_args.with_amp_inference:
+                model.torch_model.half()
 
             with torch.no_grad():
                 with autocast(enabled=args.training_args.with_amp_inference):
@@ -460,12 +463,20 @@ class DefaultTrainingFunctionality:
                         batch, device=device, non_blocking=non_blocking
                     )
 
+                    # if fp16 is on
+                    if args.training_args.with_amp_inference:
+                        for k, v in batch.items():
+                            if not isinstance(v, torch.Tensor):
+                                continue
+                            batch[k] = v.half()
+
                     # forward pass
                     return model.visualization_step(
                         engine=engine,
                         training_engine=training_engine,
                         batch=batch,
                         tb_logger=tb_logger,
+                        output_dir=output_dir,
                     )
 
         return Engine(visualization_step)
@@ -493,7 +504,10 @@ class DefaultTrainingFunctionality:
         # batches = cls._get_batches_per_epoch(train_dataloader)
         # effective_accum = args.training_args.gradient_accumulation_steps * idist.get_world_size()
         # return batches // effective_accum
-        return cls._get_batches_per_epoch(args, train_dataloader)
+        return (
+            cls._get_batches_per_epoch(args, train_dataloader)
+            // args.training_args.gradient_accumulation_steps
+        )
 
     @classmethod
     def _get_total_training_steps(cls, args, train_dataloader) -> int:
@@ -758,15 +772,28 @@ class DefaultTrainingFunctionality:
         model: FusionModel,
         stage: TrainingStage,
         prefix: str = "",
+        data_labels: Optional[Sequence[str]] = None,
     ):
+        logger = get_logger()
         if stage == TrainingStage.train and not args.training_args.eval_training:
             return
 
-        labels = model.labels if hasattr(model, "labels") else None
+        if data_labels is not None:
+            num_labels_in_model = (
+                model.config.num_labels if hasattr(model.config, "num_labels") else None
+            )
+            assert num_labels_in_model == len(data_labels), (
+                f"Number of labels in model ({num_labels_in_model}) "
+                f"does not match number of labels in data ({len(data_labels)})"
+            )
+
+        # logger.info(
+        #     f"Initializing metrics for stage={stage} with config: {pretty_print_dict(args.training_args.metric_args)}"
+        # )
         metrics = MetricsFactory.initialize_stage_metrics(
             metric_args=args.training_args.metric_args,
             model_task=args.model_args.model_task,
-            labels=labels,
+            labels=data_labels,
         )
 
         if metrics[stage] is not None:
@@ -800,6 +827,7 @@ class DefaultTrainingFunctionality:
         )
         from torch.optim.lr_scheduler import ExponentialLR, MultiStepLR, StepLR
 
+        logger = get_logger()
         for k, inner_sch in training_sch_manager.lr_schedulers.items():
             if inner_sch is None:
                 continue
@@ -807,13 +835,18 @@ class DefaultTrainingFunctionality:
             warmup_duration = cls._get_warmup_steps(args, train_dataloader)
             if warmup_duration > 0:
                 if isinstance(inner_sch, (StepLR, MultiStepLR)):
+                    logger.info(
+                        f"Initialized lr scheduler {inner_sch.__class__.__name__} with warmup. "
+                        f"Number of warmup steps = {warmup_duration}. Warmup  epochs = {args.training_args.warmup_ratio}. "
+                        "Warmup updates are triggered per optimizer steps whereas the scheduler updates are triggered per epoch."
+                    )
                     sch = create_lr_scheduler_with_warmup(
                         inner_sch,
                         warmup_start_value=0.0,
                         warmup_duration=warmup_duration,
                     )
 
-                    # we want warmup on steps and step_lr on epochs, so we create two events first for steps
+                    # we want warmup on optimizer update steps and step_lr on epochs, so we create two events first for steps
                     # and then for epochs
                     # Trigger scheduler on iteration_started events before reaching warmup_duration
                     combined_events = OptimizerEvents.OPTIMIZER_STEP_CALLED(
@@ -834,6 +867,11 @@ class DefaultTrainingFunctionality:
                     # update scheduler in dict
                     training_sch_manager.lr_schedulers[k] = sch
                 elif isinstance(inner_sch, ReduceLROnPlateauScheduler):
+                    logger.info(
+                        f"Initialized lr scheduler {inner_sch.__class__.__name__} with warmup. "
+                        f"Number of warmup steps = {warmup_duration}. Warmup  epochs = {args.training_args.warmup_ratio}. "
+                        "Warmup updates are triggered per optimizer steps whereas the scheduler updates are triggered per validation step."
+                    )
                     # we want warmup on steps and step_lr on epochs, so we create two events first for steps
                     # and then for epochs
                     sch = create_lr_scheduler_with_warmup(
@@ -862,6 +900,11 @@ class DefaultTrainingFunctionality:
                     # update scheduler in dict
                     training_sch_manager.lr_schedulers[k] = sch
                 else:
+                    logger.info(
+                        f"Initialized lr scheduler {inner_sch.__class__.__name__} with warmup. "
+                        f"Number of warmup steps = {warmup_duration}. Warmup  epochs = {args.training_args.warmup_ratio}. "
+                        "Both warmup updates and the scheduler updates are triggered per optimizer step."
+                    )
                     sch = create_lr_scheduler_with_warmup(
                         inner_sch,
                         warmup_start_value=0.0,
@@ -882,11 +925,20 @@ class DefaultTrainingFunctionality:
 
                 # update scheduler in dict
                 if isinstance(inner_sch, (StepLR, MultiStepLR, ExponentialLR)):
+                    logger.info(
+                        f"Initialized lr scheduler {inner_sch.__class__.__name__} with warmup. Scheduler updates are triggered per epoch. "
+                    )
                     training_engine.add_event_handler(Events.EPOCH_STARTED, sch)
                 elif isinstance(inner_sch, ReduceLROnPlateauScheduler):
+                    logger.info(
+                        f"Initialized lr scheduler {inner_sch.__class__.__name__} with warmup. Scheduler updates are triggered per validation step. "
+                    )
                     # inner_sch.trainer = training_engine
                     validation_engine.add_event_handler(Events.COMPLETED, sch)
                 else:
+                    logger.info(
+                        f"Initialized lr scheduler {inner_sch.__class__.__name__} with warmup. Scheduler updates are triggered per optimizer step. "
+                    )
                     training_engine.add_event_handler(
                         OptimizerEvents.OPTIMIZER_STEP_CALLED, sch
                     )
@@ -1322,6 +1374,7 @@ class DefaultTrainingFunctionality:
         do_val: bool = True,
         checkpoint_state_dict_extras: dict = {},
         checkpoint_class=Checkpoint,
+        data_labels: Optional[Sequence[str]] = None,
     ) -> None:
         import ignite.distributed as idist
 
@@ -1338,7 +1391,11 @@ class DefaultTrainingFunctionality:
             args=args, training_engine=training_engine, model=model
         )
         cls.configure_metrics(
-            args=args, engine=training_engine, model=model, stage=TrainingStage.train
+            args=args,
+            engine=training_engine,
+            model=model,
+            stage=TrainingStage.train,
+            data_labels=data_labels,
         )
         cls.configure_wd_schedulers(
             args=args,
@@ -1372,6 +1429,7 @@ class DefaultTrainingFunctionality:
                 engine=validation_engine,
                 model=model,
                 stage=TrainingStage.validation,
+                data_labels=data_labels,
             )
             cls.configure_lr_schedulers(
                 args=args,
@@ -1438,6 +1496,7 @@ class DefaultTrainingFunctionality:
         tb_logger: Optional[TensorboardLogger] = None,
         checkpoint_type: str = "last",
         load_checkpoint: bool = True,
+        data_labels: Optional[Sequence[str]] = None,
     ) -> None:
         from pathlib import Path
 
@@ -1483,6 +1542,7 @@ class DefaultTrainingFunctionality:
             model=model,
             stage=TrainingStage.test,
             prefix=checkpoint_type,
+            data_labels=data_labels,
         )
         if idist.get_rank() == 0:
             cls.configure_progress_bars(
@@ -1523,6 +1583,7 @@ class DefaultTrainingFunctionality:
         prediction_engine: Engine,
         model: FusionModel,
         tb_logger: Optional[TensorboardLogger] = None,
+        data_labels: Optional[Sequence[str]] = None,
     ) -> None:
         pass
 
@@ -1535,6 +1596,7 @@ class DefaultTrainingFunctionality:
             engine=prediction_engine,
             model=model,
             stage=TrainingStage.predict,
+            data_labels=data_labels,
         )
         if idist.get_rank() == 0:
             cls.configure_progress_bars(
@@ -1585,6 +1647,7 @@ class DefaultTrainingFunctionality:
         device,
         do_val=True,
         checkpoint_state_dict_extras={},
+        data_labels: Optional[Sequence[str]] = None,
     ):
         # setup training engine
         training_engine = cls.initialize_training_engine(
@@ -1629,6 +1692,7 @@ class DefaultTrainingFunctionality:
             val_dataloader=val_dataloader,
             do_val=do_val,
             checkpoint_state_dict_extras=checkpoint_state_dict_extras,
+            data_labels=data_labels,
         )
 
         # visualization_engine is just another evaluation engine
@@ -1662,6 +1726,7 @@ class DefaultTrainingFunctionality:
         tb_logger,
         device,
         checkpoint_type: str = "last",
+        data_labels: Optional[Sequence[str]] = None,
     ):
         # setup training engine
         test_engine = cls.initialize_test_engine(
@@ -1676,6 +1741,7 @@ class DefaultTrainingFunctionality:
             output_dir=output_dir,
             tb_logger=tb_logger,
             checkpoint_type=checkpoint_type,
+            data_labels=data_labels,
         )
 
         return test_engine
@@ -1691,6 +1757,7 @@ class DefaultTrainingFunctionality:
         device,
         checkpoint_type: str = "last",
         keys_to_device: list = [],
+        data_labels: Optional[Sequence[str]] = None,
     ):
         # setup training engine
         prediction_engine = cls.initialize_prediction_engine(
@@ -1707,6 +1774,7 @@ class DefaultTrainingFunctionality:
             prediction_engine=prediction_engine,
             model=model,
             tb_logger=tb_logger,
+            data_labels=data_labels,
         )
 
         return prediction_engine

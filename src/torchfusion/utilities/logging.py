@@ -24,7 +24,9 @@ def log_basic_info(args: Mapping, log_args=False, quiet=True):
             # torch.backends.cudnn can not be pickled with hvd spawning procs
             from torch.backends import cudnn
 
-            logger.info(f"GPU Device: {torch.cuda.get_device_name(idist.get_local_rank())}")
+            logger.info(
+                f"GPU Device: {torch.cuda.get_device_name(idist.get_local_rank())}"
+            )
             logger.info(f"CUDA version: {torch.version.cuda}")
             logger.info(f"CUDNN version: {cudnn.version()}")
         else:
@@ -101,9 +103,7 @@ class LoggingHandler:
 
             try:
                 # this isdefault hydra config path for logging
-                filepath = (
-                    f"{LoggingHandler.hydra_config.runtime.output_dir}/{LoggingHandler.hydra_config.job.name}.log"
-                )
+                filepath = f"{LoggingHandler.hydra_config.runtime.output_dir}/{LoggingHandler.hydra_config.job.name}.log"
                 fh = logging.FileHandler(filepath)
                 fh.setLevel(level)
                 fh.setFormatter(formatter)
@@ -120,7 +120,13 @@ class LoggingHandler:
         return logger
 
 
-def get_logger(name: str = DEFAULT_LOGGER_NAME, hydra_config: DictConfig = None, reset: bool = False) -> logging.Logger:
+def get_logger(
+    name: str = DEFAULT_LOGGER_NAME,
+    hydra_config: DictConfig = None,
+    reset: bool = False,
+) -> logging.Logger:
     if hydra_config is not None:
         reset = True
-    return LoggingHandler.setup_logger(name, hydra_config=hydra_config, level=logging.INFO, reset=reset)
+    return LoggingHandler.setup_logger(
+        name, hydra_config=hydra_config, level=logging.INFO, reset=reset
+    )

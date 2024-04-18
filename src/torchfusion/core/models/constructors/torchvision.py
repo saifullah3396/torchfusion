@@ -6,13 +6,14 @@ from dataclasses import dataclass, field
 import torch
 
 from torchfusion.core.models.constructors.base import ModelConstructor
+from torchfusion.core.models.tasks import ModelTasks
 
 
 @dataclass
 class TorchvisionModelConstructor(ModelConstructor):
     def __post_init__(self):
         assert self.model_task in [
-            "image_classification",
+            ModelTasks.image_classification,
         ], f"Task {self.model_task} not supported for TorchvisionModelConstructor."
 
     def _init_model(
@@ -49,5 +50,9 @@ class TorchvisionModelConstructor(ModelConstructor):
                 raise ValueError(
                     f"No classification head replacer defined for the model {self.model_name}."
                 )
+        else:
+            self._logger.warning(
+                "No num_labels provided. Classification head will not be replaced."
+            )
 
         return model

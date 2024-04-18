@@ -6,13 +6,14 @@ import timm
 import torch
 
 from torchfusion.core.models.constructors.base import ModelConstructor
+from torchfusion.core.models.tasks import ModelTasks
 
 
 @dataclass
 class TimmModelConstructor(ModelConstructor):
     def __post_init__(self):
         assert self.model_task in [
-            "image_classification",
+            ModelTasks.image_classification,
         ], f"Task {self.model_task} not supported for TimmModelConstructor."
 
     def _init_model(self, **kwargs) -> torch.Any:

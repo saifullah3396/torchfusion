@@ -1,0 +1,5 @@
+# @package _global_
+defaults:
+  - override /default_args/train_val_sampler@args.train_val_sampler: random_split
+  
+num_labels: '???'

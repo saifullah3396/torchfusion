@@ -141,6 +141,7 @@ class DiffusionTrainingFunctionality(DefaultTrainingFunctionality):
         cls,
         args,
         model,
+        data_labels,
         opt_manager,
         training_sch_manager,
         train_dataloader,
@@ -156,6 +157,7 @@ class DiffusionTrainingFunctionality(DefaultTrainingFunctionality):
         ) = DefaultTrainingFunctionality.setup_training_engine(
             args=args,
             model=model,
+            data_labels=data_labels,
             opt_manager=opt_manager,
             training_sch_manager=training_sch_manager,
             train_dataloader=train_dataloader,

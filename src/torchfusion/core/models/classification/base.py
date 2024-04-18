@@ -1,5 +1,8 @@
+import dataclasses
+import json
 from abc import abstractmethod
 from dataclasses import dataclass, is_dataclass
+from textwrap import indent
 from typing import Optional
 
 import torch
@@ -33,12 +36,9 @@ class FusionModelForClassification(FusionModel):
     ):
         super().__init__(*args, **kwargs)
         self._logger.info(
-            "Initialized the model with data labels: {}".format(self.labels)
-        )
-
-        # see if dataset features is not None, meaning a huggingface dataset is available with said features
-        self._logger.info(
-            f"Number of target labels assigned for the model = {self.config.num_labels}"
+            "Initializing the model with the following config: {}".format(
+                json.dumps(dataclasses.asdict(self.config), indent=4)
+            )
         )
 
     @abstractmethod
@@ -48,6 +48,7 @@ class FusionModelForClassification(FusionModel):
         strict: bool = False,
         model_constructor: Optional[dict] = None,
         model_constructor_args: Optional[dict] = None,
+        num_labels: Optional[int] = None,
     ):
         pass
 
@@ -61,6 +62,7 @@ class FusionModelForClassification(FusionModel):
             strict=strict,
             model_constructor=self.config.model_constructor,
             model_constructor_args=self.config.model_constructor_args,
+            num_labels=self.config.num_labels,
         )
 
         # initialize classification related stuff
@@ -71,7 +73,8 @@ class FusionModelForClassification(FusionModel):
         self.mixup_fn = None
         if self._SUPPORTS_CUTMIX and self.training_args.cutmixup_args is not None:
             self.mixup_fn = self.training_args.cutmixup_args.get_fn(
-                num_classes=self.num_labels, smoothing=self.training_args.smoothing
+                num_classes=self.config.num_labels,
+                smoothing=self.training_args.smoothing,
             )
 
         # setup loss accordingly if mixup, or label smoothing is required

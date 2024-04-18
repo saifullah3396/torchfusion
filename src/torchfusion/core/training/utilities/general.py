@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import dataclasses
+import json
 from typing import TYPE_CHECKING, Tuple
 
 import ignite.distributed as idist
@@ -253,7 +255,6 @@ def print_transforms(tf, title):
 
 
 def print_tf_from_loader(dataloader, stage=TrainingStage.train):
-    logger = get_logger()
     tf = (
         dataloader.dataset.dataset._transforms
         if isinstance(dataloader.dataset, Subset)
@@ -261,5 +262,8 @@ def print_tf_from_loader(dataloader, stage=TrainingStage.train):
     )
 
     if tf is not None:
-        logger.info("Final sanity check... Validation transforms:")
         print_transform(tf)
+
+
+def pretty_print_dict(x):
+    return json.dumps(x, default=lambda o: getattr(o, "__dict__", str(o)), indent=4)

@@ -67,11 +67,15 @@ class LRSchedulerFactory:
         elif scheduler_args.name == LRSchedulerType.COSINE_ANNEALING_LR:  # tested
             if not scheduler_args.restarts:
                 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-                    optimizer, num_training_steps, **scheduler_args.params
+                    optimizer,
+                    num_training_steps - num_warmup_steps,
+                    **scheduler_args.params,
                 )
             else:
                 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-                    optimizer, num_training_steps // num_epochs, **scheduler_args.params
+                    optimizer,
+                    num_training_steps // num_epochs - num_warmup_steps,
+                    **scheduler_args.params,
                 )
         elif scheduler_args.name == LRSchedulerType.CYCLIC_LR:  # not tested
             scheduler = torch.optim.lr_scheduler.CyclicLR(

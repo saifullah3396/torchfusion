@@ -19,8 +19,10 @@ hydra:
 
 # data loader args
 args:
+  data_args:
+    dataset_config_name: ${dataset_config_name}
   data_loader_args:
     per_device_train_batch_size: 16
     per_device_eval_batch_size: 16
-    dataloader_num_workers: 0
+    dataloader_num_workers: 4
     shuffle_data: False # this only applies to train dataloader

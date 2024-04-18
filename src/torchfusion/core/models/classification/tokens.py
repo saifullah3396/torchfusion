@@ -42,10 +42,13 @@ class FusionModelForTokenClassification(FusionModelForClassification):
         self,
         checkpoint: Optional[str] = None,
         strict: bool = False,
+        model_constructor: Optional[dict] = None,
+        model_constructor_args: Optional[dict] = None,
+        num_labels: Optional[int] = None,
     ):
         model_constructor = ModelConstructorFactory.create(
-            name=self.config.model_constructor,
-            kwargs=self.config.model_constructor_args,
+            name=model_constructor,
+            kwargs=model_constructor_args,
         )
         assert isinstance(
             model_constructor,
@@ -54,7 +57,9 @@ class FusionModelForTokenClassification(FusionModelForClassification):
             f"Model constructor must be of type TransformersModelConstructor. "
             f"Got {type(model_constructor)}"
         )
-        return model_constructor(self.num_labels, checkpoint=checkpoint, strict=strict)
+        return model_constructor(
+            checkpoint=checkpoint, strict=strict, num_labels=num_labels
+        )
 
     def _build_model(
         self,

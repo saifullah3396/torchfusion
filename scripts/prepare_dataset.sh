@@ -40,4 +40,4 @@ while [[ $# -gt 0 ]]; do
 done
 
 set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
-python3 -W ignore $SCRIPT_DIR/../src/torchfusion/runners/train.py --config-path ../../../cfg/$CFG_ROOT --config-name train "${@:1}"
+python3 $SCRIPT_DIR/../src/torchfusion/runners/prepare_dataset.py --config-path ../../../cfg/$CFG_ROOT --config-name prepare_dataset "${@:1}"

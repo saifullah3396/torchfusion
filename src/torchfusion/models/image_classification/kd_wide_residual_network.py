@@ -133,7 +133,7 @@ class WideResidualNetwork(nn.Module):
             int(32 * width),
             int(64 * width),
         ]
-        self.num_labels = num_labels
+        self.config.num_labels = num_labels
         self.drop_rate = drop_rate
         # The wide residual network assigns 4 modules outside the GroupBlock modules.
         # There exist three GroupBlock modules and each one has depth of twice the number of its blocks.

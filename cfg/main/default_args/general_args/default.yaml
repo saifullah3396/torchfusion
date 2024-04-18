@@ -4,5 +4,5 @@ do_test: true
 do_val: true
 do_train: true
 n_devices: 1
-root_output_dir: ${oc.env:TORCH_FUSION_OUTPUT_DIR}/output/
+root_output_dir: ${oc.env:TORCH_FUSION_OUTPUT_DIR}/
 seed: 42

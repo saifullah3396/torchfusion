@@ -92,7 +92,10 @@ class FusionSchedulersManager:
         if idist.get_rank() == 0:
             # print information
             if self._lr_schedulers is not None:
-                msg = f"Configured learning rate schedulers:\n"
+                msg = f"Configured learning rate schedulers: "
+                msg += f"total_training_steps={self._trainer.total_training_steps} "
+                msg += f"warmup_steps={self._trainer.warmup_steps} "
+                msg += f"max_epochs={self._args.training_args.max_epochs}\n"
                 for k, v in self._lr_schedulers.items():
                     msg += f"{k}:"
                     msg += " " * 4 + v.__class__.__name__ + "\n"

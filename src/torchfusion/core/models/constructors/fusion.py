@@ -16,6 +16,8 @@ class FusionModelConstructor(ModelConstructor):
         super().__post_init__()
         assert self.model_task in [
             ModelTasks.image_classification,
+            ModelTasks.token_classification,
+            ModelTasks.gan,
             ModelTasks.autoencoding,
         ], f"Task {self.model_task} not supported for FusionModelConstructor."
 

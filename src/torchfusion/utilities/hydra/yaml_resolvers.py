@@ -1,5 +1,5 @@
 # my_app.py
-from omegaconf import ListConfig, OmegaConf
+from omegaconf import DictConfig, ListConfig, OmegaConf
 
 
 def resolve_dir_name(input: str) -> str:
@@ -13,28 +13,20 @@ def resolve_dir_name(input: str) -> str:
     return ret
 
 
-def dir_name_from_overrides(overrides: ListConfig) -> str:
+def dir_name_from_overrides(overrides: ListConfig, filter: DictConfig) -> str:
     task_overrides: ListConfig = overrides.task
     overrides_filtered = []
     for override in task_overrides:
-        ignore = False
-        for key in [
-            "experiment",
-            "analysis",
-            "do_train",
-            "do_test",
-            "da_val",
-            "args/data_args",
-            "args/model_args",
-            "n_splits",
-            "n_devices"
-        ]:
-            if key in override:  # ignore the experiment overrides
-                ignore = True
-        if not ignore:
+        output_key_for_override = None
+        for key, target_key in filter.items():
+            if key in override:
+                output_key_for_override = target_key
+                break
+        if output_key_for_override is not None:
             key, value = override.split("=")
-            key = key.split(".")[-1]
-            overrides_filtered.append(f"{key}={value}")
+            # key = key.split(".")[-1]
+            # key = "_".join([k[:3] for k in key.split("_")])
+            overrides_filtered.append(f"{output_key_for_override}={value}")
     ret: str = "_".join(overrides_filtered)
     ret = ret.replace("{", "")
     ret = ret.replace("}", "")
@@ -46,6 +38,7 @@ def dir_name_from_overrides(overrides: ListConfig) -> str:
     if ret == "":
         return "default"
     return ret
+
 
 def resolve_tuple(*args):
     return tuple(args)

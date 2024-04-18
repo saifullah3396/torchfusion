@@ -9,6 +9,7 @@ from torchfusion.core.data.utilities.containers import MetricsDict
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.models.tasks import ModelTasks
 from torchfusion.core.training.metrics.seqeval import create_seqeval_metric
+from torchfusion.core.training.utilities.general import pretty_print_dict
 from torchfusion.utilities.logging import get_logger
 
 
@@ -38,7 +39,6 @@ class MetricsFactory:
     def initialize_stage_metrics(metric_args, model_task, labels=None):
         metrics = {}
         logger = get_logger()
-        logger.info(f"Initializing metrics with config: {metric_args}")
         for metric_config in metric_args:
             assert isinstance(metric_config, ClassInitializerArgs), (
                 f"Metric config must be of type {ClassInitializerArgs}. "
@@ -58,7 +58,10 @@ class MetricsFactory:
     @staticmethod
     def create_metric(metric_name: str, metric_kwargs: dict, model_task: str, labels):
         logger = get_logger()
-        if model_task in ["image_classification", "sequence_classification"]:
+        if model_task in [
+            ModelTasks.image_classification,
+            ModelTasks.sequence_classification,
+        ]:
             if metric_name not in [
                 MetricKeys.ACCURACY,
                 MetricKeys.PRECISION,
@@ -69,7 +72,9 @@ class MetricsFactory:
                     f"Metric {metric_name} not supported for model task {model_task}"
                 )
 
-            assert labels is not None, "Labels required for classification tasks"
+            assert (
+                labels is not None
+            ), "Labels required for classification tasks"  # is this really required here?
 
             def output_transform(output):
                 assert (
@@ -84,11 +89,10 @@ class MetricsFactory:
 
             return lambda: get_ignite_metric_class(metric_name)(
                 output_transform=output_transform,
-                # labels=labels,
                 **metric_kwargs,
             )
 
-        elif model_task in ["token_classification"]:
+        elif model_task in [ModelTasks.token_classification]:
             if metric_name not in [
                 MetricKeys.ACCURACY,
                 MetricKeys.PRECISION,

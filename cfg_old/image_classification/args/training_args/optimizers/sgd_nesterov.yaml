@@ -1,9 +1,0 @@
-default:
-  group_params:
-    - group_name: default
-      kwargs:
-        lr: 1.0e-1
-        momentum: 0.9
-        nesterov: true
-        weight_decay: 0.0005
-  name: sgd

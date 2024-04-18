@@ -45,13 +45,13 @@ class FusionModelForImageAutoEncoding(FusionModelForAutoEncoding):
                 DiffusersModelConstructor,
             ),
         ), (
-            f"Model constructor must be of type {(
+            f"""Model constructor must be of type {(
                 FusionModelConstructor,
                 DiffusersModelConstructor,
-            )}. "
+            )}. """
             f"Got {type(model_constructor)}"
         )
-        return model_constructor( checkpoint=checkpoint, strict=strict)
+        return model_constructor(checkpoint=checkpoint, strict=strict)
 
     def _visualization_step(
         self,

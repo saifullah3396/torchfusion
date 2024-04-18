@@ -587,6 +587,11 @@ class MsgpackBasedBuilder(datasets.GeneratorBasedBuilder):
         shard_lengths = []
         total_num_examples, total_num_bytes = 0, 0
 
+        if self.config.preprocess_transforms is not None:
+            logger.info(
+                f"Applying the following transforms to the dataset during caching:\n{self.config.preprocess_transforms}"
+            )
+
         shard_id = 0
         num_examples_progress_update = 0
         try:

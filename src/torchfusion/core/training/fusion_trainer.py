@@ -15,40 +15,35 @@ from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.data_augmentations.general import DictTransform
 from torchfusion.core.data.factory.batch_sampler import BatchSamplerFactory
-from torchfusion.core.data.factory.data_augmentation import \
-    DataAugmentationFactory
-from torchfusion.core.data.factory.train_val_sampler import \
-    TrainValSamplerFactory
-from torchfusion.core.data.utilities.containers import (CollateFnDict,
-                                                        TransformsDict)
+from torchfusion.core.data.factory.data_augmentation import DataAugmentationFactory
+from torchfusion.core.data.factory.train_val_sampler import TrainValSamplerFactory
+from torchfusion.core.data.utilities.containers import CollateFnDict, TransformsDict
 from torchfusion.core.data.utilities.loaders import load_datamodule_from_args
-from torchfusion.core.data.utilities.transforms import \
-    load_transforms_from_config
+from torchfusion.core.data.utilities.transforms import load_transforms_from_config
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.models.tasks import ModelTasks
-from torchfusion.core.training.functionality.default import \
-    DefaultTrainingFunctionality
-from torchfusion.core.training.functionality.diffusion import \
-    DiffusionTrainingFunctionality
-from torchfusion.core.training.functionality.gan import \
-    GANTrainingFunctionality
+from torchfusion.core.training.functionality.default import DefaultTrainingFunctionality
+from torchfusion.core.training.functionality.diffusion import (
+    DiffusionTrainingFunctionality,
+)
+from torchfusion.core.training.functionality.gan import GANTrainingFunctionality
 from torchfusion.core.training.fusion_opt_manager import FusionOptimizerManager
-from torchfusion.core.training.fusion_sch_manager import \
-    FusionSchedulersManager
+from torchfusion.core.training.fusion_sch_manager import FusionSchedulersManager
 from torchfusion.core.training.utilities.constants import TrainingStage
-from torchfusion.core.training.utilities.general import (initialize_torch,
-                                                         print_tf_from_loader,
-                                                         print_transform,
-                                                         print_transforms,
-                                                         setup_logging)
+from torchfusion.core.training.utilities.general import (
+    initialize_torch,
+    print_tf_from_loader,
+    print_transform,
+    print_transforms,
+    setup_logging,
+)
 from torchfusion.utilities.dataclasses.dacite_wrapper import from_dict
 from torchfusion.utilities.logging import get_logger
 
 if TYPE_CHECKING:
     import torch
 
-    from torchfusion.core.data.data_modules.fusion_data_module import \
-        FusionDataModule
+    from torchfusion.core.data.data_modules.fusion_data_module import FusionDataModule
     from torchfusion.core.models.fusion_model import FusionModel
 
 
@@ -117,117 +112,6 @@ class FusionTrainer:
         )
 
         return preprocess_transforms, realtime_transforms
-
-    def _setup_datamodule(
-        self,
-        stage: TrainingStage = TrainingStage.train,
-        preprocess_transforms=None,
-        realtime_transforms=None,
-        override_collate_fns=None,
-    ) -> FusionDataModule:
-        """
-        Initializes the datamodule for training.
-        """
-
-        import ignite.distributed as idist
-
-        from torchfusion.core.data.data_modules.fusion_data_module import \
-            FusionDataModule
-
-        logger = get_logger()
-        logger.info("Setting up datamodule...")
-
-        # setup transforms
-        preprocess_transforms_from_config, realtime_transforms_from_config = (
-            self._setup_transforms()
-        )
-
-        # load from config or override
-        preprocess_transforms = (
-            preprocess_transforms
-            if preprocess_transforms is not None
-            else preprocess_transforms_from_config
-        )
-        realtime_transforms = (
-            realtime_transforms
-            if realtime_transforms is not None
-            else realtime_transforms_from_config
-        )
-
-        # print transforms
-        print_transforms(preprocess_transforms, title="preprocess transforms")
-        print_transforms(realtime_transforms, title="realtime transforms")
-
-        # setup train_val_sampler
-        train_val_sampler = None
-        if (
-            self._args.general_args.do_val
-            and not self._args.data_loader_args.use_test_set_for_val
-            and self._args.train_val_sampler is not None
-        ):
-            # setup train/val sampler
-            train_val_sampler = TrainValSamplerFactory.create(
-                self._args.train_val_sampler.name,
-                self._args.train_val_sampler.kwargs,
-            )
-
-        # initialize data module generator function
-        datamodule = FusionDataModule(
-            dataset_name=self._args.data_args.dataset_name,
-            dataset_cache_dir=self._args.data_args.dataset_cache_dir,
-            dataset_dir=self._args.data_args.dataset_dir,
-            cache_file_name=self._args.data_args.cache_file_name,
-            use_auth_token=self._args.data_args.use_auth_token,
-            dataset_config_name=self._args.data_args.dataset_config_name,
-            preprocess_transforms=preprocess_transforms,
-            realtime_transforms=realtime_transforms,
-            train_val_sampler=train_val_sampler,
-            preprocess_batch_size=self._args.data_args.preprocess_batch_size,
-            dataset_kwargs=self._args.data_args.dataset_kwargs,
-            num_proc=self._args.data_args.num_proc,
-            compute_dataset_statistics=self._args.data_args.compute_dataset_statistics,
-            dataset_statistics_n_samples=self._args.data_args.dataset_statistics_n_samples,
-            stats_filename=self._args.data_args.stats_filename,
-            features_path=self._args.data_args.features_path,
-        )
-
-        # only download dataset on rank 0, all other ranks wait here for rank 0 to load the datasets
-        if self._rank > 0:
-            idist.barrier()
-
-        # we manually prepare data and call setup here so dataset related properties can be initalized.
-        datamodule.setup(
-            stage=stage,
-            do_train=self._args.general_args.do_train,
-            max_train_samples=self._args.data_loader_args.max_train_samples,
-            max_val_samples=self._args.data_loader_args.max_val_samples,
-            max_test_samples=self._args.data_loader_args.max_test_samples,
-            use_test_set_for_val=self._args.data_loader_args.use_test_set_for_val,
-        )
-
-        if self._rank == 0:
-            idist.barrier()
-
-        # print features info
-        dataset_info = datamodule.get_dataset_info()
-        if isinstance(dataset_info, DatasetInfo):
-            self._logger.info(
-                f"Dataset loaded with following features: {dataset_info.features}"
-            )
-            if DataKeys.LABEL in dataset_info.features:
-                self._logger.info(
-                    f"Number of labels = {len(dataset_info.features[DataKeys.LABEL].names)}"
-                )
-        elif isinstance(dataset_info, dict) and "features" in dataset_info:
-            self._logger.info(
-                f"Dataset loaded with following features: {dataset_info['features']}"
-            )
-            if DataKeys.LABEL in dataset_info["features"]:
-                self._logger.info(
-                    f"Number of labels = {len(dataset_info['features'][DataKeys.LABEL])}"
-                )
-
-        return datamodule
 
     def _setup_model(
         self,
@@ -306,13 +190,14 @@ class FusionTrainer:
             tb_logger=self._tb_logger,
             device=self._device,
             do_val=self._args.general_args.do_val,
+            data_labels=self._data_labels,
         )
         training_engine.logger = get_logger()
-        # training_engine.logger.propagate = False
+        training_engine.logger.propagate = False
 
         if validation_engine is not None:
             validation_engine.logger = get_logger()
-            # validation_engine.logger.propagate = False
+            validation_engine.logger.propagate = False
         return training_engine, validation_engine
 
     def _setup_test_engine(self, checkpoint_type: str = "last"):
@@ -325,6 +210,7 @@ class FusionTrainer:
             tb_logger=self._tb_logger,
             device=self._device,
             checkpoint_type=checkpoint_type,
+            data_labels=self._data_labels,
         )
         test_engine.logger = get_logger()
 
@@ -351,6 +237,11 @@ class FusionTrainer:
             self._args.model_args is not None
         ), "Model args must be provided for a training run."
 
+        if self._args.training_args.test_run:
+            self._logger.warning(
+                "This is a test run. This will run one training and evaluation batch and terminate."
+            )
+
         # setup training
         self._setup_training()
 
@@ -358,7 +249,7 @@ class FusionTrainer:
         self._trainer_functionality = self._setup_trainer_functionality()
 
         # setup datamodule
-        self._datamodule = load_datamodule_from_args(
+        self._datamodule, self._data_labels = load_datamodule_from_args(
             args=self._args, stage=TrainingStage.train, rank=self._rank
         )
 
@@ -426,7 +317,10 @@ class FusionTrainer:
                 Events.ITERATION_COMPLETED, terminate_on_iteration_complete
             )
 
+        self._logger.info("Final sanity check... Training transforms:")
         print_tf_from_loader(self._train_dataloader, stage=TrainingStage.train)
+
+        self._logger.info("Final sanity check... Validation transforms:")
         print_tf_from_loader(self._val_dataloader, stage=TrainingStage.validation)
 
         # run training
@@ -458,7 +352,7 @@ class FusionTrainer:
         if self._args.data_loader_args.use_val_set_for_test:
             # setup datamodule (since we need validation dataset, we load the complete datamodule here)
             # setting training stage since validation set is to be used which is loaded in the train stage
-            self._datamodule = load_datamodule_from_args(
+            self._datamodule, self._data_labels = load_datamodule_from_args(
                 args=self._args, stage=TrainingStage.train, rank=self._rank
             )
 
@@ -480,8 +374,9 @@ class FusionTrainer:
             )
         else:
             # setup datamodule (we only load the test dataset here)
-            self._datamodule = self._setup_datamodule(stage=TrainingStage.test)
-
+            self._datamodule, self._data_labels = load_datamodule_from_args(
+                args=self._args, stage=TrainingStage.test, rank=self._rank
+            )
             # setup model
             self._model = self._setup_model(
                 summarize=True,
@@ -576,8 +471,8 @@ class FusionTrainer:
             if args.general_args.do_train:
                 # setup logging
                 logger = get_logger(hydra_config=hydra_config)
-                logger.info("Starting torchfusion training script with arguments:")
-                logger.info(args)
+                # logger.info("Starting torchfusion training script with arguments:")
+                # logger.info(args)
 
                 try:
                     import ignite.distributed as idist
@@ -617,8 +512,8 @@ class FusionTrainer:
             if args.general_args.do_train:
                 # setup logging
                 logger = get_logger(hydra_config=hydra_config)
-                logger.info("Starting torchfusion training script with arguments:")
-                logger.info(args)
+                # logger.info("Starting torchfusion training script with arguments:")
+                # logger.info(args)
 
                 try:
                     return cls(args, hydra_config).train()
@@ -643,8 +538,8 @@ class FusionTrainer:
         if args.general_args.do_test:
             # setup logging
             logger = get_logger("init")
-            logger.info("Starting torchfusion testing script with arguments:")
-            logger.info(args)
+            # logger.info("Starting torchfusion testing script with arguments:")
+            # logger.info(args)
 
             try:
                 return cls(args, hydra_config).test()

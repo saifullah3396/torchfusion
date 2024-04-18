@@ -162,26 +162,22 @@ def load_datamodule_from_args(
 
     # print features info
     dataset_info = datamodule.get_dataset_info()
+    data_labels = None
     if isinstance(dataset_info, DatasetInfo):
         logger.info(f"Dataset loaded with following features: {dataset_info.features}")
         if DataKeys.LABEL in dataset_info.features:
             from datasets.features import ClassLabel, Sequence
 
             if isinstance(dataset_info.features[DataKeys.LABEL], ClassLabel):
-                logger.info(
-                    f"Number of labels = {len(dataset_info.features[DataKeys.LABEL])}"
-                )
+                data_labels = dataset_info.features[DataKeys.LABEL].names
             elif isinstance(dataset_info.features[DataKeys.LABEL], Sequence):
-                logger.info(
-                    f"Number of labels = {len(dataset_info.features[DataKeys.LABEL].feature.names)}"
-                )
+                data_labels = dataset_info.features[DataKeys.LABEL].feature.names
     elif isinstance(dataset_info, dict) and "features" in dataset_info:
-        logger.info(
-            f"Dataset loaded with following features: {dataset_info['features']}"
-        )
         if DataKeys.LABEL in dataset_info["features"]:
-            logger.info(
-                f"Number of labels = {len(dataset_info['features'][DataKeys.LABEL])}"
-            )
+            data_labels = dataset_info["features"][DataKeys.LABEL]
 
-    return datamodule
+    logger.info(f"Data labels = {data_labels}")
+    if isinstance(data_labels, list):
+        logger.info(f"Number of labels = {len(data_labels)}")
+
+    return datamodule, data_labels
