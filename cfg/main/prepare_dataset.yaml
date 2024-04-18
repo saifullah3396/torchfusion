@@ -26,3 +26,5 @@ args:
     per_device_eval_batch_size: 16
     dataloader_num_workers: 4
     shuffle_data: False # this only applies to train dataloader
+
+dataset_config_name: default
