@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from torchfusion.utilities.module_import import ModuleLazyImporter
+from torchfusion.core.utilities.module_import import ModuleLazyImporter
 
 
 class DataCacherFactory:

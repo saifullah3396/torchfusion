@@ -8,7 +8,7 @@ import torch
 from transformers import PreTrainedTokenizer
 
 from torchfusion.core.constants import DataKeys
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 
 def pad_sequences(sequences, padding_side, max_length, padding_elem):

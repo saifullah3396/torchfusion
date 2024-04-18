@@ -15,7 +15,7 @@ from torchfusion.analyzer.evaluators.image_reconstruction_evaluator import (
 from torchfusion.core.analyzer.tasks.base import AnalyzerTask
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.training.utilities.tb_logger import FusionTensorboardLogger
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 
 class EvaluateImageReconstruction(AnalyzerTask):

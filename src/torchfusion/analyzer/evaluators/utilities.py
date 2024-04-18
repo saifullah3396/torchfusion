@@ -13,7 +13,7 @@ import torch
 from ignite.engine import Engine
 
 from torchfusion.core.constants import DataKeys
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 if TYPE_CHECKING:
     from torchfusion.analyzer.evaluators.evaluator_base import EvaluatorBase

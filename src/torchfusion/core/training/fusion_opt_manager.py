@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 if TYPE_CHECKING:
     from torchfusion.core.args.args import FusionArguments
@@ -73,7 +73,7 @@ class FusionOptimizerManager:
     def _pretty_print(self):
         import ignite.distributed as idist
 
-        from torchfusion.utilities.general import indent_string
+        from torchfusion.core.utilities.general import indent_string
 
         if idist.get_rank() == 0:
             # print information

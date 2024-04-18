@@ -5,7 +5,7 @@ from torchfusion.core.models.constructors.torchvision import TorchvisionModelCon
 from torchfusion.core.models.constructors.transformers import (
     TransformersModelConstructor,
 )
-from torchfusion.utilities.dataclasses.dacite_wrapper import from_dict
+from torchfusion.core.utilities.dataclasses.dacite_wrapper import from_dict
 
 
 class ModelConstructorFactory:

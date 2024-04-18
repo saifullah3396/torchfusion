@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Union
 
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.text_utils.utilities import get_bbox_center
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 
 class TesseractOCRReader:

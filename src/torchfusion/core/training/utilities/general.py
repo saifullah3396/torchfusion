@@ -10,7 +10,7 @@ from torch.utils.data import Subset
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.data.data_augmentations.general import DictTransform
 from torchfusion.core.training.utilities.constants import TrainingStage
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 if TYPE_CHECKING:
     from ignite.contrib.handlers.base_logger import BaseLogger
@@ -71,7 +71,7 @@ def initialize_torch(args: FusionArguments, seed: int = 0, deterministic: bool =
     import ignite.distributed as idist
     import torch
 
-    from torchfusion.utilities.logging import log_basic_info
+    from torchfusion.core.utilities.logging import log_basic_info
 
     logger = get_logger()
 

@@ -8,7 +8,7 @@ from typing import Optional
 
 from torchfusion.core.args.args_base import ArgumentsBase
 from torchfusion.core.models.args.kd_args import KnowledgeDistillationArguments
-from torchfusion.utilities.module_import import ModuleLazyImporter
+from torchfusion.core.utilities.module_import import ModuleLazyImporter
 
 
 @dataclass
@@ -71,7 +71,7 @@ class ModelArguments(ArgumentsBase):
     def __post_init__(self):
         from torchfusion.core.models.args.fusion_model_config import FusionModelConfig
         from torchfusion.core.models.factory import ModelFactory
-        from torchfusion.utilities.dataclasses.dacite_wrapper import from_dict
+        from torchfusion.core.utilities.dataclasses.dacite_wrapper import from_dict
 
         # if model directory is none set it to name
         if self.model_directory_name is None:

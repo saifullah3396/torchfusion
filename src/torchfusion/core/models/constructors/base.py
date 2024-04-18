@@ -5,7 +5,7 @@ from typing import Any, List, Optional
 from pyparsing import abstractmethod
 
 from torchfusion.core.models.utilities.checkpoints import setup_checkpoint
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 
 @dataclass

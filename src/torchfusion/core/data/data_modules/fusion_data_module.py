@@ -42,8 +42,8 @@ from torchfusion.core.training.utilities.general import (
     pretty_print_dict,
     print_transforms,
 )
-from torchfusion.utilities.logging import get_logger
-from torchfusion.utilities.module_import import ModuleLazyImporter
+from torchfusion.core.utilities.logging import get_logger
+from torchfusion.core.utilities.module_import import ModuleLazyImporter
 
 
 class FusionDataModule(ABC):

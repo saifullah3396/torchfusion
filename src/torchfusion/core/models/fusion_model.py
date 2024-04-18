@@ -19,7 +19,7 @@ from torchfusion.core.models.utilities.ddp_model_proxy import ModuleProxyWrapper
 from torchfusion.core.models.utilities.general import batch_norm_to_group_norm
 from torchfusion.core.training.args.ema import FusionEMAHandler
 from torchfusion.core.training.utilities.constants import TrainingStage
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 
 class FusionModel:

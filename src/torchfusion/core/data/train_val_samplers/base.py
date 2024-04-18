@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from torch.utils.data import Dataset
 
-from torchfusion.utilities.dataclasses.abstract_dataclass import AbstractDataclass
+from torchfusion.core.utilities.dataclasses.abstract_dataclass import AbstractDataclass
 
 
 @dataclass

@@ -4,7 +4,7 @@ import datasets
 
 from torchfusion.core.data.datasets.fusion_dataset_config import FusionDatasetConfig
 from torchfusion.core.data.datasets.msgpack.builder import MsgpackBasedBuilder
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 logger = datasets.logging.get_logger(__name__)
 

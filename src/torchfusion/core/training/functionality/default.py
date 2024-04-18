@@ -35,7 +35,7 @@ from torchfusion.core.training.utilities.general import (
     pretty_print_dict,
 )
 from torchfusion.core.training.utilities.progress_bar import TqdmToLogger
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 if TYPE_CHECKING:
     import torch

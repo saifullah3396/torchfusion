@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Mapping
 
 import torch
 
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 if TYPE_CHECKING:
     import torch

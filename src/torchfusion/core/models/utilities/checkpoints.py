@@ -9,7 +9,7 @@ from fsspec.core import url_to_fs
 from fsspec.implementations.local import AbstractFileSystem
 from torch import nn
 
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 DEFAULT_STATE_DICT_KEY = "state_dict"
 

@@ -10,8 +10,8 @@ from omegaconf import DictConfig, OmegaConf
 
 from torchfusion.core.analyzer.tasks.factory import AnalyzerTaskFactory
 from torchfusion.core.args.args import FusionArguments
-from torchfusion.utilities.dataclasses.dacite_wrapper import from_dict
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.dataclasses.dacite_wrapper import from_dict
+from torchfusion.core.utilities.logging import get_logger
 
 
 class FusionAnalyzer:
@@ -45,7 +45,9 @@ class FusionAnalyzer:
             task.cleanup()
 
     @classmethod
-    def run_diagnostic(cls, local_rank: int, args: FusionArguments, hydra_config: DictConfig):
+    def run_diagnostic(
+        cls, local_rank: int, args: FusionArguments, hydra_config: DictConfig
+    ):
         prefix = f"{local_rank}) "
         print(f"{prefix}Rank={idist.get_rank()}")
         print(f"{prefix}torch version: {torch.version.__version__}")
@@ -72,7 +74,9 @@ class FusionAnalyzer:
                 print(f"{k}: {os.environ[k]}")
 
     @classmethod
-    def analyze_parallel(cls, local_rank: int, args: FusionArguments, hydra_config: DictConfig):
+    def analyze_parallel(
+        cls, local_rank: int, args: FusionArguments, hydra_config: DictConfig
+    ):
         cls.run_diagnostic(local_rank, args, hydra_config)
         return cls(args, hydra_config).analyze(local_rank)
 
@@ -106,7 +110,7 @@ class FusionAnalyzer:
                     with idist.Parallel(
                         backend=args.general_args.backend,
                         nproc_per_node=args.general_args.n_devices,
-                        master_port=port
+                        master_port=port,
                     ) as parallel:
                         return parallel.run(cls.analyze_parallel, args, hydra_config)
                 elif ntasks == int(args.general_args.n_devices):

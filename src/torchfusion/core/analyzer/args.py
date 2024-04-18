@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from typing import List, Mapping, Optional, Union
 
 from torchfusion.core.args.args_base import ArgumentsBase
-from torchfusion.utilities.module_import import ModuleLazyImporter
+from torchfusion.core.utilities.module_import import ModuleLazyImporter
 
 
 @dataclass

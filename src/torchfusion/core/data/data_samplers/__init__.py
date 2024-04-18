@@ -1,4 +1,4 @@
-from torchfusion.utilities.module_import import ModuleLazyImporter
+from torchfusion.core.utilities.module_import import ModuleLazyImporter
 
 _import_structure = {
     "ar_group_batch_sampler": [

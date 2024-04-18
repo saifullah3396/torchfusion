@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from torchfusion.utilities.module_import import ModuleLazyImporter
+from torchfusion.core.utilities.module_import import ModuleLazyImporter
 
 
 class TrainValSamplerFactory:
     @staticmethod
     def create(name: str, kwargs: dict):
-        from torchfusion.utilities.dataclasses.dacite_wrapper import from_dict
+        from torchfusion.core.utilities.dataclasses.dacite_wrapper import from_dict
 
         sampler_class = ModuleLazyImporter.get_train_val_samplers().get(name, None)
         if sampler_class is None:

@@ -2,7 +2,6 @@
 Defines the MNIST dataset.
 """
 
-
 import pickle
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
@@ -13,7 +12,7 @@ from datadings.reader import MsgpackReader
 from datadings.writer import FileWriter
 
 from torchfusion.core.constants import DataKeys
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 
 class DatadingsDataCacher:
@@ -36,11 +35,21 @@ class DatadingsDataCacher:
 
     @property
     def cache_file_path(self):
-        return Path(self._dataset_cache_dir) / self._dataset_name / self._split / f"{self._cache_file_name}.msgpack"
+        return (
+            Path(self._dataset_cache_dir)
+            / self._dataset_name
+            / self._split
+            / f"{self._cache_file_name}.msgpack"
+        )
 
     @property
     def cache_file_metadata(self):
-        return Path(self._dataset_cache_dir) / self._dataset_name / self._split / f"{self._cache_file_name}.metadata"
+        return (
+            Path(self._dataset_cache_dir)
+            / self._dataset_name
+            / self._split
+            / f"{self._cache_file_name}.metadata"
+        )
 
     def _save_dataset_metadata(self, data: pd.DataFrame):
         import pickle
@@ -49,7 +58,10 @@ class DatadingsDataCacher:
             sample = data.iloc[0].to_dict()
         else:
             sample = data[0]
-        dataset_meta = {"size": len(data), "keys": [DataKeys.INDEX, *list(sample.keys())]}
+        dataset_meta = {
+            "size": len(data),
+            "keys": [DataKeys.INDEX, *list(sample.keys())],
+        }
         with open(self.cache_file_metadata, "wb") as f:
             pickle.dump(dataset_meta, f)
 
@@ -80,7 +92,8 @@ class DatadingsDataCacher:
                 )
                 progress_bar = tqdm.tqdm(
                     pool.imap_unordered(
-                        self.sample_preprocessor(preprocess_fn=preprocess_fn), self.sample_generator(data)
+                        self.sample_preprocessor(preprocess_fn=preprocess_fn),
+                        self.sample_generator(data),
                     ),
                     total=len(data),
                 )
@@ -110,7 +123,9 @@ class DatadingsDataCacher:
             exit(1)
 
     def save_to_cache(self, data: pd.DataFrame, preprocess_fn: Callable = None):
-        self._logger.info(f"Saving dataset to cache file {[str(self.cache_file_path)]}...")
+        self._logger.info(
+            f"Saving dataset to cache file {[str(self.cache_file_path)]}..."
+        )
         # make target directory if not available
         if not self.cache_file_path.parent.exists():
             self.cache_file_path.parent.mkdir(parents=True)
@@ -125,7 +140,9 @@ class DatadingsDataCacher:
         return MsgpackReader(self.cache_file_path)
 
     def load_from_cache(self):
-        self._logger.info(f"Loading dataset from cache file {[str(self.cache_file_path)]}...")
+        self._logger.info(
+            f"Loading dataset from cache file {[str(self.cache_file_path)]}..."
+        )
         if self.cache_file_path.exists():
             return MsgpackReader(self.cache_file_path)
 

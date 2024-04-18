@@ -2,7 +2,6 @@
 Defines the factory for DataAugmentation class and its children.
 """
 
-
 from __future__ import annotations
 
 from typing import Type
@@ -10,7 +9,7 @@ from typing import Type
 from torchfusion.core.analyzer.args import AnalyzerArguments
 from torchfusion.core.analyzer.tasks.base import AnalyzerTask
 from torchfusion.core.args.args import FusionArguments
-from torchfusion.utilities.module_import import ModuleLazyImporter
+from torchfusion.core.utilities.module_import import ModuleLazyImporter
 
 
 class AnalyzerTaskFactory:
@@ -32,7 +31,9 @@ class AnalyzerTaskFactory:
         else:
             cls = ModuleLazyImporter.get_analyzer_tasks().get(analyzer_args.task, None)
             if cls is None:
-                raise ValueError(f"Analyzer task [{analyzer_args.task}] is not supported.")
+                raise ValueError(
+                    f"Analyzer task [{analyzer_args.task}] is not supported."
+                )
             cls = cls()
             return cls
 

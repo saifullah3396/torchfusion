@@ -7,7 +7,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from dataclasses import dataclass
 
-from torchfusion.utilities.dataclasses.abstract_dataclass import AbstractDataclass
+from torchfusion.core.utilities.dataclasses.abstract_dataclass import AbstractDataclass
 
 
 @dataclass

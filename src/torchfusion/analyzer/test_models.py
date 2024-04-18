@@ -17,7 +17,7 @@ from torchfusion.core.constants import DataKeys, MetricKeys
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.training.utilities.constants import TrainingStage
 from torchfusion.core.training.utilities.tb_logger import FusionTensorboardLogger
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 
 class TestModels(AnalyzerTask):

@@ -4,8 +4,8 @@ import importlib
 from copy import deepcopy
 
 from torchfusion.core.data.data_augmentations.general import DictTransform
-from torchfusion.utilities.dataclasses.dacite_wrapper import from_dict
-from torchfusion.utilities.module_import import ModuleLazyImporter
+from torchfusion.core.utilities.dataclasses.dacite_wrapper import from_dict
+from torchfusion.core.utilities.module_import import ModuleLazyImporter
 
 
 class DataAugmentationFactory:

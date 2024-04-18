@@ -15,8 +15,8 @@ from torchfusion.core.models.constructors.torchvision import TorchvisionModelCon
 from torchfusion.core.models.constructors.transformers import (
     TransformersModelConstructor,
 )
-from torchfusion.utilities.dataclasses.abstract_dataclass import AbstractDataclass
-from torchfusion.utilities.dataclasses.dacite_wrapper import from_dict
+from torchfusion.core.utilities.dataclasses.abstract_dataclass import AbstractDataclass
+from torchfusion.core.utilities.dataclasses.dacite_wrapper import from_dict
 
 
 @dataclass

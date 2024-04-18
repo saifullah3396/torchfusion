@@ -2,7 +2,7 @@ import dataclasses
 from dataclasses import dataclass, field
 from typing import Optional
 
-from torchfusion.utilities.dataclasses.abstract_dataclass import AbstractDataclass
+from torchfusion.core.utilities.dataclasses.abstract_dataclass import AbstractDataclass
 
 
 @dataclass

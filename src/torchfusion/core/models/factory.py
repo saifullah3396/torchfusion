@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, List, Optional, Type
 
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.models.args.model_args import ModelArguments
-from torchfusion.utilities.module_import import ModuleLazyImporter
+from torchfusion.core.utilities.module_import import ModuleLazyImporter
 
 if TYPE_CHECKING:
     from torchfusion.core.models.fusion_model import FusionModel

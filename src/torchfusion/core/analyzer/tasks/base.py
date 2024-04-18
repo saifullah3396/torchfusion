@@ -35,8 +35,8 @@ from torchfusion.core.training.utilities.general import (
     print_transforms,
     setup_logging,
 )
-from torchfusion.utilities.dataclasses.dacite_wrapper import from_dict
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.dataclasses.dacite_wrapper import from_dict
+from torchfusion.core.utilities.logging import get_logger
 
 
 class AnalyzerTask(ABC):

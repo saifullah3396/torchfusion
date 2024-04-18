@@ -17,7 +17,7 @@ from torchfusion.core.training.functionality.default import (
 )
 from torchfusion.core.training.fusion_opt_manager import FusionOptimizerManager
 from torchfusion.core.training.utilities.constants import GANStage, TrainingStage
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 
 class GANTrainingFunctionality(DefaultTrainingFunctionality):

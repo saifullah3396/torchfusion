@@ -19,7 +19,7 @@ from torchfusion.core.models.utilities.data_collators import BatchToTensorDataCo
 from torchfusion.core.training.utilities.constants import TrainingStage
 from torchfusion.core.training.utilities.general import initialize_torch, setup_logging
 from torchfusion.core.training.utilities.tb_logger import FusionTensorboardLogger
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 EVENT_KEY = "vae_features_computed"
 EVALUATOR_KEY = "vae_features"

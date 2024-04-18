@@ -4,7 +4,7 @@ Defines the base TrainValSampler class for defining training/validation split sa
 
 from dataclasses import dataclass
 
-from torchfusion.utilities.dataclasses.abstract_dataclass import AbstractDataclass
+from torchfusion.core.utilities.dataclasses.abstract_dataclass import AbstractDataclass
 
 
 @dataclass

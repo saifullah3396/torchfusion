@@ -4,7 +4,7 @@ from torch.utils.data import Dataset
 from torchvision.datasets import CIFAR10
 
 from torchfusion.core.constants import DataKeys
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 _NAMES = [
     "airplane",

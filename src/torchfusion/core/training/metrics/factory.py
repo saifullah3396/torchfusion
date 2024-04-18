@@ -10,7 +10,7 @@ from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.models.tasks import ModelTasks
 from torchfusion.core.training.metrics.seqeval import create_seqeval_metric
 from torchfusion.core.training.utilities.general import pretty_print_dict
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 
 def f1_score(output_transform):

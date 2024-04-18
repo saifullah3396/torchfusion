@@ -8,7 +8,7 @@ from torchvision.utils import make_grid
 from transformers import PreTrainedTokenizerBase
 
 from torchfusion.core.constants import DataKeys
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 
 def show_images(batch, nmax=16, show=True):

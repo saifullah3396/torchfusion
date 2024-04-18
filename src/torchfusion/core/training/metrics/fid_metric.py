@@ -9,7 +9,7 @@ from ignite.metrics.metric import reinit__is_reduced, sync_all_reduce
 from packaging.version import Version
 from torch import nn
 
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 if Version(torch.__version__) <= Version("1.7.0"):
     torch_outer = torch.ger

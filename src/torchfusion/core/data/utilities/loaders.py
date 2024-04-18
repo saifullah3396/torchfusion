@@ -12,7 +12,7 @@ from torchfusion.core.models.utilities.data_collators import (
 )
 from torchfusion.core.training.utilities.constants import TrainingStage
 from torchfusion.core.training.utilities.general import print_transforms
-from torchfusion.utilities.logging import get_logger
+from torchfusion.core.utilities.logging import get_logger
 
 logger = get_logger()
 
