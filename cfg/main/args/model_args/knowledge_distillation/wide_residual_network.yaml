@@ -7,6 +7,7 @@ remove_lora_layers: false
 return_dict: True
 bypass_params_creation: False 
 model_config:
+  num_labels: 10
   model_constructor: fusion_model
   model_constructor_args:
     model_name: kd_wide_residual_network_student
@@ -18,6 +19,7 @@ model_config:
     checkpoint: null
     checkpoint_state_dict_key: state_dict
 kd_args:
+  num_labels: 10
   temperature: 2.0
   knowledge_distillation_factor: 1.0
   variational_information_distillation_factor: 0.1

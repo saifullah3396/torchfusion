@@ -7,6 +7,7 @@ remove_lora_layers: false
 return_dict: True
 bypass_params_creation: False 
 model_config:
+  num_labels: 10
   model_constructor: fusion_model
   model_constructor_args:
     model_name: toy_model_cifar10

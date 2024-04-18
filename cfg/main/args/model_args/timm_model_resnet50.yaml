@@ -7,10 +7,11 @@ remove_lora_layers: false
 return_dict: True
 bypass_params_creation: False 
 model_config:
+  num_labels: 10
   model_constructor: timm
   model_constructor_args:
     model_name: resnet50
     init_args: {}
-    pretrained: False
-    checkpoint: /home/ataraxia/torchfusion/output/output/run/image_classification/cifar10_rain/Cifar10_fusion_model_resnet50/+run-train_model/checkpoints/checkpoint_1.pt
-    checkpoint_state_dict_key: model
+    pretrained: True
+    checkpoint: null
+    checkpoint_state_dict_key: state_dict

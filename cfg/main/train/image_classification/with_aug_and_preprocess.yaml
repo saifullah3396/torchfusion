@@ -9,7 +9,10 @@ defaults:
 args:
   data_args:
     cache_file_name: cached_${preprocess_image_size_x}x${preprocess_image_size_y}
-    
+  model_args:
+    model_config:
+      num_labels: ${num_labels}
+
 # data preprocessing args
 preprocess_image_size_x: 1024 # 1024, 512, 256, etc
 preprocess_image_size_y: 1024 # 1024, 512, 256, etc

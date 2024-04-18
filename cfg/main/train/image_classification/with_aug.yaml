@@ -4,6 +4,11 @@ defaults:
   - override /default_args/eval_realtime_augs@args.eval_realtime_augs: basic_image_aug
   - override /default_args/train_val_sampler@args.train_val_sampler: random_split
 
+args:
+  model_args:
+    model_config:
+      num_labels: ${num_labels}
+
 # data preprocessing args
 image_size_x: 224
 image_size_y: 224

@@ -7,6 +7,7 @@ remove_lora_layers: false
 return_dict: True
 bypass_params_creation: False 
 model_config:
+  num_labels: 10
   model_constructor: transformers
   model_constructor_args:
     model_name: google/vit-base-patch16-224

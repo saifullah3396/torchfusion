@@ -2,4 +2,9 @@
 defaults:
   - override /default_args/train_val_sampler@args.train_val_sampler: random_split
   
+args:
+  model_args:
+    model_config:
+      num_labels: ${num_labels}
+      
 num_labels: '???'

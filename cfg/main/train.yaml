@@ -39,6 +39,11 @@ args:
     test_run: ${test_run}
     eval_on_start: True
     eval_every_n_epochs: 1
+  model_args:
+    model_config:
+      model_constructor_args:
+        checkpoint: ${checkpoint}
+        checkpoint_state_dict_key: ${checkpoint_state_dict_key}
 
 # general args
 do_train: True
@@ -59,6 +64,10 @@ dataloader_num_workers: '???'
 experiment_name: '???'
 max_epochs: '???'
 test_run: '???'
+
+# checkpoint args
+checkpoint: null # model checkpoint path if required
+checkpoint_state_dict_key: state_dict
 
 # here we map each override argument to output directory. This allows clean output directory structure for different arguments passed when sweeping for example
 dir_name_filter: 
