@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Union
 
 import numpy as np
 import PIL
@@ -38,6 +38,9 @@ class DictTransform(DataAugmentation):
                 sample[self.key] = self.transform(sample[self.key])
 
         return sample
+
+    def __repr__(self) -> str:
+        return f"DictTransform(key={self.key}, transform={self.transform})"
 
 
 @dataclass

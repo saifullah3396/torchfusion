@@ -1,0 +1,20 @@
+# @package _global_
+defaults:
+  - /args/data_args/dataset_kwargs/tokenizer_config: layoutlmv3
+  - override /default_args/train_realtime_augs@args.train_realtime_augs: basic_image_aug
+  - override /default_args/eval_realtime_augs@args.eval_realtime_augs: basic_image_aug
+
+args:
+  data_args:
+    num_proc: 4
+    dataset_config_name: ${dataset_config_name}
+    cache_file_name: ssl=${segment_level_layout}_seq_len=${seq_len}_stride=${stride}
+    dataset_kwargs:
+      segment_level_layout: ${segment_level_layout}
+
+dataset_config_name: default
+image_size_x: 512
+image_size_y: 512
+segment_level_layout: False
+seq_len: 512
+stride: 128

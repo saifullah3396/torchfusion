@@ -48,5 +48,7 @@
     },
     "python.analysis.extraPaths": [
         "./external/due_benchmark"
-    ]
+    ],
+    "notebook.output.textLineLimit": 200,
+    "notebook.output.scrolling": false
 }

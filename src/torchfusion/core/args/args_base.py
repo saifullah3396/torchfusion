@@ -1,5 +1,5 @@
 import dataclasses
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 from torchfusion.utilities.dataclasses.abstract_dataclass import AbstractDataclass
@@ -40,4 +40,4 @@ class ClassInitializerArgs(ArgumentsBase):
     name: str = ""
 
     # Strategy kwargs
-    kwargs: Optional[dict] = None
+    kwargs: dict = field(default_factory=lambda: {})

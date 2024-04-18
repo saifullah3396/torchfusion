@@ -1,0 +1,8 @@
+# @package _global_
+defaults:
+  - override /default_args/train_realtime_augs@args.train_realtime_augs: basic_image_aug
+  - override /default_args/eval_realtime_augs@args.eval_realtime_augs: basic_image_aug
+
+# data preprocessing args
+image_size_x: 224
+image_size_y: 224

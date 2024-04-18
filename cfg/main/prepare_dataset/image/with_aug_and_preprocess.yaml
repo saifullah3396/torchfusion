@@ -1,0 +1,16 @@
+# @package _global_
+defaults:
+  - override /default_args/train_preprocess_augs@args.train_preprocess_augs: image_preprocess
+  - override /default_args/eval_preprocess_augs@args.eval_preprocess_augs: image_preprocess
+  - override /default_args/train_realtime_augs@args.train_realtime_augs: basic_image_aug
+  - override /default_args/eval_realtime_augs@args.eval_realtime_augs: basic_image_aug
+
+args:
+  data_args:
+    dataset_config_name: cached_${preprocess_image_size_x}x${preprocess_image_size_y}
+    
+# data preprocessing args
+preprocess_image_size_x: 1024 # 1024, 512, 256, etc
+preprocess_image_size_y: 1024 # 1024, 512, 256, etc
+image_size_x: 224
+image_size_y: 224

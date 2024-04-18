@@ -1,6 +1,0 @@
-- name: PreprocessAug
-  kwargs:
-    rescale_size:
-      - 1024
-      - 1024
-    key: image

@@ -26,7 +26,9 @@ class RandomSplitSampler(TrainValSampler):
     # The train/validation dataset split ratio
     random_split_ratio: float = 0.8
 
-    def __call__(self, train_dataset: typing.Union[HFDataset, TorchDataset]) -> typing.Tuple[DataLoader, DataLoader]:
+    def __call__(
+        self, train_dataset: typing.Union[HFDataset, TorchDataset]
+    ) -> typing.Tuple[DataLoader, DataLoader]:
         """
         Takes the training dataset as input and returns split train / validation
         sets based on the split ratio.
@@ -44,12 +46,15 @@ class RandomSplitSampler(TrainValSampler):
             from torch.utils.data.dataset import random_split
 
             train_dataset_size = len(train_dataset)
-            val_dataset_size = int(train_dataset_size * round(1.0 - self.random_split_ratio, 2))
+            val_dataset_size = int(
+                train_dataset_size * round(1.0 - self.random_split_ratio, 2)
+            )
             train_set, val_set = random_split(
                 train_dataset,
                 [train_dataset_size - val_dataset_size, val_dataset_size],
                 generator=torch.Generator().manual_seed(self.seed),
             )
+
             train_set.info = train_dataset.info
             val_set.info = train_dataset.info
             return train_set, val_set

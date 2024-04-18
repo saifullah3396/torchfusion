@@ -1,0 +1,7 @@
+defaults:
+- default
+  - dataset_kwargs/tokenizer_config: layoutlmv3
+
+dataset_name: WildReceipts
+dataset_dir: ${oc.env:DATA_ROOT_DIR}/documents/wildreceipt/
+dataset_cache_dir: ${args.data_args.dataset_dir}/huggingface/

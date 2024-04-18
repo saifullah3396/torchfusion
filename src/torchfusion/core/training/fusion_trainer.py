@@ -6,39 +6,49 @@ from typing import TYPE_CHECKING, Optional, Type
 
 import ignite.distributed as idist
 import torch
+from datasets import DatasetInfo
+from numpy import isin
 from omegaconf import DictConfig, OmegaConf
 from torch.utils.data import Subset
 
 from torchfusion.core.args.args import FusionArguments
+from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.data_augmentations.general import DictTransform
 from torchfusion.core.data.factory.batch_sampler import BatchSamplerFactory
-from torchfusion.core.data.factory.data_augmentation import DataAugmentationFactory
-from torchfusion.core.data.factory.train_val_sampler import TrainValSamplerFactory
-from torchfusion.core.data.utilities.containers import TransformsDict
+from torchfusion.core.data.factory.data_augmentation import \
+    DataAugmentationFactory
+from torchfusion.core.data.factory.train_val_sampler import \
+    TrainValSamplerFactory
+from torchfusion.core.data.utilities.containers import (CollateFnDict,
+                                                        TransformsDict)
+from torchfusion.core.data.utilities.loaders import load_datamodule_from_args
+from torchfusion.core.data.utilities.transforms import \
+    load_transforms_from_config
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.models.tasks import ModelTasks
-from torchfusion.core.training.functionality.default import DefaultTrainingFunctionality
-from torchfusion.core.training.functionality.diffusion import (
-    DiffusionTrainingFunctionality,
-)
-from torchfusion.core.training.functionality.gan import GANTrainingFunctionality
+from torchfusion.core.training.functionality.default import \
+    DefaultTrainingFunctionality
+from torchfusion.core.training.functionality.diffusion import \
+    DiffusionTrainingFunctionality
+from torchfusion.core.training.functionality.gan import \
+    GANTrainingFunctionality
 from torchfusion.core.training.fusion_opt_manager import FusionOptimizerManager
-from torchfusion.core.training.fusion_sch_manager import FusionSchedulersManager
+from torchfusion.core.training.fusion_sch_manager import \
+    FusionSchedulersManager
 from torchfusion.core.training.utilities.constants import TrainingStage
-from torchfusion.core.training.utilities.general import (
-    TransformsWrapper,
-    initialize_torch,
-    print_transform,
-    print_transforms,
-    setup_logging,
-)
+from torchfusion.core.training.utilities.general import (initialize_torch,
+                                                         print_tf_from_loader,
+                                                         print_transform,
+                                                         print_transforms,
+                                                         setup_logging)
 from torchfusion.utilities.dataclasses.dacite_wrapper import from_dict
 from torchfusion.utilities.logging import get_logger
 
 if TYPE_CHECKING:
     import torch
 
-    from torchfusion.core.data.data_modules.fusion_data_module import FusionDataModule
+    from torchfusion.core.data.data_modules.fusion_data_module import \
+        FusionDataModule
     from torchfusion.core.models.fusion_model import FusionModel
 
 
@@ -97,51 +107,23 @@ class FusionTrainer:
         )
 
     def _setup_transforms(self):
-        def load_from_args(train_augs, eval_augs):
-            # define data transforms according to the configuration
-            tf = TransformsDict()
-            if train_augs is not None:
-                tf.train = []
-                for aug_args in train_augs:
-                    aug = DataAugmentationFactory.create(
-                        aug_args.name,
-                        aug_args.kwargs,
-                    )
-                    tf.train.append(aug)
-
-            if eval_augs is not None:
-                tf.validation = []
-                tf.test = []
-                for aug_args in eval_augs:
-                    aug = DataAugmentationFactory.create(
-                        aug_args.name,
-                        aug_args.kwargs,
-                    )
-                    tf.validation.append(aug)
-                    tf.test.append(aug)
-
-            # wrap the transforms in a callable class
-            tf.train = TransformsWrapper(tf.train)
-            tf.validation = TransformsWrapper(tf.validation)
-            tf.test = TransformsWrapper(tf.test)
-
-            return tf
-
-        preprocess_transforms = load_from_args(
-            self._args.data_args.train_preprocess_augs,
-            self._args.data_args.eval_preprocess_augs,
+        preprocess_transforms = load_transforms_from_config(
+            self._args.train_preprocess_augs,
+            self._args.eval_preprocess_augs,
         )
-        realtime_transforms = load_from_args(
-            self._args.data_args.train_realtime_augs,
-            self._args.data_args.eval_realtime_augs,
+        realtime_transforms = load_transforms_from_config(
+            self._args.train_realtime_augs,
+            self._args.eval_realtime_augs,
         )
 
-        print_transforms(preprocess_transforms, title="preprocess transforms")
-        print_transforms(realtime_transforms, title="realtime transforms")
         return preprocess_transforms, realtime_transforms
 
     def _setup_datamodule(
-        self, stage: TrainingStage = TrainingStage.train, override_collate_fns=None
+        self,
+        stage: TrainingStage = TrainingStage.train,
+        preprocess_transforms=None,
+        realtime_transforms=None,
+        override_collate_fns=None,
     ) -> FusionDataModule:
         """
         Initializes the datamodule for training.
@@ -149,27 +131,44 @@ class FusionTrainer:
 
         import ignite.distributed as idist
 
-        from torchfusion.core.data.data_modules.fusion_data_module import (
-            FusionDataModule,
-        )
+        from torchfusion.core.data.data_modules.fusion_data_module import \
+            FusionDataModule
 
         logger = get_logger()
         logger.info("Setting up datamodule...")
 
         # setup transforms
-        preprocess_transforms, realtime_transforms = self._setup_transforms()
+        preprocess_transforms_from_config, realtime_transforms_from_config = (
+            self._setup_transforms()
+        )
+
+        # load from config or override
+        preprocess_transforms = (
+            preprocess_transforms
+            if preprocess_transforms is not None
+            else preprocess_transforms_from_config
+        )
+        realtime_transforms = (
+            realtime_transforms
+            if realtime_transforms is not None
+            else realtime_transforms_from_config
+        )
+
+        # print transforms
+        print_transforms(preprocess_transforms, title="preprocess transforms")
+        print_transforms(realtime_transforms, title="realtime transforms")
 
         # setup train_val_sampler
         train_val_sampler = None
         if (
             self._args.general_args.do_val
-            and not self._args.data_args.data_loader_args.use_test_set_for_val
-            and self._args.data_args.train_val_sampler is not None
+            and not self._args.data_loader_args.use_test_set_for_val
+            and self._args.train_val_sampler is not None
         ):
             # setup train/val sampler
             train_val_sampler = TrainValSamplerFactory.create(
-                self._args.data_args.train_val_sampler.name,
-                self._args.data_args.train_val_sampler.kwargs,
+                self._args.train_val_sampler.name,
+                self._args.train_val_sampler.kwargs,
             )
 
         # initialize data module generator function
@@ -180,7 +179,6 @@ class FusionTrainer:
             cache_file_name=self._args.data_args.cache_file_name,
             use_auth_token=self._args.data_args.use_auth_token,
             dataset_config_name=self._args.data_args.dataset_config_name,
-            collate_fns=None,
             preprocess_transforms=preprocess_transforms,
             realtime_transforms=realtime_transforms,
             train_val_sampler=train_val_sampler,
@@ -201,14 +199,33 @@ class FusionTrainer:
         datamodule.setup(
             stage=stage,
             do_train=self._args.general_args.do_train,
-            max_train_samples=self._args.data_args.data_loader_args.max_train_samples,
-            max_val_samples=self._args.data_args.data_loader_args.max_val_samples,
-            max_test_samples=self._args.data_args.data_loader_args.max_test_samples,
-            use_test_set_for_val=self._args.data_args.data_loader_args.use_test_set_for_val,
+            max_train_samples=self._args.data_loader_args.max_train_samples,
+            max_val_samples=self._args.data_loader_args.max_val_samples,
+            max_test_samples=self._args.data_loader_args.max_test_samples,
+            use_test_set_for_val=self._args.data_loader_args.use_test_set_for_val,
         )
 
         if self._rank == 0:
             idist.barrier()
+
+        # print features info
+        dataset_info = datamodule.get_dataset_info()
+        if isinstance(dataset_info, DatasetInfo):
+            self._logger.info(
+                f"Dataset loaded with following features: {dataset_info.features}"
+            )
+            if DataKeys.LABEL in dataset_info.features:
+                self._logger.info(
+                    f"Number of labels = {len(dataset_info.features[DataKeys.LABEL].names)}"
+                )
+        elif isinstance(dataset_info, dict) and "features" in dataset_info:
+            self._logger.info(
+                f"Dataset loaded with following features: {dataset_info['features']}"
+            )
+            if DataKeys.LABEL in dataset_info["features"]:
+                self._logger.info(
+                    f"Number of labels = {len(dataset_info['features'][DataKeys.LABEL])}"
+                )
 
         return datamodule
 
@@ -216,7 +233,6 @@ class FusionTrainer:
         self,
         summarize: bool = False,
         setup_for_train: bool = True,
-        dataset_features: Optional[dict] = None,
         checkpoint: Optional[str] = None,
         strict: bool = False,
     ) -> FusionModel:
@@ -232,7 +248,6 @@ class FusionTrainer:
             self._args,
             checkpoint=checkpoint,
             tb_logger=self._tb_logger,
-            dataset_features=dataset_features,
             strict=strict,
         )
 
@@ -244,7 +259,7 @@ class FusionTrainer:
 
         return model
 
-    def _setup_training(self):
+    def _setup_training(self, setup_tb_logger=True):
         # initialize training
         initialize_torch(
             self._args,
@@ -260,10 +275,14 @@ class FusionTrainer:
 
         # initialize logging directory and tensorboard logger
         self._output_dir, self._tb_logger = setup_logging(
-            output_dir=self._hydra_config.runtime.output_dir
+            output_dir=self._hydra_config.runtime.output_dir,
+            setup_tb_logger=setup_tb_logger,
         )
 
     def _setup_trainer_functionality(self):
+        if self._args.model_args is None:
+            return None
+
         if self._args.model_args.model_task == ModelTasks.gan:
             return GANTrainingFunctionality
         elif self._args.model_args.model_task == ModelTasks.diffusion:
@@ -328,6 +347,10 @@ class FusionTrainer:
         Initializes the training of a model given dataset, and their configurations.
         """
 
+        assert (
+            self._args.model_args is not None
+        ), "Model args must be provided for a training run."
+
         # setup training
         self._setup_training()
 
@@ -335,23 +358,19 @@ class FusionTrainer:
         self._trainer_functionality = self._setup_trainer_functionality()
 
         # setup datamodule
-        self._datamodule = self._setup_datamodule()
+        self._datamodule = load_datamodule_from_args(
+            args=self._args, stage=TrainingStage.train, rank=self._rank
+        )
 
         # setup batch sampler if needed
         batch_sampler_wrapper = BatchSamplerFactory.create(
-            self._args.data_args.data_loader_args.train_batch_sampler.name,
-            **self._args.data_args.data_loader_args.train_batch_sampler.kwargs,
+            self._args.data_loader_args.train_batch_sampler.name,
+            **self._args.data_loader_args.train_batch_sampler.kwargs,
         )
 
-        info = (
-            self._datamodule.train_dataset.dataset.info
-            if isinstance(self._datamodule.train_dataset, Subset)
-            else self._datamodule.train_dataset.info
-        )
         self._model = self._setup_model(
             summarize=True,
             setup_for_train=True,
-            dataset_features=info.features,
         )
 
         # now assign collate fns
@@ -360,17 +379,17 @@ class FusionTrainer:
 
         # setup dataloaders
         self._train_dataloader = self._datamodule.train_dataloader(
-            self._args.data_args.data_loader_args.per_device_train_batch_size,
-            dataloader_num_workers=self._args.data_args.data_loader_args.dataloader_num_workers,
-            pin_memory=self._args.data_args.data_loader_args.pin_memory,
-            shuffle_data=self._args.data_args.data_loader_args.shuffle_data,
-            dataloader_drop_last=self._args.data_args.data_loader_args.dataloader_drop_last,
+            self._args.data_loader_args.per_device_train_batch_size,
+            dataloader_num_workers=self._args.data_loader_args.dataloader_num_workers,
+            pin_memory=self._args.data_loader_args.pin_memory,
+            shuffle_data=self._args.data_loader_args.shuffle_data,
+            dataloader_drop_last=self._args.data_loader_args.dataloader_drop_last,
             batch_sampler_wrapper=batch_sampler_wrapper,
         )
         self._val_dataloader = self._datamodule.val_dataloader(
-            self._args.data_args.data_loader_args.per_device_eval_batch_size,
-            dataloader_num_workers=self._args.data_args.data_loader_args.dataloader_num_workers,
-            pin_memory=self._args.data_args.data_loader_args.pin_memory,
+            self._args.data_loader_args.per_device_eval_batch_size,
+            dataloader_num_workers=self._args.data_loader_args.dataloader_num_workers,
+            pin_memory=self._args.data_loader_args.pin_memory,
         )
 
         # initialize optimizer manager
@@ -407,21 +426,8 @@ class FusionTrainer:
                 Events.ITERATION_COMPLETED, terminate_on_iteration_complete
             )
 
-        # print transforms before training run just for sanity check
-        self._logger.info("Final sanity check... Training transforms:")
-        train_transform = (
-            self._train_dataloader.dataset.dataset._transforms
-            if isinstance(self._train_dataloader.dataset, Subset)
-            else self._train_dataloader.dataset._transforms
-        )
-        print_transform(train_transform)
-        self._logger.info("Final sanity check... Validation transforms:")
-        val_transform = (
-            self._val_dataloader.dataset.dataset._transforms
-            if isinstance(self._val_dataloader.dataset, Subset)
-            else self._val_dataloader.dataset._transforms
-        )
-        print_transform(val_transform)
+        print_tf_from_loader(self._train_dataloader, stage=TrainingStage.train)
+        print_tf_from_loader(self._val_dataloader, stage=TrainingStage.validation)
 
         # run training
         self._training_engine.run(
@@ -449,22 +455,17 @@ class FusionTrainer:
         self._trainer_functionality = self._setup_trainer_functionality()
 
         # setup dataloaders
-        if self._args.data_args.data_loader_args.use_val_set_for_test:
+        if self._args.data_loader_args.use_val_set_for_test:
             # setup datamodule (since we need validation dataset, we load the complete datamodule here)
-            self._datamodule = self._setup_datamodule()
-
-            # get features info
-            info = (
-                self._datamodule.val_dataset.dataset.info
-                if isinstance(self._datamodule.val_dataset, Subset)
-                else self._datamodule.val_dataset.info
+            # setting training stage since validation set is to be used which is loaded in the train stage
+            self._datamodule = load_datamodule_from_args(
+                args=self._args, stage=TrainingStage.train, rank=self._rank
             )
 
             # setup model
             self._model = self._setup_model(
                 summarize=True,
                 setup_for_train=False,
-                dataset_features=info.features,
             )
 
             # now assign collate fns
@@ -473,26 +474,18 @@ class FusionTrainer:
 
             # create dataloader
             self._test_dataloader = self._datamodule.val_dataloader(
-                self._args.data_args.data_loader_args.per_device_eval_batch_size,
-                dataloader_num_workers=self._args.data_args.data_loader_args.dataloader_num_workers,
-                pin_memory=self._args.data_args.data_loader_args.pin_memory,
+                self._args.data_loader_args.per_device_eval_batch_size,
+                dataloader_num_workers=self._args.data_loader_args.dataloader_num_workers,
+                pin_memory=self._args.data_loader_args.pin_memory,
             )
         else:
             # setup datamodule (we only load the test dataset here)
             self._datamodule = self._setup_datamodule(stage=TrainingStage.test)
 
-            # get features info
-            info = (
-                self._datamodule.test_dataset.dataset.info
-                if isinstance(self._datamodule.test_dataset, Subset)
-                else self._datamodule.test_dataset.info
-            )
-
             # setup model
             self._model = self._setup_model(
                 summarize=True,
                 setup_for_train=False,
-                dataset_features=info.features,
             )
 
             # now assign collate fns
@@ -501,19 +494,13 @@ class FusionTrainer:
 
             # setup dataloaders
             self._test_dataloader = self._datamodule.test_dataloader(
-                self._args.data_args.data_loader_args.per_device_eval_batch_size,
-                dataloader_num_workers=self._args.data_args.data_loader_args.dataloader_num_workers,
-                pin_memory=self._args.data_args.data_loader_args.pin_memory,
+                self._args.data_loader_args.per_device_eval_batch_size,
+                dataloader_num_workers=self._args.data_loader_args.dataloader_num_workers,
+                pin_memory=self._args.data_loader_args.pin_memory,
             )
 
         # print transforms before training run just for sanity check
-        self._logger.info("Final sanity check... Testing transforms:")
-        test_transform = (
-            self._test_dataloader.dataset.dataset._transforms
-            if isinstance(self._test_dataloader.dataset, Subset)
-            else self._test_dataloader.dataset._transforms
-        )
-        print_transform(test_transform)
+        print_tf_from_loader(self._test_dataloader, stage=TrainingStage.test)
 
         # setup test engines for different types of model checkpoints
         output_states = {}
@@ -653,18 +640,6 @@ class FusionTrainer:
         # initialize general configuration for script
         cfg = OmegaConf.to_object(cfg)
         args = from_dict(data_class=data_class, data=cfg["args"])
-        if args.general_args.do_test:
-            # setup logging
-            logger = get_logger("init")
-            logger.info("Starting torchfusion testing script with arguments:")
-            logger.info(args)
-
-            try:
-                return cls(args, hydra_config).test()
-            except Exception as e:
-                logging.exception(e)
-            finally:
-                return None
         if args.general_args.do_test:
             # setup logging
             logger = get_logger("init")

@@ -43,8 +43,8 @@ class DataLoaderArguments:
         default_factory=lambda: ClassInitializerArgs()
     )
 
-    # Whether to replace test set for validation set
+    # Whether to replace test set for validation set, this can be good for debugging in some case
     use_test_set_for_val: bool = False
 
-    # Whether to replace validation set for test set
+    # Whether to replace validation set for test set, this can be good for debugging in some case
     use_val_set_for_test: bool = False

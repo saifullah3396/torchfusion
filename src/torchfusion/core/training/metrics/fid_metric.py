@@ -223,7 +223,7 @@ class FID(_BaseInceptionMetric):
         if self._num_examples != self._test_num_examples:
             self._logger.warning(
                 f"The number of examples used in evaluation {self._num_examples} are not equal to the number of examples in dataset statistics {self._test_num_examples}."
-                f"Max validation used for FID are set by args.data_args.data_loader_args.max_val_samples. "
+                f"Max validation used for FID are set by args.data_loader_args.max_val_samples. "
                 f"The total samples usied for original fid statistics computation are set by: args.data_args.dataset_statistics_n_samples."
             )
 

@@ -18,7 +18,7 @@ _import_structure = {
         # "RandomResizedMaskedCrop
     ],
     "advanced": [
-        "PreprocessAug",
+        "ImagePreprocess",
         "BasicImageAug",
         "RandAug",
         "Moco",

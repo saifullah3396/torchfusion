@@ -3,12 +3,14 @@ from dataclasses import dataclass
 
 from torch import nn
 
+from torchfusion.core.models.utilities.data_collators import BatchToTensorDataCollator
+
 
 @dataclass
 class CollateFnDict:
-    train: typing.Optional[typing.Callable] = None
-    validation: typing.Optional[typing.Callable] = None
-    test: typing.Optional[typing.Callable] = None
+    train: typing.Optional[typing.Callable] = BatchToTensorDataCollator()
+    validation: typing.Optional[typing.Callable] = BatchToTensorDataCollator()
+    test: typing.Optional[typing.Callable] = BatchToTensorDataCollator()
 
     def __getitem__(self, name):
         return self.__dict__[name]

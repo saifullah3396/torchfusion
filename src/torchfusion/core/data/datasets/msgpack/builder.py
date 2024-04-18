@@ -600,9 +600,6 @@ class MsgpackBasedBuilder(datasets.GeneratorBasedBuilder):
             try:
                 _time = time.time()
 
-                # process samples in a multithreading environemnt instead
-                pool = ThreadPool(num_proc_per_shard)
-
                 def record_preprocessor(input):
                     key, record = input
                     if self.config.preprocess_transforms is not None:
@@ -614,17 +611,38 @@ class MsgpackBasedBuilder(datasets.GeneratorBasedBuilder):
                     )
                     return key, record
 
-                for key, record in pool.imap(record_preprocessor, generator):
-                    # we do not perform sharding on the go as done in hf arrow builder this is a multiprocessing loop and it might
-                    # mess up the file writing
-                    if not isinstance(key, str):  # msgpack only supports string keys
-                        key = str(key)
-                    writer.write(record, key)
-                    num_examples_progress_update += 1
-                    if time.time() > _time + config.PBAR_REFRESH_TIME_INTERVAL:
-                        _time = time.time()
-                        yield job_id, False, num_examples_progress_update
-                        num_examples_progress_update = 0
+                if num_proc_per_shard > 1:
+                    # process samples in a multithreading environemnt instead
+                    pool = ThreadPool(num_proc_per_shard)
+
+                    for key, record in pool.imap(record_preprocessor, generator):
+                        # we do not perform sharding on the go as done in hf arrow builder this is a multiprocessing loop and it might
+                        # mess up the file writing
+                        if not isinstance(
+                            key, str
+                        ):  # msgpack only supports string keys
+                            key = str(key)
+                        writer.write(record, key)
+                        num_examples_progress_update += 1
+                        if time.time() > _time + config.PBAR_REFRESH_TIME_INTERVAL:
+                            _time = time.time()
+                            yield job_id, False, num_examples_progress_update
+                            num_examples_progress_update = 0
+                else:
+                    for key, record in generator:
+                        key, record = record_preprocessor((key, record))
+                        # we do not perform sharding on the go as done in hf arrow builder this is a multiprocessing loop and it might
+                        # mess up the file writing
+                        if not isinstance(
+                            key, str
+                        ):  # msgpack only supports string keys
+                            key = str(key)
+                        writer.write(record, key)
+                        num_examples_progress_update += 1
+                        if time.time() > _time + config.PBAR_REFRESH_TIME_INTERVAL:
+                            _time = time.time()
+                            yield job_id, False, num_examples_progress_update
+                            num_examples_progress_update = 0
             finally:
                 yield job_id, False, num_examples_progress_update
                 num_shards = shard_id + 1

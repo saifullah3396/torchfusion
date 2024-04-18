@@ -175,6 +175,46 @@ class DueBenchmarkConfig(FusionDatasetConfig):
 # OCRS=(microsoft_cv)
 
 
+def add_imtok_maybe(self, item_dict):
+    """
+    Add image tokens to sample at the end, last text tokens could be removed
+    if there is no room for image tokens
+    """
+    if self.img_conf is None:
+        return item_dict
+    imtok_per_width = self.img_conf["imtok_per_width"]
+    imtok_id = self.img_conf["imtok_id"]
+    if imtok_per_width == 0:
+        return item_dict
+
+    pg_mask = item_dict["seg_data"]["pages"]["masks"]
+    pg_sizes = item_dict["seg_data"]["pages"]["bboxes"]
+    pg_sizes = pg_sizes[pg_mask].tolist()
+
+    bboxes = []
+    cum_height = 0
+    for pgs in pg_sizes:
+        # given that pages are bound together in the vertical direction we need to add page height
+        imtok_bbox = self.get_imtok_bbox(pgs[2], pgs[3], imtok_per_width, cum_height)
+        cum_height += pgs[3]
+        bboxes.append(imtok_bbox)
+
+    bboxes_arr = np.concatenate(bboxes)
+
+    mask = item_dict["attention_mask"]
+    imtok_len = bboxes_arr.shape[0]
+    fill_len = mask.sum()
+    total_len = mask.shape[0]
+
+    start_idx = min(total_len - imtok_len, fill_len)
+    end_idx = start_idx + imtok_len
+    item_dict["attention_mask"][start_idx:end_idx] = True
+    item_dict["input_ids"][start_idx:end_idx] = imtok_id
+    item_dict["seg_data"]["tokens"]["bboxes"][start_idx:end_idx] = bboxes_arr
+
+    return item_dict
+
+
 def validate_image_configuration(target_image_height, target_image_width):
     divisable_msg = f"should be divisable by {IMAGE_SIZE_DIVISIBILITY}"
     assert (
@@ -197,7 +237,8 @@ def get_image(
         target_image_width=target_image_width,
     )
     images = []
-    if image_file_path:
+    print("image_file_path", image_file_path)
+    if image_file_path.exists():
         images.extend(
             read_real_images(
                 image_file_path,
@@ -233,6 +274,7 @@ def read_real_images(
     page_sizes = feature.seg_data["pages"]["bboxes"]
     page_sizes = page_sizes[mask].tolist()
     page_lst = num_pages[mask].tolist()
+    print("reading image")
     return [
         get_page_image(
             image_file_path,
@@ -254,7 +296,8 @@ def get_page_image(
     target_image_width,
     target_image_channels,
 ):
-    page_path = image_file_path / f"{page_no}.png"
+    page_path = image_file_path
+    print("page_path", page_path)
     if page_path.is_file():
         return load_image(
             page_path,
@@ -284,7 +327,7 @@ def create_dummy_image(
 def load_image(
     page_path, target_image_height, target_image_width, target_image_channels
 ):
-    image = Image.open(page_path)
+    image = PIL.Image.open(page_path)
     if image.mode != "RGB" and target_image_channels == 3:
         image = image.convert("RGB")
     if image.mode != "L" and target_image_channels == 1:
@@ -353,19 +396,65 @@ class DueBenchmark(FusionDataset):
             / "pdfs"
             / (feature.doc_id + ".pdf")
         )
+        # print("image_file_path", image_file_path)
+        # print(feature)
+        # for bbox in feature.seg_data["tokens"]["bboxes"]:
+        #     print(bbox)
+
+        image = convert_from_path(image_file_path)
+        print(image)
+        print(feature.seg_data)
+        image = image[0]
+        # image = get_image(
+        #     image_file_path,
+        #     feature,
+        #     target_image_height=self.config.target_image_height,
+        #     target_image_width=self.config.target_image_width,
+        #     target_image_channels=self.config.target_image_channels,
+        # )
+        w, h = image.size
+        bboxes = []
+
+        # print("image", image)
+        # image = np.array(image)
+        # print(image.shape)
+        # import cv2
+
+        # print(feature.seg_data["tokens"].keys())
+        # for idx, bbox in enumerate(feature.seg_data["tokens"]["bboxes"]):
+        #     print(bbox)
+        #     if bbox[1] > 0:
+        #         bbox = [bbox[0] * w, bbox[1] * h, bbox[2] * w, bbox[3] * h]
+        #         bbox = [int(x) for x in bbox]
+        #     else:
+        #         continue
+
+        #     print(bbox)
+
+        #     cv2.rectangle(image, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (255, 0, 0), 2)
+
+        #     import matplotlib.pyplot as plt
+
+        #     plt.imshow(image)
+        #     plt.show()
+
+        #     if idx > 39:
+        #         break
+        # exit()
+        # exit()
         example = {
             # this is how the due benchmark loads the images
-            DataKeys.IMAGE: get_image(
-                image_file_path,
-                feature,
-                target_image_height=self.config.target_image_height,
-                target_image_width=self.config.target_image_width,
-                target_image_channels=self.config.target_image_channels,
-            ),
+            # DataKeys.IMAGE: get_image(
+            #     image_file_path,
+            #     feature,
+            #     target_image_height=self.config.target_image_height,
+            #     target_image_width=self.config.target_image_width,
+            #     target_image_channels=self.config.target_image_channels,
+            # ),
             # this is how the udop code due benchmark loads the images
-            # DataKeys.IMAGE: convert_from_path(image_file_path)[
-            #     0
-            # ],  # we take the first image of each pdf
+            DataKeys.IMAGE: convert_from_path(image_file_path)[
+                0
+            ],  # we take the first image of each pdf
             DataKeys.IMAGE_FILE_PATH: str(image_file_path),
             DataKeys.TOKEN_IDS: feature.input_ids,
             DataKeys.TOKEN_BBOXES: feature.seg_data["tokens"]["bboxes"],
@@ -434,10 +523,23 @@ class DueBenchmark(FusionDataset):
             if feature is None:
                 continue
             example = self._create_example_from_feature(feature)
-            # debugging
+            # # debugging
             # for k, v in example.items():
             #     print(k, type(v))
             #     if isinstance(v, np.ndarray):
             #         print(v.shape)
             #         print(v.dtype)
+
+            #     if k == "image":
+            #         import matplotlib.pyplot as plt
+
+            #         print("v", np.array(v).shape)
+            #         plt.imshow(v)
+            #         plt.show()
+
+            #     exit()
+
             yield idx, example
+
+            if idx > 10:
+                break

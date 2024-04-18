@@ -1,0 +1,26 @@
+defaults:
+  - /default_args/general_args@args.general_args: default # we map /default_args/general_args -> /args/general_args to keep it clean, simialrly all other default args
+  - /default_args/data_loader_args@args.data_loader_args: default
+  - /default_args/train_val_sampler@args.train_val_sampler: null # random_split, stratified_split, etc
+  - /default_args/train_preprocess_augs@args.train_preprocess_augs: null
+  - /default_args/eval_preprocess_augs@args.eval_preprocess_augs: null
+  - /default_args/train_realtime_augs@args.train_realtime_augs: null
+  - /default_args/eval_realtime_augs@args.eval_realtime_augs: null
+  - /default_args/training_args@args.training_args: default
+  - /args/data_args: "???"
+  - _self_
+
+hydra:
+  run:
+    dir: ${args.data_args.dataset_cache_dir}
+  output_subdir: hydra
+  job:
+    chdir: False
+
+# data loader args
+args:
+  data_loader_args:
+    per_device_train_batch_size: 16
+    per_device_eval_batch_size: 16
+    dataloader_num_workers: 0
+    shuffle_data: False # this only applies to train dataloader

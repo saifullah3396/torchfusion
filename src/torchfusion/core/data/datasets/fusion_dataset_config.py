@@ -31,8 +31,4 @@ class FusionDatasetConfig(datasets.BuilderConfig):
         # else:
         #     return super().create_config_id(config_kwargs, custom_features)
 
-        if self.cache_file_name is not None:
-            config_id = self.name + "-" + self.cache_file_name
-            return config_id
-        else:
-            return self.name
+        return self.name + "-" + self.cache_file_name

@@ -253,6 +253,7 @@ class CORD(FusionNERDataset):
                     sample[DataKeys.IMAGE] = PIL.Image.open(
                         sample[DataKeys.IMAGE_FILE_PATH]
                     )
+
                 yield idx, sample
         except Exception as e:
             print(e)

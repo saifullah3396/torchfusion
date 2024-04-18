@@ -97,12 +97,10 @@ class DiffusionTrainingFunctionality(DefaultTrainingFunctionality):
         if (
             val_dataloader is None
         ):  # we need this for tasks that require validation run for generating stuff
-            data = torch.arange(
-                0, args.data_args.data_loader_args.per_device_eval_batch_size
-            )
+            data = torch.arange(0, args.data_loader_args.per_device_eval_batch_size)
             val_dataloader = DataLoader(
                 data,
-                batch_size=args.data_args.data_loader_args.per_device_eval_batch_size,
+                batch_size=args.data_loader_args.per_device_eval_batch_size,
             )
 
         @torch.no_grad()

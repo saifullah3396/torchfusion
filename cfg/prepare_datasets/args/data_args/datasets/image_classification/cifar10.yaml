@@ -1,9 +1,0 @@
-defaults:
-  - train_preprocess_augs: null
-  - eval_preprocess_augs: null
-  - train_realtime_augs: cifar10
-  - eval_realtime_augs: cifar10
-
-dataset_name: Cifar10
-dataset_dir: ${oc.env:DATA_ROOT_DIR}/images/cifar10/
-dataset_cache_dir: ${args.data_args.dataset_dir}/huggingface/

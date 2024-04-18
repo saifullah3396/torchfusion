@@ -24,7 +24,7 @@ class FusionModelForClassification(FusionModel):
 
     @dataclass
     class Config(FusionModel.Config):
-        pass
+        num_labels: int = 10
 
     def __init__(
         self,
@@ -36,16 +36,10 @@ class FusionModelForClassification(FusionModel):
             "Initialized the model with data labels: {}".format(self.labels)
         )
 
-    @property
-    def labels(self):
-        if isinstance(self._dataset_features[self._LABEL_KEY], Sequence):
-            return self._dataset_features[self._LABEL_KEY].feature.names
-        else:
-            return self._dataset_features[self._LABEL_KEY].names
-
-    @property
-    def num_labels(self):
-        return len(self.labels)
+        # see if dataset features is not None, meaning a huggingface dataset is available with said features
+        self._logger.info(
+            f"Number of target labels assigned for the model = {self.config.num_labels}"
+        )
 
     @abstractmethod
     def _build_classification_model(

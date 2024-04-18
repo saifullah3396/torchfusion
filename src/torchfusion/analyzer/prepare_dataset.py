@@ -39,15 +39,15 @@ class PrepareDataset(AnalyzerTask):
 
         # setup dataloaders
         self._train_dataloader = self._datamodule.train_dataloader(
-            self._args.data_args.data_loader_args.per_device_eval_batch_size,
-            dataloader_num_workers=self._args.data_args.data_loader_args.dataloader_num_workers,
-            pin_memory=self._args.data_args.data_loader_args.pin_memory,
+            self._args.data_loader_args.per_device_eval_batch_size,
+            dataloader_num_workers=self._args.data_loader_args.dataloader_num_workers,
+            pin_memory=self._args.data_loader_args.pin_memory,
             shuffle_data=False,
         )
         self._test_dataloader = self._datamodule.test_dataloader(
-            self._args.data_args.data_loader_args.per_device_eval_batch_size,
-            dataloader_num_workers=self._args.data_args.data_loader_args.dataloader_num_workers,
-            pin_memory=self._args.data_args.data_loader_args.pin_memory,
+            self._args.data_loader_args.per_device_eval_batch_size,
+            dataloader_num_workers=self._args.data_loader_args.dataloader_num_workers,
+            pin_memory=self._args.data_loader_args.pin_memory,
         )
 
     def cleanup(self):

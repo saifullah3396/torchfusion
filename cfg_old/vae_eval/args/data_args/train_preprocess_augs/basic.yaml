@@ -1,0 +1,6 @@
+- name: ImagePreprocess
+  kwargs:
+    rescale_size:
+      - ${preprocess_image_size_x}
+      - ${preprocess_image_size_y}
+    key: image

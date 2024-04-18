@@ -1,4 +1,5 @@
 import numbers
+import sys
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -7,6 +8,7 @@ import torch
 from transformers import PreTrainedTokenizer
 
 from torchfusion.core.constants import DataKeys
+from torchfusion.utilities.logging import get_logger
 
 
 def pad_sequences(sequences, padding_side, max_length, padding_elem):
@@ -55,6 +57,41 @@ def list_to_tensor(list_of_items, dtype=None):
     return output
 
 
+def feature_to_maybe_tensor(features, feature_key):
+    try:
+        if isinstance(features[0][feature_key], torch.Tensor):
+            return torch.stack([sample[feature_key] for sample in features])
+        elif isinstance(features[0][feature_key], np.ndarray):
+            return torch.from_numpy(
+                np.array([sample[feature_key] for sample in features])
+            )
+        elif isinstance(features[0][feature_key], list):  # if its a list
+            if isinstance(features[0][feature_key][0], torch.Tensor):  # list of tensors
+                return torch.stack([sample[feature_key] for sample in features])
+            elif isinstance(
+                features[0][feature_key][0], list
+            ):  # list of lists, convert to tensor we assume all lists are of the same length and have numbers, this will break for other cases
+                # possible use case [[1,2,3,4],[5,6,7,8],[9,10,11,12]]
+                return torch.stack(
+                    [torch.tensor(sample[feature_key]) for sample in features]
+                )
+            elif isinstance(
+                features[0][feature_key][0], str
+            ):  # for strings we just let it pass. This could be for example a list of words
+                return [sample[feature_key] for sample in features]
+            else:
+                return torch.tensor([sample[feature_key] for sample in features])
+        elif isinstance(features[0][feature_key], str):
+            return [sample[feature_key] for sample in features]
+        else:
+            return torch.tensor([sample[feature_key] for sample in features])
+    except Exception as e:
+        raise RuntimeError(
+            f"Found a feature during batch collation that cannot be automatically converted to a tensor: {features[0][feature_key]}."
+            f" Did you forget to set transforms on the input data?"
+        )
+
+
 @dataclass
 class PassThroughCollator:
     """
@@ -74,8 +111,8 @@ class BatchToTensorDataCollator:
     Data collator for converting data in the batch to a dictionary of pytorch tensors.
     """
 
-    data_key_type_map: Optional[dict] = None
-    allow_unmapped_data: bool = False
+    allowed_keys: Optional[list] = None
+    type_map: Optional[list] = None
 
     def __call__(self, features):
         batch = {}
@@ -85,38 +122,22 @@ class BatchToTensorDataCollator:
 
         keys = features[0].keys()
         for k in keys:
-            if k not in self.data_key_type_map.keys():
-                if self.allow_unmapped_data:
-                    batch[k] = [sample[k] for sample in features]
+            if self.allowed_keys is not None and k not in self.allowed_keys:
                 continue
+            batch[k] = feature_to_maybe_tensor(features, feature_key=k)
 
-            dtype = self.data_key_type_map[k]
-            if isinstance(features[0][k], torch.Tensor):
-                batch[k] = torch.stack([sample[k] for sample in features]).type(dtype)
-            elif isinstance(features[0][k], np.ndarray):
-                batch[k] = torch.from_numpy(
-                    np.array([sample[k] for sample in features])
-                )
-            elif isinstance(features[0][k], list):
-                if isinstance(features[0][k][0], torch.Tensor):
-                    batch[k] = torch.cat(
-                        [torch.stack(sample[k]) for sample in features]
-                    )
-                elif isinstance(features[0][k][0], list):
-                    batch[k] = torch.cat(
-                        [torch.tensor(sample[k], dtype=dtype) for sample in features]
-                    )
-                elif isinstance(features[0][k][0], str):
-                    batch[k] = [sample[k] for sample in features]
-                    batch[k] = sum(batch[k], [])
-                else:
-                    batch[k] = torch.tensor(
-                        [sample[k] for sample in features], dtype=dtype
-                    )
-            elif isinstance(features[0][k], str):
-                batch[k] = [sample[k] for sample in features]
-            else:
-                batch[k] = torch.tensor([sample[k] for sample in features], dtype=dtype)
+        if len(batch.keys()) == 0:
+            logger = get_logger()
+            logger.warning(
+                "Batch is empty after collation as no empty allowed_keys=[] was passed. "
+                "If you wish to automatically collate batch, provide keys or set allowed_keys=None"
+            )
+
+        if self.type_map is not None:
+            for k, dtype in self.type_map.items():
+                if k in batch:
+                    batch[k] = batch[k].to(dtype)
+
         return batch
 
 
@@ -176,6 +197,7 @@ class BaseSequenceDataCollator:
                 **self.tokenizer_call_kwargs,
                 return_tensors=self.return_tensors,
             )
+
         for k in tokenizer_output:
             batch[k] = tokenizer_output[k]
 

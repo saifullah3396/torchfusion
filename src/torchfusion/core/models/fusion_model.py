@@ -31,14 +31,12 @@ class FusionModel:
         self,
         args: FusionArguments,
         tb_logger: Optional[TensorboardLogger] = None,
-        dataset_features: Optional[dict] = None,
     ):
         super().__init__()
 
         # initialize arguments
         self._args = args
         self._tb_logger = tb_logger
-        self._dataset_features = dataset_features
 
         # ema parameters
         self._ema_handler = None
@@ -122,16 +120,6 @@ class FusionModel:
         # models sometimes download pretrained checkpoints when initializing. Only download it on rank 0
         if idist.get_rank() > 0:  # stop all ranks > 0
             idist.barrier()
-
-        if self._args.model_args.model_task in [
-            "image_classification",
-            "sequence_classification",
-            "token_classification",
-        ]:
-            if DataKeys.LABEL not in self._dataset_features:
-                raise ValueError(
-                    "class_labels are required in dataset_features for image_classification tasks."
-                )
 
         # build the underlying nn model
         self._torch_model = self._build_model(checkpoint=checkpoint, strict=strict)

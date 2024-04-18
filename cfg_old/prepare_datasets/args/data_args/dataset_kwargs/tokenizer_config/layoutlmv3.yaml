@@ -1,0 +1,17 @@
+name: HuggingfaceTokenizer
+kwargs: 
+  model_name: microsoft/layoutlmv3-base
+  init_kwargs:
+    local_files_only: False
+    add_prefix_space: True
+    do_lower_case: True
+  call_kwargs:
+    add_special_tokens: True
+    padding: "max_length"
+    truncation: True
+    max_length: ${seq_len}
+    stride: ${stride}
+    pad_to_multiple_of: 8
+  # post processing padding args
+  padding_required: True
+  padding_side: right

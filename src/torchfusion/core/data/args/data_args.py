@@ -27,7 +27,7 @@ class DataArguments:
     features_path: Optional[str] = field(default=None)
 
     # Name of the cache file
-    cache_file_name: str = field(default="default")
+    cache_file_name: str = field(default="original")
 
     # whether to compute fid stats
     compute_dataset_statistics: bool = field(default=False)
@@ -41,39 +41,11 @@ class DataArguments:
     # Number of processes to use for processing data for cache
     num_proc: int = field(default=4)
 
-    # Whether dataset auth token is required
-    use_auth_token: bool = field(default=False)
-
-    # Train validation sampling arguments
-    train_val_sampler: Optional[ClassInitializerArgs] = field(default=None)
-
-    # Arguments related to defining default data augmentations for training.
-    train_preprocess_augs: Optional[
-        Union[ClassInitializerArgs, List[ClassInitializerArgs]]
-    ] = field(default=None)
-
-    # Arguments related to defining default data augmentations for evaluation.
-    eval_preprocess_augs: Optional[
-        Union[ClassInitializerArgs, List[ClassInitializerArgs]]
-    ] = field(default=None)
-
-    # Arguments related to defining default data augmentations for training.
-    train_realtime_augs: Optional[
-        Union[ClassInitializerArgs, List[ClassInitializerArgs]]
-    ] = field(default=None)
-
-    # Arguments related to defining default data augmentations for training.
-    eval_realtime_augs: Optional[
-        Union[ClassInitializerArgs, List[ClassInitializerArgs]]
-    ] = field(default=None)
-
-    # Arguments related to data loading or specifically torch dataloaders.
-    data_loader_args: DataLoaderArguments = field(
-        default_factory=lambda: DataLoaderArguments(),
-    )
-
     # Preprocess batch size
     preprocess_batch_size: int = field(default=1000)
+
+    # Whether dataset auth token is required
+    use_auth_token: bool = field(default=False)
 
     # Any additional argument required specifically for the dataset.
     dataset_kwargs: Union[dict, List[dict]] = field(
@@ -84,23 +56,6 @@ class DataArguments:
     )
 
     def __post_init__(self):
-        if self.train_preprocess_augs is not None and not isinstance(
-            self.train_preprocess_augs, list
-        ):
-            self.train_preprocess_augs = [self.train_preprocess_augs]
-        if self.eval_preprocess_augs is not None and not isinstance(
-            self.eval_preprocess_augs, list
-        ):
-            self.eval_preprocess_augs = [self.eval_preprocess_augs]
-        if self.train_realtime_augs is not None and not isinstance(
-            self.train_realtime_augs, list
-        ):
-            self.train_realtime_augs = [self.train_realtime_augs]
-        if self.eval_realtime_augs is not None and not isinstance(
-            self.eval_realtime_augs, list
-        ):
-            self.eval_realtime_augs = [self.eval_realtime_augs]
-
         if isinstance(self.dataset_config_name, list):
             assert isinstance(self.dataset_kwargs, list)
             assert len(self.dataset_config_name) == len(self.dataset_kwargs)

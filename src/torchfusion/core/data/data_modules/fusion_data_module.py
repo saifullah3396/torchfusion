@@ -14,7 +14,8 @@ import ignite.distributed as idist
 import PIL
 from datadings.reader import MsgpackReader as MsgpackFileReader
 from datasets import DownloadConfig
-from torch.utils.data import BatchSampler, DataLoader, Dataset
+from regex import R
+from torch.utils.data import BatchSampler, DataLoader, Dataset, Subset
 
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.data_augmentations.general import DictTransform
@@ -228,13 +229,70 @@ class FusionDataModule(ABC):
             **self._get_builder_kwargs(),
         )
 
+    def _get_builder_or_class(self):
+        dataset_class = self._get_dataset_class()
+
+        if dataset_class is not None and issubclass(
+            dataset_class, Dataset
+        ):  # if this is a torch dataset we use it directly
+            return dataset_class
+        else:
+            return self._get_builder()
+
+    def _get_tokenizer_config_if_available(self):
+        dataset_class = self._get_dataset_class()
+
+        # is this torch dataset? check if we have an argument of tokenizer_config passed to the dataset
+        tokenizer_config = None
+        if dataset_class is not None and issubclass(dataset_class, Dataset):
+            if "tokenizer_config" in self._dataset_kwargs:
+                return tokenizer_config
+        else:  # else check for it in th config
+            builder = self._get_builder()
+            if hasattr(builder.config, "tokenizer_config"):
+                return builder.config.tokenizer_config
+
+    def _get_tokenizer_if_available(self):
+        tokenizer_config = self._get_tokenizer_config_if_available()
+        if tokenizer_config is None:
+            return
+
+        # create tokenizer
+        tokenizer_name = tokenizer_config["name"]
+        tokenizer_kwargs = tokenizer_config["kwargs"]
+        tokenizer = TokenizerFactory.create(tokenizer_name, tokenizer_kwargs)
+        tokenizer = (
+            tokenizer.tokenizer
+            if isinstance(tokenizer, HuggingfaceTokenizer)
+            else tokenizer
+        )
+        return tokenizer
+
+    def _get_dataset_class(self):
+        dataset_class = None
+        if not self._dataset_name in ["imagefolder", "fusion_image_folder"]:
+            dataset_class = ModuleLazyImporter.get_datasets().get(
+                self._dataset_name, None
+            )
+
+            if dataset_class is None:
+                raise ValueError(
+                    f"Dataset class for {self._dataset_name} not found. "
+                    f"Please make sure the dataset is added to registry. Available datasets: {ModuleLazyImporter.get_datasets()}"
+                )
+
+            # initialize the class
+            dataset_class = dataset_class()
+
+        return dataset_class
+
     def _get_transforms(self, split: str = "train"):
         # get the right transforms
         preprocess_transforms = self._preprocess_transforms[split]
         realtime_transforms = self._realtime_transforms[split]
-        if realtime_transforms.transforms is None:
+        if realtime_transforms is None or realtime_transforms.transforms is None:
             realtime_transforms = None
-        if preprocess_transforms.transforms is None:
+        if preprocess_transforms is None or preprocess_transforms.transforms is None:
             preprocess_transforms = None
         return preprocess_transforms, realtime_transforms
 
@@ -243,21 +301,7 @@ class FusionDataModule(ABC):
         split: str = "train",
     ) -> Dataset:
         try:
-            dataset_class = None
-            if not self._dataset_name in ["imagefolder", "fusion_image_folder"]:
-                dataset_class = ModuleLazyImporter.get_datasets().get(
-                    self._dataset_name, None
-                )
-
-                if dataset_class is None:
-                    raise ValueError(
-                        f"Dataset class for {self._dataset_name} not found. "
-                        f"Please make sure the dataset is added to registry. Available datasets: {ModuleLazyImporter.get_datasets()}"
-                    )
-
-                # initialize the class
-                dataset_class = dataset_class()
-
+            dataset_class = self._get_dataset_class()
             if self._features_path is not None:
                 return self.load_features_dataset(
                     dataset_class=dataset_class, split=split
@@ -300,7 +344,17 @@ class FusionDataModule(ABC):
                 split="train",
             )
 
-            if str(datasets.Split.VALIDATION) in self.train_dataset.info.splits.keys():
+            available_splits = None
+            if isinstance(self.train_dataset.info, dict):
+                available_splits = self.train_dataset.info["splits"]
+            elif isinstance(self.train_dataset.info, datasets.DatasetInfo):
+                available_splits = self.train_dataset.info.splits.keys()
+            else:
+                raise ValueError(
+                    "Dataset info should be of type dict or datasets.DatasetInfo"
+                )
+
+            if str(datasets.Split.VALIDATION) in available_splits:
                 self.val_dataset = self._load_dataset(
                     split=str(datasets.Split.VALIDATION),
                 )
@@ -314,7 +368,8 @@ class FusionDataModule(ABC):
                 logger = get_logger()
                 logger.warning(
                     "Using train set as validation set as no validation dataset exists."
-                    " If this behavior is not required set, do_val=False in config."
+                    " If this behavior is not required set, do_val=False in config or set a "
+                    "args.train_val_sampler=random_split/other."
                 )
                 self.val_dataset = copy.deepcopy(self.train_dataset)
 
@@ -570,17 +625,23 @@ class FusionDataModule(ABC):
             return self.val_dataloader()
 
     def show_batch(self, batch):
-        builder = self._get_builder()
-        tokenizer = None
-        if hasattr(builder.config, "tokenizer_config"):
-            # create tokenizer
-            tokenizer_name = builder.config.tokenizer_config["name"]
-            tokenizer_kwargs = builder.config.tokenizer_config["kwargs"]
-            tokenizer = TokenizerFactory.create(tokenizer_name, tokenizer_kwargs)
-            tokenizer = (
-                tokenizer.tokenizer
-                if isinstance(tokenizer, HuggingfaceTokenizer)
-                else tokenizer
-            )
-        print_batch_info(batch, tokenizer=tokenizer)
+        print_batch_info(batch, tokenizer=self._get_tokenizer_if_available())
         show_batch(batch)
+
+    def get_dataset_info(self):
+        if self.train_dataset is not None:
+            dataset = self.train_dataset._dataset
+        elif self.test_dataset is not None:
+            dataset = self.test_dataset._dataset
+        else:
+            raise ValueError("No dataset found in datamodule.")
+
+        dataset = dataset.dataset if isinstance(dataset, Subset) else dataset
+
+        if not hasattr(dataset, "info"):
+            raise ValueError(
+                "You must define a property info in the torch-like datasets, "
+                "which returns relevant class/labels information does not have an info attribute."
+            )
+
+        return dataset.info

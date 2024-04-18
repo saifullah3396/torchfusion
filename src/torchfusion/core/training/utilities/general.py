@@ -3,9 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Tuple
 
 import ignite.distributed as idist
+from torch.utils.data import Subset
 
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.data.data_augmentations.general import DictTransform
+from torchfusion.core.training.utilities.constants import TrainingStage
 from torchfusion.utilities.logging import get_logger
 
 if TYPE_CHECKING:
@@ -143,6 +145,7 @@ def generate_output_dir(
 
 def setup_logging(
     output_dir: str,
+    setup_tb_logger=False,
 ) -> Tuple[str, BaseLogger]:
     import ignite.distributed as idist
 
@@ -154,7 +157,7 @@ def setup_logging(
 
     # Define a Tensorboard logger
     tb_logger = None
-    if rank == 0:
+    if rank == 0 and setup_tb_logger:
         from torchfusion.core.training.utilities.tb_logger import (
             FusionTensorboardLogger,
         )
@@ -230,16 +233,6 @@ def find_test_checkpoint(
     )
 
 
-class TransformsWrapper:
-    def __init__(self, transforms) -> None:
-        self.transforms = transforms
-
-    def __call__(self, sample):
-        for transform in self.transforms:
-            sample = transform(sample)
-        return sample
-
-
 def print_transform(tf):
     logger = get_logger()
     if idist.get_rank() == 0:
@@ -253,5 +246,20 @@ def print_transform(tf):
 def print_transforms(tf, title):
     logger = get_logger()
     for split in ["train", "validation", "test"]:
+        if tf[split] is None or tf[split].transforms is None:
+            continue
         logger.info(f"Defining [{split}] {title}:")
         print_transform(tf[split])
+
+
+def print_tf_from_loader(dataloader, stage=TrainingStage.train):
+    logger = get_logger()
+    tf = (
+        dataloader.dataset.dataset._transforms
+        if isinstance(dataloader.dataset, Subset)
+        else dataloader.dataset._transforms
+    )
+
+    if tf is not None:
+        logger.info("Final sanity check... Validation transforms:")
+        print_transform(tf)

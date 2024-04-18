@@ -60,11 +60,11 @@ def show_batch(batch):
     draw_batch_gt = []
     batch = [dict(zip(batch, t)) for t in zip(*batch.values())]
 
-    if len(batch) > 4:
+    if len(batch) > 16:
         logger.warning(
             "Showing only first 4 images in the batch as high-resolution images may take too much memory..."
         )
-        batch = batch[:4]
+        batch = batch[:16]
 
     for sample in batch:
         image = sample[DataKeys.IMAGE].permute(1, 2, 0).cpu().numpy()
@@ -108,23 +108,39 @@ def show_batch(batch):
             if DataKeys.TOKEN_IDS in sample and DataKeys.TOKEN_BBOXES in sample:
                 logger.info("Drawing boxes with only first token element on image...")
                 last_box = None
+                # find offset
+                is_prefix = sample[DataKeys.TOKEN_BBOXES][:, 1] < 0
+                num_prefix = is_prefix.sum(-1)
+
                 for tokens, box in zip(
                     sample[DataKeys.TOKEN_IDS], sample[DataKeys.TOKEN_BBOXES]
                 ):  # each box is [x1,y1,x2,y2] normalized
-                    if last_box is not None and last_box == box:
+                    if last_box is not None and all(last_box == box):
                         continue
-                    p1 = (int(box[0] / 1000.0 * w), int(box[1] / 1000.0 * h))
-                    p2 = (int(box[2] / 1000.0 * w), int(box[3] / 1000.0 * h))
+
+                    if box[0] < 0 or box[1] < 0 or box[2] < 0 or box[3] < 0:
+                        continue
+
+                    normalize = True
+                    if box[0] < 1 or box[1] < 1 or box[2] < 1 or box[3] < 1:
+                        normalize = False
+
+                    if normalize:
+                        p1 = (int(box[0] / 1000.0 * w), int(box[1] / 1000.0 * h))
+                        p2 = (int(box[2] / 1000.0 * w), int(box[3] / 1000.0 * h))
+                    else:
+                        p1 = (int(box[0] * w), int(box[1] * h))
+                        p2 = (int(box[2] * w), int(box[3] * h))
                     cv2.rectangle(image, p1, p2, (255, 0, 0), 1)
-                    cv2.putText(
-                        image,
-                        text=str(tokens),
-                        org=p1,
-                        fontFace=cv2.FONT_HERSHEY_PLAIN,
-                        fontScale=1,
-                        color=(0, 0, 255),
-                        thickness=1,
-                    )
+                    # cv2.putText(
+                    #     image,
+                    #     text=str(tokens),
+                    #     org=p1,
+                    #     fontFace=cv2.FONT_HERSHEY_PLAIN,
+                    #     fontScale=1,
+                    #     color=(0, 0, 255),
+                    #     thickness=1,
+                    # )
                     last_box = box
             draw_batch.append(torch.from_numpy(image).permute(2, 0, 1))
         except Exception as e:

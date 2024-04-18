@@ -40,11 +40,7 @@ class FusionNERDatasetConfig(FusionDatasetConfig):
             if self.tokenizer_config["name"] == "HuggingfaceTokenizer"
             else self.tokenizer_config["name"]
         )
-        if self.cache_file_name is not None:
-            config_id = self.name + "-" + tokenizer_name + "-" + self.cache_file_name
-            return config_id
-        else:
-            return self.name
+        return self.name + "-" + tokenizer_name + "-" + self.cache_file_name
 
 
 class FusionNERDataset(FusionDataset):

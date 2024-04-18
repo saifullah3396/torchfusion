@@ -19,6 +19,8 @@ from torchfusion.core.data.data_modules.fusion_data_module import FusionDataModu
 from torchfusion.core.data.factory.data_augmentation import DataAugmentationFactory
 from torchfusion.core.data.factory.train_val_sampler import TrainValSamplerFactory
 from torchfusion.core.data.utilities.containers import CollateFnDict, TransformsDict
+from torchfusion.core.data.utilities.loaders import load_datamodule_from_args
+from torchfusion.core.data.utilities.transforms import load_transforms_from_config
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.models.tasks import ModelTasks
 from torchfusion.core.models.utilities.data_collators import PassThroughCollator
@@ -29,8 +31,8 @@ from torchfusion.core.training.functionality.diffusion import (
 from torchfusion.core.training.functionality.gan import GANTrainingFunctionality
 from torchfusion.core.training.utilities.constants import TrainingStage
 from torchfusion.core.training.utilities.general import (
-    TransformsWrapper,
     initialize_torch,
+    print_transforms,
     setup_logging,
 )
 from torchfusion.utilities.dataclasses.dacite_wrapper import from_dict
@@ -108,138 +110,6 @@ class AnalyzerTask(ABC):
             return DiffusionTrainingFunctionality
         else:
             return DefaultTrainingFunctionality
-
-    def _setup_transforms(self):
-        def load_from_args(train_augs, eval_augs):
-            # define data transforms according to the configuration
-            tf = TransformsDict()
-            if train_augs is not None:
-                tf.train = []
-                for aug_args in train_augs:
-                    aug = DataAugmentationFactory.create(
-                        aug_args.name,
-                        aug_args.kwargs,
-                    )
-                    tf.train.append(aug)
-
-            if eval_augs is not None:
-                tf.validation = []
-                tf.test = []
-                for aug_args in eval_augs:
-                    aug = DataAugmentationFactory.create(
-                        aug_args.name,
-                        aug_args.kwargs,
-                    )
-                    tf.validation.append(aug)
-                    tf.test.append(aug)
-
-            # wrap the transforms in a callable class
-            tf.train = TransformsWrapper(tf.train)
-            tf.validation = TransformsWrapper(tf.validation)
-            tf.test = TransformsWrapper(tf.test)
-
-            return tf
-
-        def print_transforms(tf, title):
-            for split in ["train", "validation", "test"]:
-                if tf[split].transforms is None:
-                    continue
-                self._logger.info(f"Defining [{split}] {title}:")
-                if idist.get_rank() == 0:
-                    for idx, transform in enumerate(tf[split].transforms):
-                        if isinstance(transform, DictTransform):
-                            self._logger.info(
-                                f"{idx}, {transform.key}: {transform.transform}"
-                            )
-                        else:
-                            self._logger.info(f"{idx}, {transform}")
-
-        preprocess_transforms = load_from_args(
-            self._args.data_args.train_preprocess_augs,
-            self._args.data_args.eval_preprocess_augs,
-        )
-        realtime_transforms = load_from_args(
-            self._args.data_args.train_realtime_augs,
-            self._args.data_args.eval_realtime_augs,
-        )
-
-        print_transforms(preprocess_transforms, title="preprocess transforms")
-        print_transforms(realtime_transforms, title="realtime transforms")
-        return preprocess_transforms, realtime_transforms
-
-    def _setup_datamodule(
-        self, stage: TrainingStage = TrainingStage.train, override_collate_fns=None
-    ) -> FusionDataModule:
-        """
-        Initializes the datamodule for training.
-        """
-
-        import ignite.distributed as idist
-
-        from torchfusion.core.data.data_modules.fusion_data_module import (
-            FusionDataModule,
-        )
-
-        self._logger.info("Setting up datamodule...")
-
-        # setup transforms
-        preprocess_transforms, realtime_transforms = self._setup_transforms()
-
-        # set default collate_fns
-        collate_fns = self.get_collate_fns()
-
-        # setup train_val_sampler
-        train_val_sampler = None
-        if (
-            self._args.general_args.do_val
-            and not self._args.data_args.data_loader_args.use_test_set_for_val
-            and self._args.data_args.train_val_sampler is not None
-        ):
-            # setup train/val sampler
-            train_val_sampler = TrainValSamplerFactory.create(
-                self._args.data_args.train_val_sampler.name,
-                self._args.data_args.train_val_sampler.kwargs,
-            )
-
-        # initialize data module generator function
-        datamodule = FusionDataModule(
-            dataset_name=self._args.data_args.dataset_name,
-            dataset_cache_dir=self._args.data_args.dataset_cache_dir,
-            dataset_dir=self._args.data_args.dataset_dir,
-            cache_file_name=self._args.data_args.cache_file_name,
-            use_auth_token=self._args.data_args.use_auth_token,
-            dataset_config_name=self._args.data_args.dataset_config_name,
-            collate_fns=collate_fns,
-            preprocess_transforms=preprocess_transforms,
-            realtime_transforms=realtime_transforms,
-            train_val_sampler=train_val_sampler,
-            preprocess_batch_size=self._args.data_args.preprocess_batch_size,
-            dataset_kwargs=self._args.data_args.dataset_kwargs,
-            num_proc=self._args.data_args.num_proc,
-            compute_dataset_statistics=self._args.data_args.compute_dataset_statistics,
-            dataset_statistics_n_samples=self._args.data_args.dataset_statistics_n_samples,
-            stats_filename=self._args.data_args.stats_filename,
-            features_path=self._args.data_args.features_path,
-        )
-
-        # only download dataset on rank 0, all other ranks wait here for rank 0 to load the datasets
-        if self._rank > 0:
-            idist.barrier()
-
-        # we manually prepare data and call setup here so dataset related properties can be initalized.
-        datamodule.setup(
-            stage=stage,
-            do_train=self._args.general_args.do_train,
-            max_train_samples=self._args.data_args.data_loader_args.max_train_samples,
-            max_val_samples=self._args.data_args.data_loader_args.max_val_samples,
-            max_test_samples=self._args.data_args.data_loader_args.max_test_samples,
-            use_test_set_for_val=self._args.data_args.data_loader_args.use_test_set_for_val,
-        )
-
-        if self._rank == 0:
-            idist.barrier()
-
-        return datamodule
 
     def _setup_test_engine(self, model, checkpoint_type: str = "last"):
         # setup training engine
@@ -321,7 +191,9 @@ class AnalyzerTask(ABC):
         self._trainer_functionality = self._setup_trainer_functionality()
 
         # setup datamodule
-        self._datamodule = self._setup_datamodule(stage=None)
+        self._datamodule = load_datamodule_from_args(
+            self._args, stage=None, rank=self._rank
+        )
 
     def setup_dataloader(self, collate_fns: CollateFnDict):
         self._datamodule._collate_fns = collate_fns
@@ -330,23 +202,23 @@ class AnalyzerTask(ABC):
         # setup dataloaders
         if stage == TrainingStage.train:
             return self._datamodule.train_dataloader(
-                self._args.data_args.data_loader_args.per_device_eval_batch_size,
-                dataloader_num_workers=self._args.data_args.data_loader_args.dataloader_num_workers,
-                pin_memory=self._args.data_args.data_loader_args.pin_memory,
+                self._args.data_loader_args.per_device_eval_batch_size,
+                dataloader_num_workers=self._args.data_loader_args.dataloader_num_workers,
+                pin_memory=self._args.data_loader_args.pin_memory,
                 shuffle_data=False,
                 dataloader_drop_last=False,
             )
         elif stage == TrainingStage.validation:
             return self._datamodule.val_dataloader(
-                self._args.data_args.data_loader_args.per_device_eval_batch_size,
-                dataloader_num_workers=self._args.data_args.data_loader_args.dataloader_num_workers,
-                pin_memory=self._args.data_args.data_loader_args.pin_memory,
+                self._args.data_loader_args.per_device_eval_batch_size,
+                dataloader_num_workers=self._args.data_loader_args.dataloader_num_workers,
+                pin_memory=self._args.data_loader_args.pin_memory,
             )
         else:
             return self._datamodule.test_dataloader(
-                self._args.data_args.data_loader_args.per_device_eval_batch_size,
-                dataloader_num_workers=self._args.data_args.data_loader_args.dataloader_num_workers,
-                pin_memory=self._args.data_args.data_loader_args.pin_memory,
+                self._args.data_loader_args.per_device_eval_batch_size,
+                dataloader_num_workers=self._args.data_loader_args.dataloader_num_workers,
+                pin_memory=self._args.data_loader_args.pin_memory,
             )
 
     def cleanup(self):
