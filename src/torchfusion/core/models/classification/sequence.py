@@ -1,24 +1,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from operator import is_
 
 import torch
 from dacite import Optional
-from matplotlib.transforms import Transform
-from transformers import AutoConfig, AutoModelForSequenceClassification
-
 from torchfusion.core.constants import DataKeys
-from torchfusion.core.data.text_utils.data_collators import SequenceDataCollator
 from torchfusion.core.data.utilities.containers import CollateFnDict
 from torchfusion.core.models.classification.base import FusionModelForClassification
 from torchfusion.core.models.constructors.factory import ModelConstructorFactory
 from torchfusion.core.models.constructors.transformers import (
     TransformersModelConstructor,
 )
-from torchfusion.models.utilities import (
-    find_layer_in_model,
-    freeze_layers,
-    freeze_layers_by_name,
+from torchfusion.core.models.utilities.data_collators import (
+    BatchToTensorDataCollator,
+    SequenceTokenizerDataCollator,
 )
 
 
@@ -31,6 +27,7 @@ class FusionModelForSequenceClassification(FusionModelForClassification):
     class Config(FusionModelForClassification.Config):
         use_bbox: bool = True
         use_image: bool = True
+        input_is_tokenized: bool = False
 
     def _build_classification_model(
         self,
@@ -72,8 +69,9 @@ class FusionModelForSequenceClassification(FusionModelForClassification):
     def _prepare_label(self, engine, batch, tb_logger, **kwargs):
         return batch[self._LABEL_KEY]
 
-    def get_data_collators(self, data_key_type_map=None) -> CollateFnDict:
-        collate_fn_class = SequenceDataCollator
+    def get_data_collators(
+        self, data_key_type_map=None, tokenizer=None
+    ) -> CollateFnDict:
         if data_key_type_map is None:
             data_key_type_map = {
                 DataKeys.TOKEN_IDS: torch.long,
@@ -87,15 +85,50 @@ class FusionModelForSequenceClassification(FusionModelForClassification):
             data_key_type_map[DataKeys.ATTENTION_MASKS] = torch.long
             data_key_type_map[self._LABEL_KEY] = torch.long
 
-        if self.model_args.config.use_bbox:
+        if self.config.use_bbox:
             data_key_type_map[DataKeys.TOKEN_BBOXES] = torch.long
 
-        if self.model_args.config.use_image:
+        if self.config.use_image:
             data_key_type_map[DataKeys.IMAGE] = torch.float
 
-        collate_fn = collate_fn_class(
-            data_key_type_map=data_key_type_map,
-        )
+        if self.config.input_is_tokenized:
+            collate_fn = BatchToTensorDataCollator(
+                data_key_type_map=data_key_type_map,  # make sure we only get what we want not any extra stuff from dataset
+                allowed_keys=list(data_key_type_map.keys()),
+            )
 
-        # initialize the data collators for bert grid based word classification
-        return CollateFnDict(train=collate_fn, validation=collate_fn, test=collate_fn)
+            # initialize the data collators for bert grid based word classification
+            return CollateFnDict(
+                train=collate_fn, validation=collate_fn, test=collate_fn
+            )
+        else:
+            assert (
+                tokenizer is not None
+            ), "Tokenizer must be provided for sequence classification if input is not tokenzized"
+
+            keys_to_add_on_overflow = {
+                DataKeys.IMAGE,
+                DataKeys.LABEL,
+            }
+
+            # for training, we randomly take a sample from the overflowing tokens on each input sample
+            collate_fn_train = SequenceTokenizerDataCollator(
+                data_key_type_map=data_key_type_map,
+                tokenizer=tokenizer,
+                keys_to_add_on_overflow=keys_to_add_on_overflow,
+                overflow_sampling="return_all",
+            )
+
+            # for validation and test, we do not take any samples from the overflowing tokens
+            # therefore only first sequence from each input is used
+            collate_fn_eval = SequenceTokenizerDataCollator(
+                data_key_type_map=data_key_type_map,
+                tokenizer=tokenizer,
+                keys_to_add_on_overflow=keys_to_add_on_overflow,
+                overflow_sampling="no_overflow",
+            )
+
+            # initialize the data collators for bert grid based word classification
+            return CollateFnDict(
+                train=collate_fn_train, validation=collate_fn_eval, test=collate_fn_eval
+            )

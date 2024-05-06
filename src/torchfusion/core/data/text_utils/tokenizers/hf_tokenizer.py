@@ -5,11 +5,11 @@ import os
 from dataclasses import dataclass, field
 from typing import List, Optional, Union
 
-from transformers import AutoTokenizer
-
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.text_utils.tokenizers.base import TorchFusionTokenizer
 from torchfusion.core.data.text_utils.utilities import remove_keys, rename_key
+from torchfusion.core.utilities.logging import get_logger
+from transformers import AutoTokenizer
 
 
 def pad_sequences(sequences, padding_side, max_length, padding_elem):
@@ -30,6 +30,7 @@ class HuggingfaceTokenizer(TorchFusionTokenizer):
     keys_to_add_on_overflow: Optional[List[str]] = field(
         default_factory=lambda: [DataKeys.IMAGE_FILE_PATH, DataKeys.IMAGE]
     )
+    overflow_sampling: str = "return_all"
 
     def __post_init__(self):
 
@@ -42,7 +43,7 @@ class HuggingfaceTokenizer(TorchFusionTokenizer):
             self.model_name, **self.init_kwargs
         )
 
-        self.output_keys = [
+        self.tokenizer_output_keys = [
             DataKeys.TOKEN_IDS,
             DataKeys.ATTENTION_MASKS,
             DataKeys.TOKEN_TYPE_IDS,
@@ -52,7 +53,18 @@ class HuggingfaceTokenizer(TorchFusionTokenizer):
             DataKeys.WORD_IDS,
         ]
 
+        # warned about labels once
+        self.warned_labels = False
+
+        # how to return overflowing samples?
+        assert self.overflow_sampling in ["return_all", "random", "no_overflow"]
+
     def _apply_tokenizer(self, sample: dict):
+        assert DataKeys.WORDS in sample, (
+            f"Words key {DataKeys.WORDS} not found in sample. "
+            f"Tokenized input must be provided with the key {DataKeys.WORDS}"
+        )
+
         data = sample[DataKeys.WORDS]
 
         self.default_call_kwargs = {
@@ -67,7 +79,8 @@ class HuggingfaceTokenizer(TorchFusionTokenizer):
 
         fixed_kwargs = dict(
             is_split_into_words=True,
-            return_overflowing_tokens=True,  # set some arguments that we need to stay fixed for our case
+            return_overflowing_tokens=self.overflow_sampling
+            != "no_overflow",  # set some arguments that we need to stay fixed for our case
             return_token_type_ids=None,
             return_attention_mask=None,
             return_special_tokens_mask=False,
@@ -78,9 +91,26 @@ class HuggingfaceTokenizer(TorchFusionTokenizer):
         )
 
         if "layoutlm" in self.model_name:
+            assert DataKeys.WORD_BBOXES in sample, (
+                f"Word Bboxes key {DataKeys.WORD_BBOXES} not found in sample. "
+                f"Tokenized input must be provided with the key {DataKeys.WORD_BBOXES}"
+            )
+
             fixed_kwargs.pop("is_split_into_words")
             fixed_kwargs["boxes"] = sample[DataKeys.WORD_BBOXES]
-            fixed_kwargs["word_labels"] = sample[DataKeys.LABEL]
+
+            if DataKeys.LABEL in sample:
+                logger = get_logger()
+
+                # check if labels is a squence of labels
+                if isinstance(sample[DataKeys.LABEL][0], list):
+                    fixed_kwargs["word_labels"] = sample[DataKeys.LABEL]
+                else:
+                    if not self.warned_labels:
+                        logger.warning(
+                            "The labels are per sample, not per word. This must only be used with sequence classification"
+                        )
+                        self.warned_labels = True
 
         kwargs = {**fixed_kwargs, **self.call_kwargs}
 
@@ -104,41 +134,74 @@ class HuggingfaceTokenizer(TorchFusionTokenizer):
         rename_key(tokenized_data, "bbox", DataKeys.TOKEN_BBOXES)
         rename_key(tokenized_data, "labels", DataKeys.LABEL)
 
-        # remove unneeded ids
-        remove_keys(samples, [DataKeys.WORDS, DataKeys.WORD_BBOXES])
-
         # add word ids
         tokenized_data[DataKeys.WORD_IDS] = [
             tokenized_data.word_ids(i)
             for i in range(len(tokenized_data[DataKeys.TOKEN_IDS]))
         ]
 
-        for k in self.output_keys:
-            if k in tokenized_data:
-                samples[k] = tokenized_data[k]
+        return tokenized_data
 
-        return samples
+    def _process_sample_overflow(self, tokenized_samples: dict, original_samples: dict):
+        if DataKeys.OVERFLOW_MAPPING in tokenized_samples:
+            # post process here we repete all additional ids if they are matched to the same original file
+            # for example if we have 2 overflowed samples from the same original sample we need to repeat the image file path
+            overflowed_data = {
+                k: [] for k in self.keys_to_add_on_overflow if k in original_samples
+            }
+            for batch_index in range(len(tokenized_samples[DataKeys.TOKEN_IDS])):
+                org_batch_index = tokenized_samples[DataKeys.OVERFLOW_MAPPING][
+                    batch_index
+                ]
+                for k in overflowed_data.keys():
+                    if k in original_samples:
+                        overflowed_data[k].append(original_samples[k][org_batch_index])
 
-    def __call__(self, samples: Union[dict, List[dict]]):
-        tokenized_samples = self._process_samples(samples)
-
-        # post process here we repete all additional ids if they are matched to the same original file
-        # for example if we have 2 overflowed samples from the same original sample we need to repeat the image file path
-        overflowed_data = {k: [] for k in self.keys_to_add_on_overflow if k in samples}
-        for batch_index in range(len(tokenized_samples[DataKeys.TOKEN_IDS])):
-            org_batch_index = tokenized_samples[DataKeys.OVERFLOW_MAPPING][batch_index]
+            # add new overflowed samples to update the batch, this results in a variable batch size
             for k in overflowed_data.keys():
-                if k in samples:
-                    overflowed_data[k].append(samples[k][org_batch_index])
-        for k in overflowed_data.keys():
-            tokenized_samples[k] = overflowed_data[k]
+                tokenized_samples[k] = overflowed_data[k]
+        else:
+            for k in self.keys_to_add_on_overflow:
+                if k in original_samples:
+                    tokenized_samples[k] = original_samples[k]
 
         # convert dict of lists to list of dicts
         tokenized_samples_list = [
             dict(zip(tokenized_samples, t)) for t in zip(*tokenized_samples.values())
         ]
         for k, v in tokenized_samples.items():
-            assert len(tokenized_samples_list) == len(v)
+            assert len(tokenized_samples_list) == len(
+                v
+            ), f"Not all keys have the same length to create a list of sample dicts. {len(tokenized_samples_list)} =/= {len(v)}"
+
+        # now we filter tokenized_samples_list according to overflow sampling strategy. If it is return_all
+        # we return all samples, this will result in variable batch size! might cause issues,
+        if self.overflow_sampling in ["no_overflow", "return_all"]:
+            pass  # do nothing
+        elif self.overflow_sampling == "random":
+            import random
+
+            random.shuffle(
+                tokenized_samples_list
+            )  # shuffle the samples but keep the same batch size
+            tokenized_samples_list = tokenized_samples_list[
+                : len(original_samples[list(original_samples.keys())[0]])
+            ]
+        else:
+            raise ValueError(
+                f"Overflow sampling strategy {self.overflow_sampling} is not supported"
+            )
+
+        return tokenized_samples_list
+
+    def __call__(self, samples: Union[dict, List[dict]], return_dict=False):
+        # tokenize the samples
+        tokenized_samples = self._process_samples(samples)
+
+        # process overflowing tokens as required
+        tokenized_samples_list = self._process_sample_overflow(
+            tokenized_samples, samples
+        )
 
         # pad the samples
         if self.padding_required:
@@ -149,6 +212,12 @@ class HuggingfaceTokenizer(TorchFusionTokenizer):
                 self.tokenizer.pad_token_type_id,
             )
             tokenized_samples_list = data_padder(tokenized_samples_list)
+
+        if return_dict:
+            return {
+                k: [dic[k] for dic in tokenized_samples_list]
+                for k in tokenized_samples_list[0]
+            }
 
         return tokenized_samples_list
 
@@ -186,20 +255,14 @@ class DataPadder:
     def _pad_sample(self, sample: dict):
         for k, padding_elem in self.data_padding_dict.items():
             if k in sample:
-                if isinstance(sample, list):
-                    sample[k] = pad_sequences(
-                        sample[k],
-                        self.padding_side,
-                        self.max_length,
-                        padding_elem,
-                    )
-                else:
-                    sample[k] = pad_sequences(
-                        [sample[k]],
-                        self.padding_side,
-                        self.max_length,
-                        padding_elem,
-                    )[0]
+                if isinstance(sample[k], int):
+                    continue  # skip padding for integers
+                sample[k] = pad_sequences(
+                    [sample[k]],
+                    self.padding_side,
+                    self.max_length,
+                    padding_elem,
+                )[0]
         return sample
 
     def __call__(self, samples: Union[dict, List[dict]]):

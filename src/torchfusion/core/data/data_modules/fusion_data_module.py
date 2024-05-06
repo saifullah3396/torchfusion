@@ -60,6 +60,7 @@ class FusionDataModule(ABC):
         train_val_sampler: Optional[TrainValSampler] = None,
         preprocess_batch_size: int = 100,
         dataset_kwargs: dict = {},
+        tokenizer_config: Optional[dict] = None,
         num_proc: int = 8,
         compute_dataset_statistics: bool = False,
         dataset_statistics_n_samples: int = 50000,
@@ -82,6 +83,7 @@ class FusionDataModule(ABC):
         self._train_val_sampler = train_val_sampler
         self._preprocess_batch_size = preprocess_batch_size
         self._dataset_kwargs = dataset_kwargs
+        self._tokenizer_config = tokenizer_config
         self._num_proc = num_proc
         self._compute_dataset_statistics = compute_dataset_statistics
         self._dataset_statistics_n_samples = dataset_statistics_n_samples
@@ -134,6 +136,10 @@ class FusionDataModule(ABC):
         return dataset
 
     def _load_torch_dataset(self, dataset_class: Type[Dataset], split: str = "train"):
+        # pass tokenizer info to dataset. This may be required for preprocessing data
+        if self._tokenizer_config is not None:
+            self._dataset_kwargs["tokenizer_config"] = self._tokenizer_config
+
         dataset = dataset_class(
             config_name=self._dataset_config_name,
             data_dir=self._dataset_dir,
@@ -214,6 +220,10 @@ class FusionDataModule(ABC):
         # prepare download config
         download_config = self._get_download_config()
 
+        # pass tokenizer info to dataset. This may be required for preprocessing data
+        if self._tokenizer_config is not None:
+            self._dataset_kwargs["tokenizer_config"] = self._tokenizer_config
+
         # get dataset info from builder class of original dataset
         builder_kwargs = dict(
             name=self._dataset_config_name,
@@ -243,34 +253,14 @@ class FusionDataModule(ABC):
         else:
             return self._get_builder()
 
-    def _get_tokenizer_config_if_available(self):
-        dataset_class = self._get_dataset_class()
-
-        # is this torch dataset? check if we have an argument of tokenizer_config passed to the dataset
-        tokenizer_config = None
-        if dataset_class is not None and issubclass(dataset_class, Dataset):
-            if "tokenizer_config" in self._dataset_kwargs:
-                return tokenizer_config
-        else:  # else check for it in th config
-            builder = self._get_builder()
-            if hasattr(builder.config, "tokenizer_config"):
-                return builder.config.tokenizer_config
-
-    def _get_tokenizer_if_available(self):
-        tokenizer_config = self._get_tokenizer_config_if_available()
-        if tokenizer_config is None:
+    def get_tokenizer_if_available(self):
+        if self._tokenizer_config is None:
             return
 
         # create tokenizer
-        tokenizer_name = tokenizer_config["name"]
-        tokenizer_kwargs = tokenizer_config["kwargs"]
-        tokenizer = TokenizerFactory.create(tokenizer_name, tokenizer_kwargs)
-        tokenizer = (
-            tokenizer.tokenizer
-            if isinstance(tokenizer, HuggingfaceTokenizer)
-            else tokenizer
-        )
-        return tokenizer
+        tokenizer_name = self._tokenizer_config["name"]
+        tokenizer_kwargs = self._tokenizer_config["kwargs"]
+        return TokenizerFactory.create(tokenizer_name, tokenizer_kwargs)
 
     def _get_dataset_class(self):
         dataset_class = None
@@ -633,7 +623,7 @@ class FusionDataModule(ABC):
             return self.val_dataloader()
 
     def show_batch(self, batch):
-        print_batch_info(batch, tokenizer=self._get_tokenizer_if_available())
+        print_batch_info(batch, tokenizer=self.get_tokenizer_if_available())
         show_batch(batch)
 
     def get_dataset_info(self):

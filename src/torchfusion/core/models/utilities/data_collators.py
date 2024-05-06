@@ -5,10 +5,12 @@ from typing import Optional
 
 import numpy as np
 import torch
-from transformers import PreTrainedTokenizer
-
 from torchfusion.core.constants import DataKeys
+from torchfusion.core.data.text_utils.tokenizers.hf_tokenizer import (
+    HuggingfaceTokenizer,
+)
 from torchfusion.core.utilities.logging import get_logger
+from transformers import PreTrainedTokenizer
 
 
 def pad_sequences(sequences, padding_side, max_length, padding_elem):
@@ -137,66 +139,28 @@ class BatchToTensorDataCollator:
             for k, dtype in self.data_key_type_map.items():
                 if k in batch:
                     batch[k] = batch[k].to(dtype)
-
         return batch
 
 
 @dataclass
-class BaseSequenceDataCollator:
+class SequenceTokenizerDataCollator:
     data_key_type_map: dict = field(default_factory=lambda: {})
-    data_padding_dict: dict = field(default_factory=lambda: {})
-    tokenizer: Optional[PreTrainedTokenizer] = None
-    tokenizer_call_kwargs: Optional[dict] = field(default_factory=lambda: {})
-    tokenizer_apply_key: Optional[str] = None
-    tokenizer_apply_dict_keys: Optional[list] = field(default_factory=lambda: [])
+    tokenizer: Optional[HuggingfaceTokenizer] = None
+    keys_to_add_on_overflow: Optional[str] = None
     return_tensors: str = "pt"
-
-    def __post_init__(self) -> None:
-        # sequence keys dict
-        if DataKeys.TOKEN_IDS not in self.data_padding_dict:
-            self.data_padding_dict[DataKeys.TOKEN_IDS] = self.tokenizer.pad_token_id
-        if DataKeys.TOKEN_TYPE_IDS not in self.data_padding_dict:
-            self.data_padding_dict[DataKeys.TOKEN_TYPE_IDS] = (
-                self.tokenizer.pad_token_type_id
-            )
-        if DataKeys.ATTENTION_MASKS not in self.data_padding_dict:
-            self.data_padding_dict[DataKeys.ATTENTION_MASKS] = 0
-        if DataKeys.TOKEN_BBOXES not in self.data_padding_dict:
-            self.data_padding_dict[DataKeys.TOKEN_BBOXES] = [0, 0, 0, 0]
-        if DataKeys.TOKEN_ANGLES not in self.data_padding_dict:
-            self.data_padding_dict[DataKeys.TOKEN_ANGLES] = 0
+    overflow_sampling: str = "return_all"
 
     def __call__(self, features):
-        # both cannot be used at the same time
-        assert not (
-            self.tokenizer_apply_dict_keys is not None
-            and self.tokenizer_apply_key is not None
-        ), "Both tokenizer_apply_dict_keys and tokenizer_apply_key cannot be used at the same time"
+        batch = {}
+        keys = features[0].keys()
+        for k in keys:
+            batch[k] = [sample[k] for sample in features]
 
-        batch = {k: [dic[k] for dic in features] for k in features[0]}
-        if self.tokenizer_apply_dict_keys is not None:
-            # generate input from our own keys
-            tokenizer_input = {
-                mapped_key: batch[key]
-                for mapped_key, key in self.tokenizer_apply_dict_keys.items()
-            }
+        # update tokenizer args here if required
+        self.tokenizer.keys_to_add_on_overflow = self.keys_to_add_on_overflow
+        self.tokenizer.overflow_sampling = self.overflow_sampling
 
-            tokenizer_output = self.tokenizer(
-                **tokenizer_input,
-                **self.tokenizer_call_kwargs,
-                return_tensors=self.return_tensors,
-            )
-
-            # fix the keys
-            if "bbox" in tokenizer_output.keys():
-                tokenizer_output[DataKeys.TOKEN_BBOXES] = tokenizer_output["bbox"]
-                del tokenizer_output["bbox"]
-        else:
-            tokenizer_output = self.tokenizer(
-                batch[self.tokenizer_apply_key],
-                **self.tokenizer_call_kwargs,
-                return_tensors=self.return_tensors,
-            )
+        tokenizer_output = self.tokenizer(batch, return_dict=True)
 
         for k in tokenizer_output:
             batch[k] = tokenizer_output[k]

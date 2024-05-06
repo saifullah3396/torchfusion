@@ -4,11 +4,14 @@ import cv2
 import numpy as np
 import torch
 from matplotlib import pyplot as plt
+from torchfusion.core.constants import DataKeys
+from torchfusion.core.data.text_utils.tokenizers.base import TorchFusionTokenizer
+from torchfusion.core.data.text_utils.tokenizers.hf_tokenizer import (
+    HuggingfaceTokenizer,
+)
+from torchfusion.core.utilities.logging import get_logger
 from torchvision.utils import make_grid
 from transformers import PreTrainedTokenizerBase
-
-from torchfusion.core.constants import DataKeys
-from torchfusion.core.utilities.logging import get_logger
 
 
 def show_images(batch, nmax=16, show=True):
@@ -24,7 +27,13 @@ def show_images(batch, nmax=16, show=True):
     return image_grid
 
 
-def print_batch_info(batch, tokenizer: PreTrainedTokenizerBase = None):
+def print_batch_info(batch, tokenizer: TorchFusionTokenizer = None):
+    tokenizer = (
+        tokenizer.tokenizer
+        if isinstance(tokenizer, HuggingfaceTokenizer)
+        else tokenizer
+    )
+
     logger = get_logger()
     logger.info("Batch information: ")
     if tokenizer is not None:

@@ -1,3 +1,4 @@
+import dataclasses
 import logging
 
 from datasets import DatasetInfo
@@ -5,11 +6,7 @@ from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.data_modules.fusion_data_module import FusionDataModule
 from torchfusion.core.data.factory.data_augmentation import DataAugmentationFactory
 from torchfusion.core.data.factory.train_val_sampler import TrainValSamplerFactory
-from torchfusion.core.data.utilities.containers import CollateFnDict, TransformsDict
-from torchfusion.core.models.utilities.data_collators import (
-    BaseSequenceDataCollator,
-    BatchToTensorDataCollator,
-)
+from torchfusion.core.data.utilities.containers import TransformsDict
 from torchfusion.core.training.utilities.constants import TrainingStage
 from torchfusion.core.training.utilities.general import print_transforms
 from torchfusion.core.utilities.logging import get_logger
@@ -143,6 +140,7 @@ def load_datamodule_from_args(
         train_val_sampler=train_val_sampler,
         preprocess_batch_size=args.data_args.preprocess_batch_size,
         dataset_kwargs=args.data_args.dataset_kwargs,
+        tokenizer_config=dataclasses.asdict(args.data_args.tokenizer_config),
         num_proc=args.data_args.num_proc,
         compute_dataset_statistics=args.data_args.compute_dataset_statistics,
         dataset_statistics_n_samples=args.data_args.dataset_statistics_n_samples,

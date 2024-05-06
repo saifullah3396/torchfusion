@@ -55,6 +55,12 @@ class DataArguments:
         },
     )
 
+    # Any additional argument required specifically for the dataset.
+    tokenizer_config: Optional[ClassInitializerArgs] = field(
+        default=None,
+        metadata={"help": ("A tokenizer configuration for the dataset if required.")},
+    )
+
     def __post_init__(self):
         if isinstance(self.dataset_config_name, list):
             assert isinstance(self.dataset_kwargs, list)

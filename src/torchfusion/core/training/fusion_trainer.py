@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import logging
 import os
 from typing import TYPE_CHECKING, Optional, Type
@@ -240,6 +241,21 @@ class FusionTrainer:
         training_sch_manager.setup()
         return training_sch_manager
 
+    def _setup_collate_fns(self):
+        # now assign collate fns
+        # see if the collator function requires a tokenizer or not
+        collator_kwargs = {}
+        if (
+            "tokenizer"
+            in list(  # get all key word arguments and see if tokenizer is required
+                inspect.signature(self._model.get_data_collators).parameters.keys()
+            )
+        ):
+            tokenizer = self._datamodule.get_tokenizer_if_available()
+            collator_kwargs = {"tokenizer": tokenizer}
+
+        return self._model.get_data_collators(**collator_kwargs)
+
     def train(self, local_rank=0):
         """
         Initializes the training of a model given dataset, and their configurations.
@@ -271,14 +287,14 @@ class FusionTrainer:
             **self._args.data_loader_args.train_batch_sampler.kwargs,
         )
 
+        # setup model
         self._model = self._setup_model(
             summarize=True,
             setup_for_train=True,
         )
 
-        # now assign collate fns
-        collate_fns = self._model.get_data_collators()
-        self._datamodule._collate_fns = collate_fns
+        # set collate fns
+        self._datamodule._collate_fns = self._setup_collate_fns()
 
         # setup dataloaders
         self._train_dataloader = self._datamodule.train_dataloader(
@@ -374,9 +390,8 @@ class FusionTrainer:
                 setup_for_train=False,
             )
 
-            # now assign collate fns
-            collate_fns = self._model.get_data_collators()
-            self._datamodule._collate_fns = collate_fns
+            # set collate fns
+            self._datamodule._collate_fns = self._setup_collate_fns()
 
             # create dataloader
             self._test_dataloader = self._datamodule.val_dataloader(
@@ -395,9 +410,8 @@ class FusionTrainer:
                 setup_for_train=False,
             )
 
-            # now assign collate fns
-            collate_fns = self._model.get_data_collators()
-            self._datamodule._collate_fns = collate_fns
+            # set collate fns
+            self._datamodule._collate_fns = self._setup_collate_fns()
 
             # setup dataloaders
             self._test_dataloader = self._datamodule.test_dataloader(

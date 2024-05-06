@@ -11,7 +11,6 @@ import torch
 from ignite.contrib.handlers.tensorboard_logger import TensorboardLogger
 from torch import nn
 from torch.nn.parallel import DataParallel, DistributedDataParallel
-
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.models.args.fusion_model_config import FusionModelConfig
@@ -138,6 +137,7 @@ class FusionModel:
         if self._args.training_args.test_run:
             self._logger.info("Following input is provided to the model for training:")
             for key, value in kwargs["batch"].items():
+                print("Key", key)
                 if value.dtype == torch.float:
                     self._logger.info(
                         f"[{key}] shape={value.shape}, min={value.min()}, max={value.max()}, mean={value.mean()}, std={value.std()}"
