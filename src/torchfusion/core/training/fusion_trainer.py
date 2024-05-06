@@ -10,7 +10,6 @@ from datasets import DatasetInfo
 from numpy import isin
 from omegaconf import DictConfig, OmegaConf
 from torch.utils.data import Subset
-
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.data_augmentations.general import DictTransform
@@ -42,7 +41,6 @@ from torchfusion.core.utilities.logging import get_logger
 
 if TYPE_CHECKING:
     import torch
-
     from torchfusion.core.data.data_modules.fusion_data_module import FusionDataModule
     from torchfusion.core.models.fusion_model import FusionModel
 
@@ -199,16 +197,19 @@ class FusionTrainer:
             validation_engine.logger = get_logger()
             validation_engine.logger.propagate = False
 
-        self._logger.info(f"Configured Training Engine: \n")
-        self._logger.info(f"Total steps per epoch = {self.batches_per_epch}")
+        self._logger.info(f"Configured Training Engine:")
+        self._logger.info(f"\tTotal steps per epoch = {self.batches_per_epch}")
         self._logger.info(
-            f"Total gradient accumulation steps per device = {self._args.training_args.gradient_accumulation_steps}"
+            f"\tGradient accumulation per device = {self._args.training_args.gradient_accumulation_steps}"
         )
         self._logger.info(
-            f"Total optimizer update steps per epoch (scaled by grad accumulation steps) = {self.total_training_steps}"
+            f"\tTotal optimizer update steps over (scaled by grad accumulation steps) = {self.steps_per_epoch}"
         )
-        self._logger.info(f"Total warmup steps = {self.warmup_steps}")
-        self._logger.info(f"Max epochs = {self._args.training_args.max_epochs}")
+        self._logger.info(
+            f"\tTotal optimizer update over complete training cycle (scaled by grad accumulation steps) = {self.total_training_steps}"
+        )
+        self._logger.info(f"\tTotal warmup steps = {self.warmup_steps}")
+        self._logger.info(f"\tMax epochs = {self._args.training_args.max_epochs}")
         return training_engine, validation_engine
 
     def _setup_test_engine(self, checkpoint_type: str = "last"):
@@ -328,10 +329,10 @@ class FusionTrainer:
                 Events.ITERATION_COMPLETED, terminate_on_iteration_complete
             )
 
-        self._logger.info("Final sanity check... Training transforms:")
+        self._logger.debug("Final sanity check... Training transforms:")
         print_tf_from_loader(self._train_dataloader, stage=TrainingStage.train)
 
-        self._logger.info("Final sanity check... Validation transforms:")
+        self._logger.debug("Final sanity check... Validation transforms:")
         print_tf_from_loader(self._val_dataloader, stage=TrainingStage.validation)
 
         # run training

@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import Optional
 
 import torch
-
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.text_utils.data_collators import SequenceDataCollator
 from torchfusion.core.data.utilities.containers import CollateFnDict
@@ -66,7 +65,13 @@ class FusionModelForTokenClassification(FusionModelForClassification):
         checkpoint: Optional[str] = None,
         strict: bool = False,
     ):
-        return self._build_classification_model(checkpoint=checkpoint, strict=strict)
+        return self._build_classification_model(
+            checkpoint=checkpoint,
+            strict=strict,
+            model_constructor=self.config.model_constructor,
+            model_constructor_args=self.config.model_constructor_args,
+            num_labels=self.config.num_labels,
+        )
 
     def _training_step(self, engine, batch, tb_logger, **kwargs) -> None:
         assert self._LABEL_KEY in batch, "Label must be passed for training"

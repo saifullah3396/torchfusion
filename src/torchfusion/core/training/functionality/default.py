@@ -21,7 +21,6 @@ from ignite.engine import Engine, EventEnum, Events
 from ignite.handlers import Checkpoint
 from ignite.handlers.checkpoint import BaseSaveHandler, DiskSaver
 from torch.utils.data import DataLoader
-
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.training.fusion_opt_manager import FusionOptimizerManager
@@ -39,7 +38,6 @@ from torchfusion.core.utilities.logging import get_logger
 
 if TYPE_CHECKING:
     import torch
-
     from torchfusion.core.models.fusion_model import FusionModel
     from torchfusion.core.training.fusion_sch_manager import FusionSchedulersManager
 
@@ -105,7 +103,6 @@ class DefaultTrainingFunctionality:
 
             import torch
             from ignite.utils import convert_tensor
-
             from torchfusion.core.constants import DataKeys
 
             # perform optimizers zero_grad() operation with gradient accumulation
@@ -175,7 +172,6 @@ class DefaultTrainingFunctionality:
 
             import torch
             from ignite.utils import convert_tensor
-
             from torchfusion.core.constants import DataKeys
 
             # perform optimizers zero_grad() operation with gradient accumulation
@@ -294,7 +290,6 @@ class DefaultTrainingFunctionality:
             import torch
             from ignite.utils import convert_tensor
             from torch.cuda.amp import autocast
-
             from torchfusion.core.training.utilities.constants import TrainingStage
 
             # ready model for evaluation
@@ -396,7 +391,6 @@ class DefaultTrainingFunctionality:
 
             import torch
             from ignite.utils import convert_tensor
-
             from torchfusion.core.training.utilities.constants import TrainingStage
 
             # ready model for evaluation
@@ -841,7 +835,7 @@ class DefaultTrainingFunctionality:
                 logger.info(
                     f"Number of warmup steps = {warmup_duration}. This corresponds to optimizer updates, "
                     "not total batches in epoch and therefore its scaled by grad "
-                    f"acummulation steps = ${args.training_args.gradient_accumulation_steps}."
+                    f"acummulation steps = {args.training_args.gradient_accumulation_steps}."
                 )
 
                 if isinstance(inner_sch, (StepLR, MultiStepLR)):
@@ -1058,7 +1052,6 @@ class DefaultTrainingFunctionality:
 
         if args.training_args.resume_from_checkpoint:
             import torch
-
             from torchfusion.core.training.utilities.general import (
                 find_resume_checkpoint,
             )
@@ -1162,7 +1155,6 @@ class DefaultTrainingFunctionality:
         opt_manager: FusionOptimizerManager = None,
     ):
         from ignite.engine import Events
-
         from torchfusion.core.training.utilities.progress_bar import FusionProgressBar
 
         # redirect tqdm output to logger
@@ -1508,7 +1500,6 @@ class DefaultTrainingFunctionality:
         import torch
         from ignite.engine import Events
         from ignite.handlers import Checkpoint
-
         from torchfusion.core.training.utilities.general import find_test_checkpoint
 
         # configure model checkpoint_state_dict

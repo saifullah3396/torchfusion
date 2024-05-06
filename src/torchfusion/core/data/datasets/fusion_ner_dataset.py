@@ -6,7 +6,6 @@ from typing import Optional
 import datasets
 import numpy as np
 from datasets.features import Features, Image
-
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.datasets.features import FusionClassLabel
 from torchfusion.core.data.datasets.fusion_dataset import FusionDataset
@@ -35,6 +34,9 @@ class FusionNERDatasetConfig(FusionDatasetConfig):
         config_kwargs: dict,
         custom_features: typing.Optional[Features] = None,
     ) -> str:
+        if self.tokenizer_config is None:
+            raise ValueError("Tokenizer config must be provided for this dataset!")
+
         tokenizer_name = (
             self.tokenizer_config["kwargs"]["model_name"]
             if self.tokenizer_config["name"] == "HuggingfaceTokenizer"
