@@ -1,6 +1,6 @@
-from datasets import DatasetInfo
-from torchvision.transforms import Compose
+import logging
 
+from datasets import DatasetInfo
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.data_modules.fusion_data_module import FusionDataModule
 from torchfusion.core.data.factory.data_augmentation import DataAugmentationFactory
@@ -13,6 +13,7 @@ from torchfusion.core.models.utilities.data_collators import (
 from torchfusion.core.training.utilities.constants import TrainingStage
 from torchfusion.core.training.utilities.general import print_transforms
 from torchfusion.core.utilities.logging import get_logger
+from torchvision.transforms import Compose
 
 logger = get_logger()
 
@@ -66,7 +67,6 @@ def load_datamodule_from_args(
     """
 
     import ignite.distributed as idist
-
     from torchfusion.core.data.data_modules.fusion_data_module import FusionDataModule
 
     logger.info("Setting up datamodule...")
@@ -94,8 +94,16 @@ def load_datamodule_from_args(
     )
 
     # print transforms
-    print_transforms(preprocess_transforms, title="preprocess transforms")
-    print_transforms(realtime_transforms, title="realtime transforms")
+    print_transforms(
+        preprocess_transforms,
+        title="preprocess transforms",
+        log_level=logging.INFO,
+    )
+    print_transforms(
+        realtime_transforms,
+        title="realtime transforms",
+        log_level=logging.INFO,
+    )
 
     # setup train_val_sampler
     train_val_sampler = None
@@ -164,7 +172,7 @@ def load_datamodule_from_args(
     dataset_info = datamodule.get_dataset_info()
     data_labels = None
     if isinstance(dataset_info, DatasetInfo):
-        logger.info(f"Dataset loaded with following features: {dataset_info.features}")
+        logger.debug(f"Dataset loaded with following features: {dataset_info.features}")
         if DataKeys.LABEL in dataset_info.features:
             from datasets.features import ClassLabel, Sequence
 

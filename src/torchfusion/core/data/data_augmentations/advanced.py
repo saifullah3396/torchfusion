@@ -11,13 +11,11 @@ import PIL
 import torch
 from PIL import Image as PILImage
 from timm.data import create_transform
-from torchvision import transforms
-
 from torchfusion.core.args.args_base import ClassInitializerArgs
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.data_augmentations.transforms import SquarePad
-from torchfusion.core.data.factory.data_augmentation import \
-    DataAugmentationFactory
+from torchfusion.core.data.factory.data_augmentation import DataAugmentationFactory
+from torchvision import transforms
 
 from .base import DataAugmentation
 from .distortions import Solarization
@@ -43,7 +41,6 @@ class PILNumpyResize:
 
 @dataclass
 class PILEncode:
-    rescale_size: Optional[List[int]] = None
     encode_format: str = "PNG"
 
     def __call__(self, image) -> Any:

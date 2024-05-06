@@ -11,6 +11,17 @@ import torch
 from omegaconf import DictConfig
 
 DEFAULT_LOGGER_NAME = "torchfusion"
+DEFAULT_LEVEL_STYLES = {
+    "critical": {"bold": True, "color": "red"},
+    "debug": {"color": "green"},
+    "error": {"color": "red"},
+    "info": {"color": "cyan"},
+    "notice": {"color": "magenta"},
+    "spam": {"color": "green", "faint": True},
+    "success": {"bold": True, "color": "green"},
+    "verbose": {"color": "blue"},
+    "warning": {"color": "yellow"},
+}
 
 
 def log_basic_info(args: Mapping, log_args=False, quiet=True):
@@ -93,7 +104,11 @@ class LoggingHandler:
             ch.setLevel(level)
             ch.setFormatter(formatter)
             logger.addHandler(ch)
-            coloredlogs.install(logger=logger)
+            coloredlogs.install(
+                logger=logger,
+                level=level,
+                level_styles=DEFAULT_LEVEL_STYLES,
+            )
 
             if filepath is not None:
                 fh = logging.FileHandler(filepath)

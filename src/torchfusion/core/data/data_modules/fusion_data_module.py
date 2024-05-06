@@ -17,7 +17,6 @@ import PIL
 from datadings.reader import MsgpackReader as MsgpackFileReader
 from datasets import DownloadConfig
 from torch.utils.data import BatchSampler, DataLoader, Dataset, Subset
-
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.data_augmentations.general import DictTransform
 from torchfusion.core.data.datasets.msgpack.dataset import (
@@ -188,7 +187,7 @@ class FusionDataModule(ABC):
             dataset_build_kwargs["preprocess_transforms"] = preprocess_transforms
 
         # create the dataset
-        self._logger.info(
+        self._logger.debug(
             f"Loading dataset with the following kwargs: {pretty_print_dict(dataset_build_kwargs)}"
         )
         dataset = DatasetFactory.create(
@@ -364,7 +363,7 @@ class FusionDataModule(ABC):
                     split=str(datasets.Split.VALIDATION),
                 )
             elif self._train_val_sampler is not None:
-                self._logger.info(
+                self._logger.debug(
                     f"Using train/validation sampler [{self._train_val_sampler}] for splitting the "
                     f"dataset with following arguments: {pretty_print_dict(self._train_val_sampler)}"
                 )

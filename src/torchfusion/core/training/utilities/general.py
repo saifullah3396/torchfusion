@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import dataclasses
 import json
+import logging
 from typing import TYPE_CHECKING, Tuple
 
 import ignite.distributed as idist
 from torch.utils.data import Subset
-
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.data.data_augmentations.general import DictTransform
 from torchfusion.core.training.utilities.constants import TrainingStage
@@ -70,7 +70,6 @@ def initialize_torch(args: FusionArguments, seed: int = 0, deterministic: bool =
 
     import ignite.distributed as idist
     import torch
-
     from torchfusion.core.utilities.logging import log_basic_info
 
     logger = get_logger()
@@ -235,34 +234,48 @@ def find_test_checkpoint(
     )
 
 
-def print_transform(tf):
+def print_transform(tf, log_level=logging.DEBUG):
     logger = get_logger()
     if idist.get_rank() == 0:
         for idx, transform in enumerate(tf.transforms):
             if isinstance(transform, DictTransform):
-                logger.info(f"{idx}, {transform.key}: {transform.transform}")
+                if log_level == logging.DEBUG:
+                    logger.debug(f"{idx}, {transform.key}: {transform.transform}")
+                else:
+                    logger.info(f"{idx}, {transform.key}: {transform.transform}")
             else:
-                logger.info(f"{idx}, {transform}")
+                if log_level == logging.DEBUG:
+                    logger.debug(f"{idx}, {transform}")
+                else:
+                    logger.info(f"{idx}, {transform}")
 
 
-def print_transforms(tf, title):
+def print_transforms(tf, title, log_level=logging.DEBUG):
     logger = get_logger()
     for split in ["train", "validation", "test"]:
         if tf[split] is None or tf[split].transforms is None:
             continue
-        logger.info(f"Defining [{split}] {title}:")
-        print_transform(tf[split])
+        if log_level == logging.DEBUG:
+            logger.debug(f"Defining [{split}] {title}:")
+        else:
+            logger.info(f"Defining [{split}] {title}:")
+        print_transform(tf[split], log_level=log_level)
 
 
-def print_tf_from_loader(dataloader, stage=TrainingStage.train):
+def print_tf_from_loader(dataloader, stage, log_level=logging.DEBUG):
+    logger = get_logger()
     tf = (
         dataloader.dataset.dataset._transforms
         if isinstance(dataloader.dataset, Subset)
         else dataloader.dataset._transforms
     )
 
+    if log_level == logging.DEBUG:
+        logger.debug(f"Transforms for [{stage}]:")
+    else:
+        logger.info(f"Transforms for [{stage}]:")
     if tf is not None:
-        print_transform(tf)
+        print_transform(tf, log_level=log_level)
 
 
 def pretty_print_dict(x):
