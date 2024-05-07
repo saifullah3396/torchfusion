@@ -191,7 +191,6 @@ class TransformedDataset(Dataset):
         sample = self._dataset[index]
 
         # apply transforms
-        print("self._transforms", self._transforms)
         if self._transforms is not None:
             sample = self._transforms(sample)
 
@@ -208,9 +207,3 @@ class TransformedDataset(Dataset):
 
     def close(self):
         self._dataset._close()
-
-    def __getattr__(self, name):
-        try:
-            return super().__getattr__(name)
-        except AttributeError:
-            return getattr(self._dataset, name)
