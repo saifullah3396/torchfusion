@@ -439,6 +439,9 @@ class FusionTrainer:
     def train_parallel(
         cls, local_rank: int, args: FusionArguments, hydra_config: DictConfig
     ):
+        # initialize logger
+        get_logger(hydra_config=hydra_config)
+
         cls.run_diagnostic(local_rank, args, hydra_config)
         return cls(args, hydra_config).train(local_rank)
 

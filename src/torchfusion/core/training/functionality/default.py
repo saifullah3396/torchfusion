@@ -1152,8 +1152,8 @@ class DefaultTrainingFunctionality:
         from torchfusion.core.training.utilities.progress_bar import FusionProgressBar
 
         # redirect tqdm output to logger
-        # tqdm_to_logger = TqdmToLogger(get_logger())
-        tqdm_to_logger = TqdmToLogger(logger)
+        tqdm_to_logger = TqdmToLogger(get_logger())
+        # tqdm_to_logger = TqdmToLogger(logger)
         if stage == TrainingStage.train:
             if opt_manager is None:
                 raise ValueError("opt_manager is required for TrainingStage=Train.")
