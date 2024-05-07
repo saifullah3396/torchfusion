@@ -1,3 +1,4 @@
+from torchfusion.core.models.constructors.detectron2 import Detectron2ModelConstructor
 from torchfusion.core.models.constructors.diffusers import DiffusersModelConstructor
 from torchfusion.core.models.constructors.fusion import FusionModelConstructor
 from torchfusion.core.models.constructors.timm import TimmModelConstructor
@@ -19,6 +20,8 @@ class ModelConstructorFactory:
             model_constructor_class = TorchvisionModelConstructor
         elif name == "timm":
             model_constructor_class = TimmModelConstructor
+        elif name == "detectron2":
+            model_constructor_class = Detectron2ModelConstructor
         elif name == "diffusers":
             model_constructor_class = DiffusersModelConstructor
         else:

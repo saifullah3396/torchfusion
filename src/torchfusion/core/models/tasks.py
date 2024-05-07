@@ -3,6 +3,7 @@ class ModelTasks:
     sequence_classification = "sequence_classification"
     token_classification = "token_classification"
     image_generation = "image_generation"
+    object_detection = "object_detection"
     embedding = "embedding"
     autoencoding = "autoencoding"
     gan = "gan"
