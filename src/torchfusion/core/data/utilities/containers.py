@@ -1,8 +1,6 @@
 import typing
 from dataclasses import dataclass
 
-from torch import nn
-
 from torchfusion.core.models.utilities.data_collators import BatchToTensorDataCollator
 
 

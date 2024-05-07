@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import List, Optional
 
 import datasets
+import numpy as np
 import PIL
 import tqdm
 from torchfusion.core.constants import DataKeys
@@ -13,6 +14,7 @@ from torchfusion.core.data.datasets.fusion_dataset import (
     FusionDataset,
     FusionDatasetConfig,
 )
+from torchfusion.core.data.utilities.coco_utils import load_coco_json
 
 # we do not use the logger from torchfusion, but the one from datasets here
 logger = datasets.logging.get_logger(__name__)
@@ -49,6 +51,7 @@ class FusionCocoDataset(FusionDataset):
         return f"{self.config.data_dir}/{split}.json"
 
     def _dataset_features(self):
+        # we prepare coco style features as output
         features = datasets.Features(
             {
                 "image_id": datasets.Value("int64"),
@@ -69,6 +72,30 @@ class FusionCocoDataset(FusionDataset):
             "id": datasets.Value("int64"),
             "area": datasets.Value("int64"),
             "bbox": datasets.Sequence(datasets.Value("float32"), length=4),
+            "bbox_mode": datasets.Value("int32"),
+            "segmentation": datasets.Sequence(
+                datasets.Sequence(datasets.Value("float32"))
+            ),
+            "iscrowd": datasets.Value("bool"),
+        }
+        features["objects"] = [object_dict]
+        return features
+
+    def _dataset_features(self):
+        features = datasets.Features(
+            {
+                DataKeys.IMAGE_ID: datasets.Value("int64"),
+                DataKeys.IMAGE_WIDTH: datasets.Value("int32"),
+                DataKeys.IMAGE_HEIGHT: datasets.Value("int32"),
+                DataKeys.IMAGE_FILE_PATH: datasets.features.Value("string"),
+                DataKeys.IMAGE: datasets.Image(decode=True),
+            }
+        )
+        object_dict = {
+            "category_id": datasets.ClassLabel(names=self.config.category_names),
+            "area": datasets.Value("int64"),
+            "bbox": datasets.Sequence(datasets.Value("float32"), length=4),
+            "bbox_mode": datasets.Value("int32"),
             "segmentation": datasets.Sequence(
                 datasets.Sequence(datasets.Value("float32"))
             ),
@@ -136,3 +163,56 @@ class FusionCocoDataset(FusionDataset):
 
             splits.append(dataset)
         return splits
+
+    def _generate_examples_impl(
+        self,
+        split,
+    ):
+        """Yields examples as (key, example) tuples."""
+
+        logger.info("Loading annotations file...")
+
+        # check if image files exist and if not, raise a warning
+        if not Path(self._get_image_dir(split)).exists():
+            logger.warning(
+                f"Image directory {self._get_image_dir(split)} does not exist. Loading data without images..."
+            )
+
+        # load all coco samples from json file
+        samples_list, category_names = load_coco_json(
+            json_file=self._get_json_path(split), image_root=self._get_image_dir(split)
+        )
+
+        assert (
+            category_names == self.config.category_names
+        ), "Category names do not match between dataset config and json file."
+
+        # This method handles input defined in _split_generators to yield (key, example) tuples from the dataset.
+        # The `key` is here for legacy reason (tfds) and is not important in itself.
+        def _sample_from_coco_sample(sample):
+            image_file_path = self._get_image_dir(split) / sample["file_name"]
+            image = np.array(PIL.Image.open(image_file_path))
+            return {
+                DataKeys.IMAGE_ID: sample["image_id"],
+                DataKeys.IMAGE_WIDTH: sample["width"],
+                DataKeys.IMAGE_HEIGHT: sample["height"],
+                DataKeys.IMAGE_FILE_PATH: sample["file_name"],
+                DataKeys.IMAGE: image,
+            }
+
+        for idx, coco_sample in enumerate(samples_list):
+            sample = _sample_from_coco_sample(coco_sample)
+            objects = []
+            for annotation in coco_sample["annotations"]:
+                if "bbox_mode" in annotation:
+                    annotation["bbox_mode"] = annotation["bbox_mode"].value
+
+                if "modified" in annotation:
+                    del annotation["modified"]
+                objects.append(annotation)
+            sample["objects"] = objects
+
+            yield idx, sample
+
+            if idx > 10:
+                break

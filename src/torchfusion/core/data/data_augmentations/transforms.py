@@ -13,11 +13,10 @@ import torch
 import torchvision.transforms.functional as F
 from scipy.ndimage.interpolation import map_coordinates
 from skimage.filters import gaussian
+from torchfusion.core.data.data_augmentations.base import DataAugmentation
 from torchvision import transforms
 from torchvision.transforms import InterpolationMode, RandomAffine
 from torchvision.transforms.functional import resize
-
-from torchfusion.core.data.data_augmentations.base import DataAugmentation
 
 if TYPE_CHECKING:
     import torch
@@ -390,6 +389,26 @@ class RandomResizedCrop(DataAugmentation):
             ratio=self.ratio,
             interpolation=InterpolationMode[self.interpolation],  # to do fix later
             antialias=False,
+        )
+
+    def __call__(self, image):
+        return self._aug(image)
+
+
+@dataclass
+class ResizeShortestEdge(DataAugmentation):
+    """
+    Applies random cropping on a torch tensor image.
+    """
+
+    short_edge_length: List[int] = field(default_factory=lambda: [400, 500, 600])
+    sample_style: str = "choice"
+
+    def __post_init__(self):
+        from detectron2.data.transforms import ResizeShortestEdge
+
+        self._aug = ResizeShortestEdge(
+            short_edge_length=self.short_edge_length, sample_style=self.sample_style
         )
 
     def __call__(self, image):

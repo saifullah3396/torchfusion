@@ -1,8 +1,9 @@
 class DataKeys:
     INDEX = "index"
     IMAGE = "image"
-    IMAGE_WIDTH = "image_width"
-    IMAGE_HEIGHT = "image_height"
+    IMAGE_ID = "image_id"
+    IMAGE_WIDTH = "width"
+    IMAGE_HEIGHT = "height"
     IMAGE_FILE_PATH = "image_file_path"
     GT_IMAGE = "gt_image"
     GT_IMAGE_FILE_PATH = "gt_image_file_path"
@@ -57,6 +58,7 @@ class DataKeys:
     FONT = "font"
     TEXT = "text"
     PAGE_BBOXES = "page_bboxes"
+    COCO_OBJECTS = "objects"
 
 
 class MetricKeys:

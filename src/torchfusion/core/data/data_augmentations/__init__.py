@@ -19,7 +19,9 @@ _import_structure = {
     ],
     "advanced": [
         "ImagePreprocess",
+        "ObjectDetectionImagePreprocess",
         "BasicImageAug",
+        "ObjectDetectionImageAug",
         "RandAug",
         "Moco",
         "BarlowTwins",

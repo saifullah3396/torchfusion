@@ -15,6 +15,7 @@ from torchfusion.core.args.args_base import ClassInitializerArgs
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.data_augmentations.transforms import SquarePad
 from torchfusion.core.data.factory.data_augmentation import DataAugmentationFactory
+from torchfusion.core.utilities.logging import get_logger
 from torchvision import transforms
 
 from .base import DataAugmentation
@@ -24,6 +25,128 @@ from .noise import GaussianNoiseRGB
 
 if TYPE_CHECKING:
     import torch
+logger = get_logger(__name__)
+
+
+def check_image_size(sample, image):
+    """
+    Raise an error if the image does not match the size specified in the dict.
+    """
+    if DataKeys.IMAGE_WIDTH in sample or DataKeys.IMAGE_HEIGHT in sample:
+        # image has h, w, c as numpy array
+        image_wh = (image.shape[1], image.shape[0])
+        expected_wh = (
+            sample[DataKeys.IMAGE_WIDTH],
+            sample[DataKeys.IMAGE_HEIGHT],
+        )
+        if not image_wh == expected_wh:
+            raise ValueError(
+                "Mismatched image shape{}, got {}, expect {}.".format(
+                    (
+                        " for image " + sample["file_name"]
+                        if "file_name" in sample
+                        else ""
+                    ),
+                    image_wh,
+                    expected_wh,
+                )
+                + " Please check the width/height in your annotation."
+            )
+
+    # To ensure bbox always remap to original image size
+    if DataKeys.IMAGE_HEIGHT not in sample or sample[DataKeys.IMAGE_HEIGHT] is None:
+        sample[DataKeys.IMAGE_HEIGHT] = image.shape[0]
+    if DataKeys.IMAGE_WIDTH not in sample or sample[DataKeys.IMAGE_WIDTH] is None:
+        sample[DataKeys.IMAGE_WIDTH] = image.shape[1]
+
+
+def detectron2_preprocess_transform_image_and_objects(sample, geometric_tf):
+    from detectron2.data.detection_utils import transform_instance_annotations
+    from detectron2.data.transforms import apply_transform_gens
+
+    # we always read image in RGB format in the dataset, when it reaches here the image is of numpay array with shape (h, w, c)
+    # detectron2 needs image of shape (h, w, c) and in this place of transformation.
+    # here we once resize the image to max possible sizes needed during training/testing
+    image = sample[DataKeys.IMAGE]
+
+    # sample must contain image height and image width as done for coco type datasets
+    # here we assume that the sample has those. If not the image width and heights are set
+    check_image_size(sample, image)
+
+    # here the image is resized to correct aspect ratio
+    # the returned geometric_tf is needed for bbox transformation in detectron2
+    image, geometric_tf = apply_transform_gens(geometric_tf, image)
+
+    # store the image shape here
+    image_shape = image.shape[:2]  # h, w
+
+    # To ensure bbox always remap to original image size, we reset image shape here as this is only preprocessing
+    sample[DataKeys.IMAGE_HEIGHT] = image_shape[0]
+    sample[DataKeys.IMAGE_WIDTH] = image_shape[1]
+
+    if "objects" in sample:  # convert the objects to the new image size
+        # here objects are transformed from XYWH_ABS to XYXY_ABS
+        sample["objects"] = [
+            transform_instance_annotations(obj, geometric_tf, image_shape)
+            for obj in sample["objects"]
+            if obj.get("iscrowd", 0) == 0
+        ]
+
+    # update image in place
+    sample[DataKeys.IMAGE] = image
+    return sample
+
+
+def detectron2_realtime_ransform_image_and_objects(sample, geometric_tf, mask_on):
+    from detectron2.data.detection_utils import (
+        annotations_to_instances,
+        filter_empty_instances,
+        transform_instance_annotations,
+    )
+    from detectron2.data.transforms import apply_transform_gens
+    from detectron2.structures import BoxMode
+    from torchvision.transforms.functional import to_tensor
+
+    # we always read image in RGB format in the dataset, when it reaches here the image is of numpay array with shape (h, w, c)
+    # detectron2 needs image of shape (h, w, c) and in this place of transformation.
+    # here we once resize the image to max possible sizes needed during training/testing
+    image = np.array(sample[DataKeys.IMAGE])
+
+    # sample must contain image height and image width as done for coco type datasets
+    # here we assume that the sample has those. If not the image width and heights are set
+    check_image_size(sample, image)
+
+    # here the image is resized to correct aspect ratio
+    # the returned geometric_tf is needed for bbox transformation in detectron2
+    image, geometric_tf = apply_transform_gens(geometric_tf, image)
+
+    # store the image shape here
+    image_shape = image.shape[:2]  # h, w
+
+    if "objects" in sample:  # convert the objects to the new image size
+        # USER: Modify this if you want to keep them for some reason.
+        for obj in sample["objects"]:
+            if not mask_on:
+                obj.pop("segmentation", None)
+            obj.pop("keypoints", None)
+
+            if "bbox_mode" in obj:
+                obj["bbox_mode"] = BoxMode(obj["bbox_mode"])
+
+        # here objects are transformed from XYWH_ABS to XYXY_ABS
+        sample["objects"] = [
+            transform_instance_annotations(obj, geometric_tf, image_shape)
+            for obj in sample["objects"]
+            if obj.get("iscrowd", 0) == 0
+        ]
+
+        instances = annotations_to_instances(sample["objects"], image_shape)
+        sample["instances"] = filter_empty_instances(instances)
+
+    # convert image to tensor and update in place
+    sample[DataKeys.IMAGE] = to_tensor(image)
+
+    return sample
 
 
 @dataclass
@@ -127,6 +250,192 @@ class ImagePreprocess(DataAugmentation):
             return [self._aug(s) for s in sample]
         else:
             return self._aug(sample)
+
+
+@dataclass
+class ObjectDetectionImagePreprocess(DataAugmentation):
+    """
+    Defines a basic image preprocessing for image object detection based on detectron2.
+    """
+
+    encode_image: bool = True
+    encode_format: str = "PNG"
+
+    # detection related
+    min_size: int = (
+        800  # this is the size used in detectron2 default config, we preprocess all image to this size
+    )
+    max_size: int = (
+        1333  # this is the size used in detectron2 default config, we preprocess all image to this size
+    )
+
+    def _initialize_aug(self):
+        from detectron2.data.transforms import ResizeShortestEdge
+
+        # generate transformations list
+        self.image_postprocess_tf = transforms.Compose(
+            [transforms.ToPILImage(), PILEncode(encode_format=self.encode_format)]
+        )
+
+        # this can only be applied to tensors
+        self.geometric_tf = [ResizeShortestEdge(self.min_size, self.max_size)]
+
+    def __post_init__(self):
+        self._initialize_aug()
+
+    def __call__(self, sample):
+        sample = detectron2_preprocess_transform_image_and_objects(
+            sample, self.geometric_tf
+        )
+
+        if self.encode_image:
+            sample[DataKeys.IMAGE] = self.image_postprocess_tf(sample[DataKeys.IMAGE])
+        return sample
+
+
+@dataclass
+class ObjectDetectionImageAug(DataAugmentation):
+    """
+    Defines a basic image augmentation for image object detection based on detectron2.
+    """
+
+    # detection related
+    min_size: Union[int, List[int]] = field(
+        default_factory=lambda: [480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800]
+    )
+    max_size: int = (
+        1333  # this is the size used in detectron2 default config, we preprocess all image to this size
+    )
+    mask_on: bool = False
+    random_flip: bool = field(
+        default=False, metadata={"help": "Whether to perform random horizontal flip."}
+    )
+    sampling_style: str = "choice"
+    keep_objects: bool = False
+
+    def _initialize_aug(self):
+        from detectron2.data.transforms import RandomFlip, ResizeShortestEdge
+
+        # this can only be applied to tensors
+        self.geometric_tf = []
+        if self.random_flip:
+            self.geometric_tf.append(RandomFlip())
+        self.geometric_tf.append(
+            ResizeShortestEdge(
+                self.min_size, self.max_size, sample_style=self.sampling_style
+            )
+        )
+
+    def __post_init__(self):
+        self._initialize_aug()
+
+    def __call__(self, sample):
+        sample = detectron2_realtime_ransform_image_and_objects(
+            sample, self.geometric_tf, mask_on=self.mask_on
+        )
+
+        if not self.keep_objects:
+            sample.pop("objects", None)
+        return sample
+
+
+@dataclass
+class ObjDetectionBasicAug(DataAugmentation):
+    """
+    Defines a basic image augmentation for image object detection.
+    """
+
+    rgb_to_bgr: bool = False
+    rescale_strategy: Optional[ClassInitializerArgs] = field(
+        default=None,
+    )
+    normalize: bool = True
+    random_hflip: bool = field(
+        default=False, metadata={"help": "Whether to perform random horizontal flip."}
+    )
+    random_vflip: bool = field(
+        default=False, metadata={"help": "Whether to perform random vertical flip."}
+    )
+
+    # detection related
+    mask_on: bool = False
+
+    def __str__(self):
+        return str(self._aug)
+
+    def _initialize_aug(self):
+        # create rescaling transform
+        self.rescale_transform = None
+        if self.rescale_strategy is not None:
+            self.rescale_transform = DataAugmentationFactory.create(
+                name=self.rescale_strategy.name, kwargs=self.rescale_strategy.kwargs
+            )
+
+        # generate transformations list
+        aug = []
+
+        # convert images to tensor
+        aug.append(transforms.ToTensor())
+
+        # apply rgb to bgr if required
+        if self.rgb_to_bgr:
+            aug.append(RGBToBGR())
+
+        # apply rescaling if required
+        if self.rescale_transform is not None:
+            aug.append(self.rescale_transform)
+
+        # apply random horizontal flip if required
+        if self.random_hflip:
+            aug.append(transforms.RandomHorizontalFlip(0.5))
+
+        # apply random vertical flip if required
+        if self.random_vflip:
+            aug.append(transforms.RandomVerticalFlip(0.5))
+
+        # change dtype to float
+        aug.append(transforms.ConvertImageDtype(torch.float))
+
+        # normalize image if required
+        if self.normalize:
+            if isinstance(self.mean, float):
+                aug.append(transforms.Normalize((self.mean,), (self.std,)))
+            else:
+                aug.append(transforms.Normalize(self.mean, self.std))
+
+        # generate torch transformation
+        return transforms.Compose(aug)
+
+    def __post_init__(self):
+        self._aug = self._initialize_aug()
+
+    def __call__(self, sample):
+        if not isinstance(sample, list):
+            samples = [sample]
+
+        for sample in samples:
+            # image sanity check
+            image = sample[DataKeys.IMAGE]  # PIL Image with (W, H, C)
+
+            # sample has width, height information
+            check_image_size(sample, image)
+
+            image = self._aug(image)
+
+            # handle objects
+            objects = sample.get("objects", None)
+            for object in objects:
+                if not self.mask_on:
+                    object.pop("segmentation", None)
+                object.pop("keypoints", None)
+
+            annos = [
+                transform_instance_annotations(obj, transforms, image_shape)
+                for obj in dataset_dict.pop("annotations")
+                if obj.get("iscrowd", 0) == 0
+            ]
+            instances = annotations_to_instances(annos, image_shape)
+            dataset_dict["instances"] = utils.filter_empty_instances(instances)
 
 
 @dataclass
