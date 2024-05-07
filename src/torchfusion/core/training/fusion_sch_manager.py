@@ -3,15 +3,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Mapping
 
 import torch
-
 from torchfusion.core.utilities.logging import get_logger
 
 if TYPE_CHECKING:
     import torch
-
     from torchfusion.core.args.args import FusionArguments
     from torchfusion.core.training.fusion_opt_manager import FusionOptimizerManager
     from torchfusion.core.training.fusion_trainer import FusionTrainer
+
+logger = get_logger(__name__)
 
 
 class FusionSchedulersManager:
@@ -26,7 +26,6 @@ class FusionSchedulersManager:
         self._optimizers = optimizer_manager.optimizers
         self._lr_schedulers = None
         self._wd_schedulers = None
-        self._logger = get_logger()
 
     @property
     def optimizers(self):
@@ -96,12 +95,12 @@ class FusionSchedulersManager:
                 for k, v in self._lr_schedulers.items():
                     msg += f"{k}:"
                     msg += " " * 4 + v.__class__.__name__ + "\n"
-                self._logger.info(msg)
+                logger.info(msg)
             if self._wd_schedulers is not None:
                 msg = f"Configured weight decay schedulers:\n"
                 for k, v in self._wd_schedulers.items():
                     msg += f"{k}: {v.__class__.__name__}\n"
-                self._logger.info(msg)
+                logger.info(msg)
 
     def get_checkpoint_state_dict(self):
         checkpoint = {}

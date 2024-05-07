@@ -2,15 +2,14 @@ from pathlib import Path
 
 import ignite.distributed as idist
 from ignite.metrics import Accuracy, Precision, Recall
-
 from torchfusion.core.args.args_base import ClassInitializerArgs
 from torchfusion.core.constants import DataKeys, MetricKeys
 from torchfusion.core.data.utilities.containers import MetricsDict
-from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.models.tasks import ModelTasks
 from torchfusion.core.training.metrics.seqeval import create_seqeval_metric
-from torchfusion.core.training.utilities.general import pretty_print_dict
 from torchfusion.core.utilities.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 def f1_score(output_transform):
@@ -38,7 +37,6 @@ class MetricsFactory:
     @staticmethod
     def initialize_stage_metrics(metric_args, model_task, labels=None):
         metrics = {}
-        logger = get_logger()
         for metric_config in metric_args:
             assert isinstance(metric_config, ClassInitializerArgs), (
                 f"Metric config must be of type {ClassInitializerArgs}. "
@@ -57,7 +55,6 @@ class MetricsFactory:
 
     @staticmethod
     def create_metric(metric_name: str, metric_kwargs: dict, model_task: str, labels):
-        logger = get_logger()
         if model_task in [
             ModelTasks.image_classification,
             ModelTasks.sequence_classification,
@@ -127,7 +124,6 @@ class MetricsFactory:
                 )
 
             from pytorch_fid.inception import InceptionV3
-
             from torchfusion.core.training.metrics.fid_metric import (
                 FID,
                 WrapperInceptionV3,

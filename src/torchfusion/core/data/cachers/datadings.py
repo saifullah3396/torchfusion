@@ -10,9 +10,10 @@ from typing import Callable
 import pandas as pd
 from datadings.reader import MsgpackReader
 from datadings.writer import FileWriter
-
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.utilities.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class DatadingsDataCacher:
@@ -31,7 +32,6 @@ class DatadingsDataCacher:
         self._split = split
         self._overwrite = overwrite
         self._workers = workers
-        self._logger = get_logger()
 
     @property
     def cache_file_path(self):
@@ -86,7 +86,7 @@ class DatadingsDataCacher:
             # Pillow has a problem loading images in threaded envrionment :/
             pool = ThreadPool(self._workers)
             with FileWriter(self.cache_file_path, overwrite=True) as writer:
-                self._logger.info(
+                logger.info(
                     f"Writing dataset [{self._dataset_name}] to a datadings "
                     f"file {self.cache_file_path}. This might take a while..."
                 )
@@ -106,7 +106,7 @@ class DatadingsDataCacher:
 
             # # create writier instnace
             # with FileWriter(self.cache_file_path, overwrite=True) as writer:
-            #     self._logger.info(
+            #     logger.info(
             #         f"Writing  dataset [{self._dataset_name}] to a datadings "
             #         f"file {self.cache_file_path}. This might take a while..."
             #     )
@@ -116,16 +116,14 @@ class DatadingsDataCacher:
             #         writer.write(fn(sample))
 
         except KeyboardInterrupt as exc:
-            self._logger.exception(f"Data caching interrupted. Exiting...")
+            logger.exception(f"Data caching interrupted. Exiting...")
             exit(1)
         except Exception as exc:
-            self._logger.exception(f"Exception raise while writing data: {exc}")
+            logger.exception(f"Exception raise while writing data: {exc}")
             exit(1)
 
     def save_to_cache(self, data: pd.DataFrame, preprocess_fn: Callable = None):
-        self._logger.info(
-            f"Saving dataset to cache file {[str(self.cache_file_path)]}..."
-        )
+        logger.info(f"Saving dataset to cache file {[str(self.cache_file_path)]}...")
         # make target directory if not available
         if not self.cache_file_path.parent.exists():
             self.cache_file_path.parent.mkdir(parents=True)
@@ -140,9 +138,7 @@ class DatadingsDataCacher:
         return MsgpackReader(self.cache_file_path)
 
     def load_from_cache(self):
-        self._logger.info(
-            f"Loading dataset from cache file {[str(self.cache_file_path)]}..."
-        )
+        logger.info(f"Loading dataset from cache file {[str(self.cache_file_path)]}...")
         if self.cache_file_path.exists():
             return MsgpackReader(self.cache_file_path)
 

@@ -6,8 +6,9 @@ import pickle
 from pathlib import Path
 
 import pandas as pd
-
 from torchfusion.core.utilities.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class PickleDataCacher:
@@ -24,7 +25,6 @@ class PickleDataCacher:
         self._cache_file_name = cache_file_name
         self._split = split
         self._overwrite = overwrite
-        self._logger = get_logger()
 
     @property
     def cache_file_path(self):
@@ -36,9 +36,7 @@ class PickleDataCacher:
         )
 
     def save_to_cache(self, data):
-        self._logger.info(
-            f"Saving dataset to cache file {[str(self.cache_file_path)]}..."
-        )
+        logger.info(f"Saving dataset to cache file {[str(self.cache_file_path)]}...")
         # make target directory if not available
         if not self.cache_file_path.parent.exists():
             self.cache_file_path.parent.mkdir(parents=True)
@@ -49,9 +47,7 @@ class PickleDataCacher:
         return data
 
     def load_from_cache(self):
-        self._logger.info(
-            f"Loading dataset from cache file {[str(self.cache_file_path)]}..."
-        )
+        logger.info(f"Loading dataset from cache file {[str(self.cache_file_path)]}...")
         if self.cache_file_path.exists():
             return pd.read_pickle(self.cache_file_path)
 

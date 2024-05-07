@@ -78,6 +78,8 @@ class LoggingHandler:
 
         # if existing, get the logger otherwise create a new one
         logger = logging.getLogger(name)
+        if not reset:
+            return logger
 
         distributed_rank = idist.get_rank()
 

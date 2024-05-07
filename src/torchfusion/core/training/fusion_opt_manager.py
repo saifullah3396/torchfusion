@@ -9,6 +9,8 @@ if TYPE_CHECKING:
     from torchfusion.core.models.fusion_model import FusionModel
     from torchfusion.core.training.fusion_trainer import FusionTrainer
 
+logger = get_logger(__name__)
+
 
 class FusionOptimizerManager:
     def __init__(
@@ -18,7 +20,6 @@ class FusionOptimizerManager:
         self._model = model
         self._trainer = trainer
         self._optimizers = None
-        self._logger = get_logger()
 
     @property
     def optimizers(self):
@@ -72,7 +73,6 @@ class FusionOptimizerManager:
 
     def _pretty_print(self):
         import ignite.distributed as idist
-
         from torchfusion.core.utilities.general import indent_string
 
         if idist.get_rank() == 0:
@@ -82,7 +82,7 @@ class FusionOptimizerManager:
                 opt_str = indent_string(str(v), " " * 4)
                 msg += f"{k}:\n"
                 msg += f"{opt_str}\n"
-            self._logger.info(msg)
+            logger.info(msg)
 
     def get_checkpoint_state_dict(self):
         checkpoint = {}

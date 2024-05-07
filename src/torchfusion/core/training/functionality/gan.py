@@ -6,8 +6,6 @@ from typing import Any, Callable, Mapping, Optional, Sequence, Tuple, Union
 import torch
 from ignite.contrib.handlers import TensorboardLogger
 from ignite.engine import Engine
-from torch.utils.data import DataLoader
-
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.models.fusion_model import FusionModel
@@ -18,6 +16,8 @@ from torchfusion.core.training.functionality.default import (
 from torchfusion.core.training.fusion_opt_manager import FusionOptimizerManager
 from torchfusion.core.training.utilities.constants import GANStage, TrainingStage
 from torchfusion.core.utilities.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class GANTrainingFunctionality(DefaultTrainingFunctionality):
@@ -237,8 +237,6 @@ class GANTrainingFunctionality(DefaultTrainingFunctionality):
                     "Unhandled type of update_function's output. "
                     f"It should either mapping or sequence, but given {type(x)}"
                 )
-
-        logger = get_logger()
 
         # add loss as a running average metric
         for i, n in enumerate(args.training_args.outputs_to_metric):

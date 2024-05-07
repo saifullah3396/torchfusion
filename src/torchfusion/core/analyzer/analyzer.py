@@ -7,18 +7,18 @@ from typing import Type
 import ignite.distributed as idist
 import torch
 from omegaconf import DictConfig, OmegaConf
-
 from torchfusion.core.analyzer.tasks.factory import AnalyzerTaskFactory
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.utilities.dataclasses.dacite_wrapper import from_dict
 from torchfusion.core.utilities.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class FusionAnalyzer:
     def __init__(self, args, hydra_config) -> None:
         self._args = args
         self._hydra_config = hydra_config
-        self._logger = get_logger(hydra_config=hydra_config)
 
     def analyze(self, local_rank=0):
         """
@@ -33,7 +33,7 @@ class FusionAnalyzer:
 
         # run task on datamodule and models
         for task_name, task in analyzer_tasks.items():
-            self._logger.info(f"Running task: {task_name}")
+            logger.info(f"Running task: {task_name}")
 
             # initialize task
             task.setup(task_name)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import ignite.distributed as idist
 import torch
@@ -12,13 +12,14 @@ from ignite.contrib.handlers.tensorboard_logger import TensorboardLogger
 from torch import nn
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torchfusion.core.args.args import FusionArguments
-from torchfusion.core.constants import DataKeys
 from torchfusion.core.models.args.fusion_model_config import FusionModelConfig
 from torchfusion.core.models.utilities.ddp_model_proxy import ModuleProxyWrapper
 from torchfusion.core.models.utilities.general import batch_norm_to_group_norm
 from torchfusion.core.training.args.ema import FusionEMAHandler
 from torchfusion.core.training.utilities.constants import TrainingStage
 from torchfusion.core.utilities.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class FusionModel:
@@ -41,9 +42,6 @@ class FusionModel:
         self._ema_handler = None
         self._ema_activated = False
         self._stored_parameters = None
-
-        # initialize logger
-        self._logger = get_logger()
 
     @property
     def ema_handler(self):
@@ -117,7 +115,7 @@ class FusionModel:
         checkpoint: Optional[str] = None,
         strict: bool = False,
     ):
-        from torchfusion.core.models.factory import ModelFactory
+        pass
 
         # models sometimes download pretrained checkpoints when initializing. Only download it on rank 0
         if idist.get_rank() > 0:  # stop all ranks > 0
@@ -135,16 +133,16 @@ class FusionModel:
 
     def training_step(self, *args, **kwargs) -> None:
         if self._args.training_args.test_run:
-            self._logger.info("Following input is provided to the model for training:")
+            logger.info("Following input is provided to the model for training:")
             for key, value in kwargs["batch"].items():
                 print("Key", key)
                 if value.dtype == torch.float:
-                    self._logger.info(
+                    logger.info(
                         f"[{key}] shape={value.shape}, min={value.min()}, max={value.max()}, mean={value.mean()}, std={value.std()}"
                     )
                 else:
-                    self._logger.info(f"[{key}] shape={value.shape}")
-                self._logger.info(f"[{key}] Sample input: {value[0]}")
+                    logger.info(f"[{key}] shape={value.shape}")
+                logger.info(f"[{key}] Sample input: {value[0]}")
         if "stage" in kwargs:
             kwargs.pop("stage")
         return self._training_step(*args, **kwargs)
@@ -183,7 +181,7 @@ class FusionModel:
     def update_ema_for_stage(self, stage: TrainingStage):
         if stage == TrainingStage.train:
             if self._ema_activated:
-                self._logger.info("Resetting model weights to training weights")
+                logger.info("Resetting model weights to training weights")
                 # deactivate ema
                 if isinstance(self._ema_handler, dict):
                     for key, ema_handler in self._ema_handler.items():
@@ -198,7 +196,7 @@ class FusionModel:
                 and self._args.training_args.use_ema_for_val
             ):
                 if not self._ema_activated:
-                    self._logger.info(
+                    logger.info(
                         "Updating model weights from EMA weights for evaluation"
                     )
                     if isinstance(self._ema_handler, dict):
@@ -233,7 +231,7 @@ class FusionModel:
         module: nn.Module,
         device="gpu",
     ) -> Union[nn.Module, FusionModel]:
-        self._logger.info(f"Putting {type(module)} to {device}.")
+        logger.info(f"Putting {type(module)} to {device}.")
         module_requires_grad = False
         for p in module.parameters():
             if p.requires_grad:

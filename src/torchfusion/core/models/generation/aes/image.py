@@ -1,21 +1,17 @@
 import math
-from abc import abstractmethod
-from dataclasses import dataclass, is_dataclass
+from dataclasses import dataclass
 from typing import Optional
 
 import ignite.distributed as idist
-import torch
 import torchvision
-
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.utilities.containers import CollateFnDict
 from torchfusion.core.models.constructors.diffusers import DiffusersModelConstructor
 from torchfusion.core.models.constructors.factory import ModelConstructorFactory
 from torchfusion.core.models.constructors.fusion import FusionModelConstructor
-from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.models.generation.aes.base import FusionModelForAutoEncoding
-from torchfusion.core.models.utilities.data_collators import BatchToTensorDataCollator
-from torchfusion.core.training.utilities.constants import TrainingStage
+
+logger = get_logger(__name__)
 
 
 class FusionModelForImageAutoEncoding(FusionModelForAutoEncoding):
@@ -84,9 +80,7 @@ class FusionModelForImageAutoEncoding(FusionModelForAutoEncoding):
             and engine.state.iteration <= self.config.visualized_batches
         ):
             # this only saves first batch always if you want you can shuffle validation set and save random batches
-            self._logger.info(
-                f"Saving image batch {engine.state.iteration} to tensorboard"
-            )
+            logger.info(f"Saving image batch {engine.state.iteration} to tensorboard")
             if self.config.unnormalize:
                 input = input / 2 + 0.5
                 reconstruction = reconstruction / 2 + 0.5
@@ -114,7 +108,6 @@ class FusionModelForImageAutoEncoding(FusionModelForAutoEncoding):
         data_key_type_map: Optional[dict] = None,
     ) -> CollateFnDict:
         import torch
-
         from torchfusion.core.data.utilities.containers import CollateFnDict
         from torchfusion.core.models.utilities.data_collators import (
             BatchToTensorDataCollator,

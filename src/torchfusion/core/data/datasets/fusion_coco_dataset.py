@@ -8,15 +8,13 @@ from typing import List, Optional
 import datasets
 import PIL
 import tqdm
-from datasets.features import Image
-from datasets.tasks import ImageClassification
-
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.datasets.fusion_dataset import (
     FusionDataset,
     FusionDatasetConfig,
 )
 
+# we do not use the logger from torchfusion, but the one from datasets here
 logger = datasets.logging.get_logger(__name__)
 
 
@@ -100,7 +98,7 @@ class FusionCocoDataset(FusionDataset):
             image_info = annotation_data["images"]
             annotations = annotation_data["annotations"]
             image_id_to_annotations = collections.defaultdict(list)
-            self._logger.info("Preparing annotations...")
+            logger.info("Preparing annotations...")
             for annotation in tqdm.tqdm(annotations):
                 image_id_to_annotations[annotation["image_id"]].append(annotation)
         return image_info, image_id_to_annotations

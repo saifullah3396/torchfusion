@@ -11,16 +11,10 @@ from typing import Optional
 
 import ignite.distributed as idist
 from torch.utils.data import Subset
-
 from torchfusion.core.analyzer.tasks.base_config import AnalyzerTaskConfig
 from torchfusion.core.args.args import FusionArguments
-from torchfusion.core.data.data_augmentations.general import DictTransform
-from torchfusion.core.data.data_modules.fusion_data_module import FusionDataModule
-from torchfusion.core.data.factory.data_augmentation import DataAugmentationFactory
-from torchfusion.core.data.factory.train_val_sampler import TrainValSamplerFactory
-from torchfusion.core.data.utilities.containers import CollateFnDict, TransformsDict
+from torchfusion.core.data.utilities.containers import CollateFnDict
 from torchfusion.core.data.utilities.loaders import load_datamodule_from_args
-from torchfusion.core.data.utilities.transforms import load_transforms_from_config
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.models.tasks import ModelTasks
 from torchfusion.core.models.utilities.data_collators import PassThroughCollator
@@ -32,11 +26,12 @@ from torchfusion.core.training.functionality.gan import GANTrainingFunctionality
 from torchfusion.core.training.utilities.constants import TrainingStage
 from torchfusion.core.training.utilities.general import (
     initialize_torch,
-    print_transforms,
     setup_logging,
 )
 from torchfusion.core.utilities.dataclasses.dacite_wrapper import from_dict
 from torchfusion.core.utilities.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class AnalyzerTask(ABC):
@@ -56,7 +51,6 @@ class AnalyzerTask(ABC):
         self._data_labels = None
         self._data_loader = None
         self._config = self._setup_config(config)
-        self._logger = get_logger(hydra_config=hydra_config)
 
     @property
     def config(self):
@@ -73,7 +67,7 @@ class AnalyzerTask(ABC):
                     data=config,
                 )
         except Exception as e:
-            self._logger.exception(
+            logger.exception(
                 f"Exception raised while initializing config for task: {self.__class__}: {e}"
             )
             exit()
@@ -155,7 +149,7 @@ class AnalyzerTask(ABC):
         """
         from torchfusion.core.models.factory import ModelFactory
 
-        self._logger.info("Setting up model...")
+        logger.info("Setting up model...")
 
         # setup model
         model = ModelFactory.create_fusion_model(

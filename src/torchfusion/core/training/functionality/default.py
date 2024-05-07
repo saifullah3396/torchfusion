@@ -29,10 +29,7 @@ from torchfusion.core.training.sch.schedulers.warmup import (
     create_lr_scheduler_with_warmup,
 )
 from torchfusion.core.training.utilities.constants import TrainingStage
-from torchfusion.core.training.utilities.general import (
-    empty_cuda_cache,
-    pretty_print_dict,
-)
+from torchfusion.core.training.utilities.general import empty_cuda_cache
 from torchfusion.core.training.utilities.progress_bar import TqdmToLogger
 from torchfusion.core.utilities.logging import get_logger
 
@@ -40,6 +37,8 @@ if TYPE_CHECKING:
     import torch
     from torchfusion.core.models.fusion_model import FusionModel
     from torchfusion.core.training.fusion_sch_manager import FusionSchedulersManager
+
+logger = get_logger(__name__)
 
 
 def log_training_metrics(logger, epoch, elapsed, tag, metrics):
@@ -573,7 +572,6 @@ class DefaultTrainingFunctionality:
         cls, args: FusionArguments, training_engine: Engine, model: FusionModel
     ):
         if model.ema_handler is not None:
-            logger = get_logger()
 
             if isinstance(model.ema_handler, dict):
                 for key, handler in model.ema_handler.items():
@@ -653,7 +651,6 @@ class DefaultTrainingFunctionality:
             if train_dataloader.sampler is not None and isinstance(
                 train_dataloader.sampler, DistributedSampler
             ):
-                logger = get_logger()
 
                 logger.warning(
                     "Argument train_sampler is a distributed sampler,"
@@ -768,7 +765,7 @@ class DefaultTrainingFunctionality:
         prefix: str = "",
         data_labels: Optional[Sequence[str]] = None,
     ):
-        logger = get_logger()
+
         if stage == TrainingStage.train and not args.training_args.eval_training:
             return
 
@@ -791,7 +788,7 @@ class DefaultTrainingFunctionality:
         )
 
         if metrics[stage] is not None:
-            logger = get_logger()
+
             for k, metric in metrics[stage].items():
                 if metric is not None:
                     logger.info(f"Attaching metric {k} for stage={stage}")
@@ -821,7 +818,6 @@ class DefaultTrainingFunctionality:
         )
         from torch.optim.lr_scheduler import ExponentialLR, MultiStepLR, StepLR
 
-        logger = get_logger()
         for k, inner_sch in training_sch_manager.lr_schedulers.items():
             if inner_sch is None:
                 continue
@@ -1056,8 +1052,6 @@ class DefaultTrainingFunctionality:
                 find_resume_checkpoint,
             )
 
-            logger = get_logger()
-
             resume_checkpoint_path = find_resume_checkpoint(
                 args.training_args.resume_checkpoint_file,
                 checkpoint_dir,
@@ -1158,7 +1152,8 @@ class DefaultTrainingFunctionality:
         from torchfusion.core.training.utilities.progress_bar import FusionProgressBar
 
         # redirect tqdm output to logger
-        tqdm_to_logger = TqdmToLogger(get_logger())
+        # tqdm_to_logger = TqdmToLogger(get_logger())
+        tqdm_to_logger = TqdmToLogger(logger)
         if stage == TrainingStage.train:
             if opt_manager is None:
                 raise ValueError("opt_manager is required for TrainingStage=Train.")
@@ -1211,7 +1206,7 @@ class DefaultTrainingFunctionality:
                         metrics["ema/mom"] = engine.state.ema_momentum
 
                 log_training_metrics(
-                    get_logger(),
+                    logger,
                     engine.state.epoch,
                     engine.state.times["EPOCH_COMPLETED"],
                     TrainingStage.train,
@@ -1252,8 +1247,6 @@ class DefaultTrainingFunctionality:
         val_dataloader: DataLoader,
     ):
         from ignite.engine import Events
-
-        logger = get_logger()
 
         if (
             val_dataloader is None
@@ -1548,7 +1541,6 @@ class DefaultTrainingFunctionality:
         )
 
         if idist.get_rank() == 0:
-            logger = get_logger()
 
             def log_test_metrics(engine):
                 state = engine.state
@@ -1602,7 +1594,6 @@ class DefaultTrainingFunctionality:
             )
 
         if idist.get_rank() == 0:
-            logger = get_logger()
 
             def log_test_metrics(engine):
                 state = engine.state

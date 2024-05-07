@@ -2,13 +2,10 @@ import dataclasses
 import json
 from abc import abstractmethod
 from dataclasses import dataclass, is_dataclass
-from textwrap import indent
 from typing import Optional
 
 import torch
-from datasets.features import Sequence
 from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
-
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.utilities.containers import CollateFnDict
 from torchfusion.core.models.fusion_model import FusionModel
@@ -18,6 +15,9 @@ from torchfusion.core.models.utilities.knowledge_distillation import (
     TemperatureScaledKLDivLoss,
 )
 from torchfusion.core.training.utilities.constants import TrainingStage
+from torchfusion.core.utilities.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class FusionModelForClassification(FusionModel):
@@ -35,7 +35,7 @@ class FusionModelForClassification(FusionModel):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self._logger.info(
+        logger.info(
             "Initializing the model with the following config: {}".format(
                 json.dumps(dataclasses.asdict(self.config), indent=4)
             )

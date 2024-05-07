@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from torch.utils.data import Dataset
-from torchvision.datasets import CIFAR10
-
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.utilities.logging import get_logger
+from torchvision.datasets import CIFAR10
+
+logger = get_logger()
 
 _NAMES = [
     "airplane",
@@ -32,7 +33,6 @@ class Cifar10TorchDataset(Dataset):
         self._cache_dir = cache_dir
         self._config_name = config_name
         self._split = split
-        self._logger = get_logger()
 
         if split == "train":
             self._data = CIFAR10(self._data_dir, train=True, download=True)

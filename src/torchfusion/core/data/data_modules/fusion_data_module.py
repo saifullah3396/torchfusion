@@ -1,11 +1,7 @@
 from __future__ import annotations
 
 import copy
-import dataclasses
-import io
-import json
 import os
-import pickle
 import sys
 from abc import ABC
 from pathlib import Path
@@ -13,12 +9,10 @@ from typing import Callable, Optional, Type
 
 import datasets
 import ignite.distributed as idist
-import PIL
 from datadings.reader import MsgpackReader as MsgpackFileReader
 from datasets import DownloadConfig
 from torch.utils.data import BatchSampler, DataLoader, Dataset, Subset
 from torchfusion.core.constants import DataKeys
-from torchfusion.core.data.data_augmentations.general import DictTransform
 from torchfusion.core.data.datasets.msgpack.dataset import (
     MsgpackBasedDataset,
     MsgpackBasedTorchDataset,
@@ -26,9 +20,6 @@ from torchfusion.core.data.datasets.msgpack.dataset import (
 )
 from torchfusion.core.data.factory.dataset import DatasetFactory
 from torchfusion.core.data.text_utils.tokenizers.factory import TokenizerFactory
-from torchfusion.core.data.text_utils.tokenizers.hf_tokenizer import (
-    HuggingfaceTokenizer,
-)
 from torchfusion.core.data.train_val_samplers.base import TrainValSampler
 from torchfusion.core.data.utilities.containers import CollateFnDict, TransformsDict
 from torchfusion.core.data.utilities.data_visualization import (
@@ -43,6 +34,8 @@ from torchfusion.core.training.utilities.general import (
 )
 from torchfusion.core.utilities.logging import get_logger
 from torchfusion.core.utilities.module_import import ModuleLazyImporter
+
+logger = get_logger(__name__)
 
 
 class FusionDataModule(ABC):
@@ -95,13 +88,10 @@ class FusionDataModule(ABC):
         self.val_dataset = None
         self.test_dataset = None
 
-        # setup logger
-        self._logger = get_logger()
-
     def load_features_dataset(self, dataset_class, split: str = "train"):
         # if features are given we load dataset directly from features but still use info from original dataset
         if self._compute_dataset_statistics:
-            self._logger.warning(
+            logger.warning(
                 "You wish to compute dataset_statistics with features_path given. "
                 "This is not possible. Skipping dataset_statistics computation. "
                 "To compute dataset_statistics with args.data_args.compute_dataset_statistics=True"
@@ -154,12 +144,12 @@ class FusionDataModule(ABC):
         return dataset
 
     def _compute_dataset_statistics_fn(self, dataset, split):
-        self._logger.info(
+        logger.info(
             "You have set args.data_args.compute_dataset_statistics=True. "
             "This will compute the FID stats for this dataset. "
         )
         # for computing statistics, we always use evaluation transforms instead of train ones
-        self._logger.info("Using following transform for computing dataset statistics:")
+        logger.info("Using following transform for computing dataset statistics:")
         transforms = self._realtime_transforms["test"]
         print_transforms(transforms)
         load_or_precalc_dataset_stats(
@@ -169,14 +159,14 @@ class FusionDataModule(ABC):
             batch_size=200,
             dataset_statistics_n_samples=self._dataset_statistics_n_samples,
             stats_filename=self._stats_filename,
-            logger=self._logger,
+            logger=logger,
         )
-        self._logger.info("Dataset statistics computed successfully.")
+        logger.info("Dataset statistics computed successfully.")
 
     def _load_fusion_dataset(self, split: str = "train"):
         builder = self._get_builder()
         if builder.info.splits is not None and split not in builder.info.splits.keys():
-            self._logger.warning(f"The split {split} is not available in this dataset.")
+            logger.warning(f"The split {split} is not available in this dataset.")
             return
 
         # then add all additional kwargs
@@ -193,7 +183,7 @@ class FusionDataModule(ABC):
             dataset_build_kwargs["preprocess_transforms"] = preprocess_transforms
 
         # create the dataset
-        self._logger.debug(
+        logger.debug(
             f"Loading dataset with the following kwargs: {pretty_print_dict(dataset_build_kwargs)}"
         )
         dataset = DatasetFactory.create(
@@ -308,7 +298,7 @@ class FusionDataModule(ABC):
             else:
                 return self._load_fusion_dataset(split=split)
         except Exception as exc:
-            self._logger.exception(
+            logger.exception(
                 f"Exception raised while loading the dataset "
                 f"[{self._dataset_name}]: {exc}"
             )
@@ -326,9 +316,9 @@ class FusionDataModule(ABC):
         from torch.utils.data import Subset
 
         if stage is not None:
-            self._logger.info(f"Loading data for stage == {stage}")
+            logger.info(f"Loading data for stage == {stage}")
         else:
-            self._logger.info(f"Loading data for stage == train|test|val")
+            logger.info(f"Loading data for stage == train|test|val")
 
         # Assign train/val datasets for use in dataloaders using the train/val sampler
         # lightning calls training stage 'fit'
@@ -353,7 +343,7 @@ class FusionDataModule(ABC):
                     split=str(datasets.Split.VALIDATION),
                 )
             elif self._train_val_sampler is not None:
-                self._logger.debug(
+                logger.debug(
                     f"Using train/validation sampler [{self._train_val_sampler}] for splitting the "
                     f"dataset with following arguments: {pretty_print_dict(self._train_val_sampler)}"
                 )
@@ -363,7 +353,6 @@ class FusionDataModule(ABC):
             elif not use_test_set_for_val and (
                 self.val_dataset is None or len(self.val_dataset) == 0
             ):
-                logger = get_logger()
                 logger.warning(
                     "Using train set as validation set as no validation dataset exists."
                     " If this behavior is not required set, do_val=False in config or set a "
@@ -390,7 +379,6 @@ class FusionDataModule(ABC):
                 )
 
             if use_test_set_for_val:
-                logger = get_logger()
                 logger.warning(
                     "Using test set as validation set."
                     " If this behavior is not required set, use_test_set_for_val=False in config."
@@ -408,9 +396,9 @@ class FusionDataModule(ABC):
                             range(0, max_val_samples),
                         )
 
-            self._logger.info(f"Training set size = {len(self.train_dataset)}")
+            logger.info(f"Training set size = {len(self.train_dataset)}")
             if self.val_dataset is not None:
-                self._logger.info(f"Validation set size = {len(self.val_dataset)}")
+                logger.info(f"Validation set size = {len(self.val_dataset)}")
 
         # Assign test dataset for use in dataloader(s)
         if stage == TrainingStage.test or stage is None:
@@ -430,9 +418,9 @@ class FusionDataModule(ABC):
                         )
 
                 if self.test_dataset is not None:
-                    self._logger.info(f"Test set size = {len(self.test_dataset)}")
+                    logger.info(f"Test set size = {len(self.test_dataset)}")
             except Exception as e:
-                self._logger.exception(f"Error while loading test dataset: {e}")
+                logger.exception(f"Error while loading test dataset: {e}")
 
         # assign transforms
         if self.train_dataset is not None:
@@ -540,7 +528,7 @@ class FusionDataModule(ABC):
 
         if idist.get_world_size() > 1:
             if len(self.val_dataset) % idist.get_world_size() != 0:
-                self._logger.warning(
+                logger.warning(
                     "Enabling distributed evaluation with an eval dataset not divisible by process number. "
                     "This will slightly alter validation results as extra duplicate entries are added to achieve "
                     "equal num of samples per-process."
@@ -577,7 +565,7 @@ class FusionDataModule(ABC):
 
         if idist.get_world_size() > 1:
             if len(dataset) % idist.get_world_size() != 0:
-                self._logger.warning(
+                logger.warning(
                     "Enabling distributed evaluation with an eval dataset not divisible by process number. "
                     "This will slightly alter validation results as extra duplicate entries are added to achieve "
                     "equal num of samples per-process."

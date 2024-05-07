@@ -1,12 +1,9 @@
 from abc import ABC, abstractmethod
 
 import datasets
-
 from torchfusion.core.data.datasets.fusion_dataset_config import FusionDatasetConfig
 from torchfusion.core.data.datasets.msgpack.builder import MsgpackBasedBuilder
 from torchfusion.core.utilities.logging import get_logger
-
-logger = datasets.logging.get_logger(__name__)
 
 
 class FusionDataset(MsgpackBasedBuilder, ABC):
@@ -20,7 +17,7 @@ class FusionDataset(MsgpackBasedBuilder, ABC):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._logger = get_logger()
+        self._logger = get_logger(__name__)
 
     def _relative_data_dir(self, with_version=True, with_hash=False) -> str:
         return super()._relative_data_dir(

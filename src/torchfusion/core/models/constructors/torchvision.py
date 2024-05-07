@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import torch
-
 from torchfusion.core.models.constructors.base import ModelConstructor
 from torchfusion.core.models.tasks import ModelTasks
+from torchfusion.core.utilities.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -51,7 +53,7 @@ class TorchvisionModelConstructor(ModelConstructor):
                     f"No classification head replacer defined for the model {self.model_name}."
                 )
         else:
-            self._logger.warning(
+            logger.warning(
                 "No num_labels provided. Classification head will not be replaced."
             )
 

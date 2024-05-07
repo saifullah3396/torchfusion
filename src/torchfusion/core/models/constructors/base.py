@@ -3,9 +3,10 @@ from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
 from pyparsing import abstractmethod
-
 from torchfusion.core.models.utilities.checkpoints import setup_checkpoint
 from torchfusion.core.utilities.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -42,8 +43,6 @@ class ModelConstructor:
         assert (
             self.model_name != ""
         ), "Model name must be provided for the model constructor."
-
-        self._logger = get_logger()
 
     @abstractmethod
     def _init_model(self, *args: Any, **kwkwargsds: Any) -> Any:

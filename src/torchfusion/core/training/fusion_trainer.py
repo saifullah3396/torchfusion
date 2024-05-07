@@ -7,17 +7,9 @@ from typing import TYPE_CHECKING, Optional, Type
 
 import ignite.distributed as idist
 import torch
-from datasets import DatasetInfo
-from numpy import isin
 from omegaconf import DictConfig, OmegaConf
-from torch.utils.data import Subset
 from torchfusion.core.args.args import FusionArguments
-from torchfusion.core.constants import DataKeys
-from torchfusion.core.data.data_augmentations.general import DictTransform
 from torchfusion.core.data.factory.batch_sampler import BatchSamplerFactory
-from torchfusion.core.data.factory.data_augmentation import DataAugmentationFactory
-from torchfusion.core.data.factory.train_val_sampler import TrainValSamplerFactory
-from torchfusion.core.data.utilities.containers import CollateFnDict, TransformsDict
 from torchfusion.core.data.utilities.loaders import load_datamodule_from_args
 from torchfusion.core.data.utilities.transforms import load_transforms_from_config
 from torchfusion.core.models.fusion_model import FusionModel
@@ -33,8 +25,6 @@ from torchfusion.core.training.utilities.constants import TrainingStage
 from torchfusion.core.training.utilities.general import (
     initialize_torch,
     print_tf_from_loader,
-    print_transform,
-    print_transforms,
     setup_logging,
 )
 from torchfusion.core.utilities.dataclasses.dacite_wrapper import from_dict
@@ -42,8 +32,9 @@ from torchfusion.core.utilities.logging import get_logger
 
 if TYPE_CHECKING:
     import torch
-    from torchfusion.core.data.data_modules.fusion_data_module import FusionDataModule
     from torchfusion.core.models.fusion_model import FusionModel
+
+logger = get_logger(__name__)
 
 
 class FusionTrainer:
@@ -60,9 +51,6 @@ class FusionTrainer:
         self._train_dataloader = None
         self._val_dataloader = None
         self._test_dataloader = None
-
-        # initialize logger
-        self._logger = get_logger(hydra_config=hydra_config)
 
     @property
     def optimizers(self):
@@ -124,7 +112,7 @@ class FusionTrainer:
         """
         from torchfusion.core.models.factory import ModelFactory
 
-        self._logger.info("Setting up model...")
+        logger.info("Setting up model...")
 
         # setup model
         model = ModelFactory.create_fusion_model(
@@ -191,26 +179,26 @@ class FusionTrainer:
             do_val=self._args.general_args.do_val,
             data_labels=self._data_labels,
         )
-        training_engine.logger = get_logger()
-        training_engine.logger.propagate = False
+        training_engine.logger = logger
+        # training_engine.logger.propagate = False
 
         if validation_engine is not None:
-            validation_engine.logger = get_logger()
-            validation_engine.logger.propagate = False
+            validation_engine.logger = logger
+            # validation_engine.logger.propagate = False
 
-        self._logger.info(f"Configured Training Engine:")
-        self._logger.info(f"\tTotal steps per epoch = {self.batches_per_epch}")
-        self._logger.info(
+        logger.info(f"Configured Training Engine:")
+        logger.info(f"\tTotal steps per epoch = {self.batches_per_epch}")
+        logger.info(
             f"\tGradient accumulation per device = {self._args.training_args.gradient_accumulation_steps}"
         )
-        self._logger.info(
+        logger.info(
             f"\tTotal optimizer update steps over (scaled by grad accumulation steps) = {self.steps_per_epoch}"
         )
-        self._logger.info(
+        logger.info(
             f"\tTotal optimizer update over complete training cycle (scaled by grad accumulation steps) = {self.total_training_steps}"
         )
-        self._logger.info(f"\tTotal warmup steps = {self.warmup_steps}")
-        self._logger.info(f"\tMax epochs = {self._args.training_args.max_epochs}")
+        logger.info(f"\tTotal warmup steps = {self.warmup_steps}")
+        logger.info(f"\tMax epochs = {self._args.training_args.max_epochs}")
         return training_engine, validation_engine
 
     def _setup_test_engine(self, checkpoint_type: str = "last"):
@@ -225,7 +213,7 @@ class FusionTrainer:
             checkpoint_type=checkpoint_type,
             data_labels=self._data_labels,
         )
-        test_engine.logger = get_logger()
+        test_engine.logger = logger
 
         return test_engine
 
@@ -266,7 +254,7 @@ class FusionTrainer:
         ), "Model args must be provided for a training run."
 
         if self._args.training_args.test_run:
-            self._logger.warning(
+            logger.warning(
                 "This is a test run. This will run one training and evaluation batch and terminate."
             )
 
@@ -325,7 +313,7 @@ class FusionTrainer:
             self._training_engine._is_done(self._training_engine.state)
             and resume_epoch >= self._args.training_args.max_epochs
         ):  # if we are resuming from last checkpoint and training is already finished
-            self._logger.info(
+            logger.info(
                 "Training has already been finished! Either increase the number of "
                 f"epochs (current={self._args.training_args.max_epochs}) >= {resume_epoch} "
                 "OR reset the training from start."
@@ -338,17 +326,17 @@ class FusionTrainer:
             def terminate_on_iteration_complete(
                 engine,
             ):  # this is necessary for fldp to work with correct privacy accounting
-                self._logger.info("Terminating training engine as test_run=True")
+                logger.info("Terminating training engine as test_run=True")
                 engine.terminate()
 
             self._training_engine.add_event_handler(
                 Events.ITERATION_COMPLETED, terminate_on_iteration_complete
             )
 
-        self._logger.debug("Final sanity check... Training transforms:")
+        logger.debug("Final sanity check... Training transforms:")
         print_tf_from_loader(self._train_dataloader, stage=TrainingStage.train)
 
-        self._logger.debug("Final sanity check... Validation transforms:")
+        logger.debug("Final sanity check... Validation transforms:")
         print_tf_from_loader(self._val_dataloader, stage=TrainingStage.validation)
 
         # run training
@@ -497,8 +485,8 @@ class FusionTrainer:
             if args.general_args.do_train:
                 # setup logging
                 logger = get_logger(hydra_config=hydra_config)
-                # logger.info("Starting torchfusion training script with arguments:")
-                # logger.info(args)
+                logger.info("Starting torchfusion training script with arguments:")
+                logger.info(args)
 
                 try:
                     import ignite.distributed as idist
@@ -510,7 +498,12 @@ class FusionTrainer:
                     else:
                         ntasks = 1
                     if ntasks == 1:
-                        port = (int(os.environ["SLURM_JOB_ID"]) + 10007) % 16384 + 49152
+                        if "SLURM_JOB_ID" in os.environ:
+                            port = (
+                                int(os.environ["SLURM_JOB_ID"]) + 10007
+                            ) % 16384 + 49152
+                        else:
+                            port = 27015
                         logger.info(f"Starting distributed training on port: [{port}]")
                         with idist.Parallel(
                             backend=args.general_args.backend,
@@ -538,8 +531,8 @@ class FusionTrainer:
             if args.general_args.do_train:
                 # setup logging
                 logger = get_logger(hydra_config=hydra_config)
-                # logger.info("Starting torchfusion training script with arguments:")
-                # logger.info(args)
+                logger.info("Starting torchfusion training script with arguments:")
+                logger.info(args)
 
                 try:
                     return cls(args, hydra_config).train()
@@ -564,8 +557,8 @@ class FusionTrainer:
         if args.general_args.do_test:
             # setup logging
             logger = get_logger("init")
-            # logger.info("Starting torchfusion testing script with arguments:")
-            # logger.info(args)
+            logger.info("Starting torchfusion testing script with arguments:")
+            logger.info(args)
 
             try:
                 return cls(args, hydra_config).test()

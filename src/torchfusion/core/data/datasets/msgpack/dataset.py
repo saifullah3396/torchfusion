@@ -1,6 +1,6 @@
 import copy
 import pickle
-from typing import TYPE_CHECKING, Callable, List, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
 import numpy as np
 import tqdm
@@ -10,7 +10,6 @@ from datasets.info import DatasetInfo
 from datasets.splits import NamedSplit
 from datasets.utils import logging
 from torch.utils.data import Dataset
-
 from torchfusion.core.constants import DataKeys
 
 if TYPE_CHECKING:
@@ -192,6 +191,7 @@ class TransformedDataset(Dataset):
         sample = self._dataset[index]
 
         # apply transforms
+        print("self._transforms", self._transforms)
         if self._transforms is not None:
             sample = self._transforms(sample)
 

@@ -2,13 +2,11 @@ import warnings
 from pathlib import Path
 from typing import Callable, Optional, Sequence, Union
 
-import numpy as np
 import torch
 from ignite.metrics.gan.utils import InceptionModel, _BaseInceptionMetric
 from ignite.metrics.metric import reinit__is_reduced, sync_all_reduce
 from packaging.version import Version
 from torch import nn
-
 from torchfusion.core.utilities.logging import get_logger
 
 if Version(torch.__version__) <= Version("1.7.0"):
@@ -17,12 +15,14 @@ else:
     torch_outer = torch.outer
 
 
+logger = get_logger(__name__)
+
+
 # wrapper class as feature_extractor
 class WrapperInceptionV3(nn.Module):
     def __init__(self, fid_incv3):
         super().__init__()
         self.fid_incv3 = fid_incv3
-        self.logger = get_logger()
         self.warned = False
 
     @torch.no_grad()
@@ -57,7 +57,6 @@ def fid_score(
     sigma2: torch.Tensor,
     eps: float = 1e-6,
 ) -> float:
-    logger = get_logger()
     try:
         import numpy as np
     except ImportError:
@@ -125,7 +124,6 @@ class FID(_BaseInceptionMetric):
 
         self._ckpt_path = Path(ckpt_path)
         self._eps = 1e-6
-        self._logger = get_logger()
 
         super(FID, self).__init__(
             num_features=num_features,
@@ -221,7 +219,7 @@ class FID(_BaseInceptionMetric):
     )
     def compute(self) -> float:
         if self._num_examples != self._test_num_examples:
-            self._logger.warning(
+            logger.warning(
                 f"The number of examples used in evaluation {self._num_examples} are not equal to the number of examples in dataset statistics {self._test_num_examples}."
                 f"Max validation used for FID are set by args.data_loader_args.max_val_samples. "
                 f"The total samples usied for original fid statistics computation are set by: args.data_args.dataset_statistics_n_samples."

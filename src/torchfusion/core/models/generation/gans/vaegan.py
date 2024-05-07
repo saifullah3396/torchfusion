@@ -7,7 +7,6 @@ import ignite.distributed as idist
 import torch
 import torchvision
 from torch import nn
-
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.utilities.containers import CollateFnDict
 from torchfusion.core.models.constructors.diffusers import DiffusersModelConstructor
@@ -16,6 +15,8 @@ from torchfusion.core.models.constructors.fusion import FusionModelConstructor
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.models.generation.gans.lpips import LPIPSWithDiscriminator
 from torchfusion.core.training.utilities.constants import GANStage, TrainingStage
+
+logger = get_logger(__name__)
 
 
 class FusionModelForVAEGAN(FusionModel):
@@ -272,9 +273,7 @@ class FusionModelForVAEGAN(FusionModel):
             ).sample
 
             # this only saves first batch always if you want you can shuffle validation set and save random batches
-            self._logger.info(
-                f"Saving image batch {engine.state.iteration} to tensorboard"
-            )
+            logger.info(f"Saving image batch {engine.state.iteration} to tensorboard")
 
             # save images to tensorboard
             num_samples = batch[self.config.image_key].shape[0]
@@ -327,7 +326,6 @@ class FusionModelForVAEGAN(FusionModel):
         data_key_type_map: Optional[dict] = None,
     ) -> CollateFnDict:
         import torch
-
         from torchfusion.core.data.utilities.containers import CollateFnDict
         from torchfusion.core.models.utilities.data_collators import (
             BatchToTensorDataCollator,

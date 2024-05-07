@@ -12,7 +12,7 @@ from torchfusion.core.training.utilities.general import print_transforms
 from torchfusion.core.utilities.logging import get_logger
 from torchvision.transforms import Compose
 
-logger = get_logger()
+logger = get_logger(__name__)
 
 
 def load_transforms_from_config(train_augs, eval_augs):
@@ -140,7 +140,11 @@ def load_datamodule_from_args(
         train_val_sampler=train_val_sampler,
         preprocess_batch_size=args.data_args.preprocess_batch_size,
         dataset_kwargs=args.data_args.dataset_kwargs,
-        tokenizer_config=dataclasses.asdict(args.data_args.tokenizer_config),
+        tokenizer_config=(
+            dataclasses.asdict(args.data_args.tokenizer_config)
+            if args.data_args.tokenizer_config is not None
+            else None
+        ),
         num_proc=args.data_args.num_proc,
         compute_dataset_statistics=args.data_args.compute_dataset_statistics,
         dataset_statistics_n_samples=args.data_args.dataset_statistics_n_samples,
