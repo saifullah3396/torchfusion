@@ -11,13 +11,14 @@ from omegaconf import DictConfig, OmegaConf
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.data.datasets.dataset_metadata import FusionDatasetMetaData
 from torchfusion.core.data.factory.batch_sampler import BatchSamplerFactory
-from torchfusion.core.data.utilities.loaders import (
-    load_datamodule_from_args,
-)
+from torchfusion.core.data.utilities.loaders import load_datamodule_from_args
 from torchfusion.core.data.utilities.transforms import load_transforms_from_config
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.models.tasks import ModelTasks
 from torchfusion.core.training.functionality.default import DefaultTrainingFunctionality
+from torchfusion.core.training.functionality.detection import (
+    ObjectDetectionTrainingFunctionality,
+)
 from torchfusion.core.training.functionality.diffusion import (
     DiffusionTrainingFunctionality,
 )
@@ -163,6 +164,8 @@ class FusionTrainer:
             return GANTrainingFunctionality
         elif self._args.model_args.model_task == ModelTasks.diffusion:
             return DiffusionTrainingFunctionality
+        elif self._args.model_args.model_task == ModelTasks.object_detection:
+            return ObjectDetectionTrainingFunctionality
         else:
             return DefaultTrainingFunctionality
 
@@ -349,9 +352,53 @@ class FusionTrainer:
         print_tf_from_loader(self._val_dataloader, stage=TrainingStage.validation)
 
         # run training
-        self._training_engine.run(
-            self._train_dataloader, max_epochs=self._args.training_args.max_epochs
-        )
+        if self._args.model_args.model_task == ModelTasks.object_detection:
+            from detectron2.utils.events import EventStorage, TensorboardXWriter
+            from ignite.engine import Events
+
+            writers = [
+                # It may not always print what you want to see, since it prints "common" metrics only.
+                TensorboardXWriter(self._hydra_config.runtime.output_dir),
+            ]
+
+            def event_writers_update():
+                for writer in writers:
+                    writer.write()
+
+            def event_writers_close(self):
+                for writer in writers:
+                    writer.write()
+                    writer.close()
+
+            with EventStorage(start_iter=0) as self.storage:
+
+                self._training_engine.add_event_handler(
+                    Events.ITERATION_COMPLETED(
+                        every=self._args.training_args.logging_steps
+                    ),
+                    event_writers_update,
+                )
+                self._training_engine.add_event_handler(
+                    Events.COMPLETED, event_writers_close
+                )
+
+                def set_storage_iteration(
+                    engine,
+                ):
+                    self.storage.iter = engine.state.iteration
+
+                self._training_engine.add_event_handler(
+                    Events.ITERATION_STARTED, set_storage_iteration
+                )
+
+                self._training_engine.run(
+                    self._train_dataloader,
+                    max_epochs=self._args.training_args.max_epochs,
+                )
+        else:
+            self._training_engine.run(
+                self._train_dataloader, max_epochs=self._args.training_args.max_epochs
+            )
 
         if self._rank == 0:
             # close tb logger

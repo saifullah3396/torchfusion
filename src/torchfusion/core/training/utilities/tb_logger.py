@@ -6,7 +6,6 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import torch
 from ignite.contrib.handlers.tensorboard_logger import OutputHandler, TensorboardLogger
 from ignite.engine import Engine, EventEnum
-
 from torchfusion.core.constants import MetricKeys
 
 
@@ -111,11 +110,6 @@ class CustomOutputHandler(OutputHandler):
                 f"global_step must be int, got {type(global_step)}."
                 " Please check the output of global_step_transform."
             )
-
-        accuracy = None
-        for key, value in metrics.items():
-            if MetricKeys.ACCURACY in key:
-                accuracy = value
 
         for key, value in metrics.items():
             # if we're in test loop we also draw high resolution confusion matrix

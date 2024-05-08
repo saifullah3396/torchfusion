@@ -13,6 +13,7 @@ from torch import nn
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.data.datasets.dataset_metadata import FusionDatasetMetaData
+from torchfusion.core.data.utilities.data_visualization import print_batch_info
 from torchfusion.core.models.args.fusion_model_config import FusionModelConfig
 from torchfusion.core.models.utilities.ddp_model_proxy import ModuleProxyWrapper
 from torchfusion.core.models.utilities.general import batch_norm_to_group_norm
@@ -137,20 +138,17 @@ class FusionModel:
     def training_step(self, *args, **kwargs) -> None:
         if self._args.training_args.test_run:
             logger.info("Following input is provided to the model for training:")
-            for key, value in kwargs["batch"].items():
-                print("Key", key)
-                if value.dtype == torch.float:
-                    logger.info(
-                        f"[{key}] shape={value.shape}, min={value.min()}, max={value.max()}, mean={value.mean()}, std={value.std()}"
-                    )
-                else:
-                    logger.info(f"[{key}] shape={value.shape}")
-                logger.info(f"[{key}] Sample input: {value[0]}")
+            print_batch_info(kwargs["batch"])
+
         if "stage" in kwargs:
             kwargs.pop("stage")
         return self._training_step(*args, **kwargs)
 
     def evaluation_step(self, *args, **kwargs) -> None:
+        if self._args.training_args.test_run:
+            logger.info("Following input is provided to the model for evaluation:")
+            print_batch_info(kwargs["batch"])
+
         return self._evaluation_step(*args, **kwargs)
 
     def predict_step(self, *args, **kwargs) -> None:

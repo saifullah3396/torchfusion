@@ -12,7 +12,7 @@ clear_cuda_cache: true
 enable_checkpointing: true
 enable_grad_clipping: false
 eval_on_start: true
-gradient_accumulation_steps: 2
+gradient_accumulation_steps: 1
 log_gpu_stats: False
 log_to_tb: true
 logging_steps: 10

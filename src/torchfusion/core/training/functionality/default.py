@@ -3,17 +3,8 @@ from __future__ import annotations
 import math
 from functools import partial
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import (TYPE_CHECKING, Any, Callable, Mapping, Optional, Sequence,
+                    Tuple, Union, cast)
 
 import torch
 from ignite.contrib.handlers import TensorboardLogger
@@ -25,9 +16,8 @@ from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.training.fusion_opt_manager import FusionOptimizerManager
 from torchfusion.core.training.metrics.factory import MetricsFactory
-from torchfusion.core.training.sch.schedulers.warmup import (
-    create_lr_scheduler_with_warmup,
-)
+from torchfusion.core.training.sch.schedulers.warmup import \
+    create_lr_scheduler_with_warmup
 from torchfusion.core.training.utilities.constants import TrainingStage
 from torchfusion.core.training.utilities.general import empty_cuda_cache
 from torchfusion.core.training.utilities.progress_bar import TqdmToLogger
@@ -36,7 +26,8 @@ from torchfusion.core.utilities.logging import get_logger
 if TYPE_CHECKING:
     import torch
     from torchfusion.core.models.fusion_model import FusionModel
-    from torchfusion.core.training.fusion_sch_manager import FusionSchedulersManager
+    from torchfusion.core.training.fusion_sch_manager import \
+        FusionSchedulersManager
 
 logger = get_logger(__name__)
 
@@ -69,6 +60,7 @@ class DefaultTrainingFunctionality:
         device: Optional[Union[str, torch.device]] = torch.device("cpu"),
         scaler: Optional["torch.cuda.amp.GradScaler"] = None,
         tb_logger: TensorboardLogger = None,
+        put_batch_to_device: bool = True,
     ) -> Callable:
         if args.training_args.gradient_accumulation_steps <= 0:
             raise ValueError(
@@ -113,7 +105,8 @@ class DefaultTrainingFunctionality:
             model.torch_model.train()
 
             # put batch to device
-            batch = convert_tensor(batch, device=device, non_blocking=non_blocking)
+            if put_batch_to_device:
+                batch = convert_tensor(batch, device=device, non_blocking=non_blocking)
 
             # forward pass
             model_output = model.training_step(
@@ -182,7 +175,8 @@ class DefaultTrainingFunctionality:
             model.torch_model.train()
 
             # put batch to device
-            batch = convert_tensor(batch, device=device, non_blocking=non_blocking)
+            if put_batch_to_device:
+                batch = convert_tensor(batch, device=device, non_blocking=non_blocking)
 
             with autocast(enabled=True):
                 # forward pass
@@ -273,6 +267,7 @@ class DefaultTrainingFunctionality:
         output_dir: str,
         device: Optional[Union[str, torch.device]] = torch.device("cpu"),
         tb_logger: TensorboardLogger = None,
+        put_batch_to_device: bool = True,
     ) -> Callable:
         from ignite.engine import Engine
 
@@ -289,17 +284,19 @@ class DefaultTrainingFunctionality:
             import torch
             from ignite.utils import convert_tensor
             from torch.cuda.amp import autocast
-            from torchfusion.core.training.utilities.constants import TrainingStage
+            from torchfusion.core.training.utilities.constants import \
+                TrainingStage
 
             # ready model for evaluation
             model.torch_model.eval()
 
             with torch.no_grad():
                 with autocast(enabled=args.training_args.with_amp_inference):
-                    # put batch to device
-                    batch = convert_tensor(
-                        batch, device=device, non_blocking=non_blocking
-                    )
+                    if put_batch_to_device:
+                        # put batch to device
+                        batch = convert_tensor(
+                            batch, device=device, non_blocking=non_blocking
+                        )
 
                     # forward pass
                     return model.evaluation_step(
@@ -320,6 +317,7 @@ class DefaultTrainingFunctionality:
         device: Optional[Union[str, torch.device]] = torch.device("cpu"),
         tb_logger: TensorboardLogger = None,
         keys_to_device: list = [],
+        put_batch_to_device: bool = True
     ) -> Callable:
         from ignite.engine import Engine
 
@@ -342,18 +340,19 @@ class DefaultTrainingFunctionality:
                 model.torch_model.half()
 
             with torch.no_grad():
-                if len(keys_to_device) > 0:
-                    keys = list(batch.keys())
-                    for k in keys:
-                        if k in keys_to_device:
-                            batch[k] = convert_tensor(
-                                batch[k], device=device, non_blocking=non_blocking
-                            )
-                else:
-                    # put batch to device
-                    batch = convert_tensor(
-                        batch, device=device, non_blocking=non_blocking
-                    )
+                if put_batch_to_device:
+                    if len(keys_to_device) > 0:
+                        keys = list(batch.keys())
+                        for k in keys:
+                            if k in keys_to_device:
+                                batch[k] = convert_tensor(
+                                    batch[k], device=device, non_blocking=non_blocking
+                                )
+                    else:
+                        # put batch to device
+                        batch = convert_tensor(
+                            batch, device=device, non_blocking=non_blocking
+                        )
 
                 # if fp16 is on
                 if args.training_args.with_amp_inference:
@@ -375,6 +374,7 @@ class DefaultTrainingFunctionality:
         model: FusionModel,
         device: Optional[Union[str, torch.device]] = torch.device("cpu"),
         tb_logger: TensorboardLogger = None,
+        put_batch_to_device: bool = True
     ) -> Callable:
         from ignite.engine import Engine
 
@@ -390,15 +390,17 @@ class DefaultTrainingFunctionality:
 
             import torch
             from ignite.utils import convert_tensor
-            from torchfusion.core.training.utilities.constants import TrainingStage
+            from torchfusion.core.training.utilities.constants import \
+                TrainingStage
 
             # ready model for evaluation
             model.torch_model.eval()
             if args.training_args.with_amp_inference:
                 model.torch_model.half()
             with torch.no_grad():
-                # put batch to device
-                batch = convert_tensor(batch, device=device, non_blocking=non_blocking)
+                if put_batch_to_device:
+                    # put batch to device
+                    batch = convert_tensor(batch, device=device, non_blocking=non_blocking)
 
                 # if fp16 is on
                 if args.training_args.with_amp_inference:
@@ -427,6 +429,7 @@ class DefaultTrainingFunctionality:
         output_dir: str,
         device: Optional[Union[str, torch.device]] = torch.device("cpu"),
         tb_logger: TensorboardLogger = None,
+        put_batch_to_device: bool = True
     ) -> Callable:
         from ignite.engine import Engine
 
@@ -451,10 +454,11 @@ class DefaultTrainingFunctionality:
 
             with torch.no_grad():
                 with autocast(enabled=args.training_args.with_amp_inference):
-                    # put batch to device
-                    batch = convert_tensor(
-                        batch, device=device, non_blocking=non_blocking
-                    )
+                    if put_batch_to_device:
+                        # put batch to device
+                        batch = convert_tensor(
+                            batch, device=device, non_blocking=non_blocking
+                        )
 
                     # if fp16 is on
                     if args.training_args.with_amp_inference:
@@ -770,13 +774,11 @@ class DefaultTrainingFunctionality:
             return
 
         if data_labels is not None:
-            num_labels_in_model = (
-                model.config.num_labels if hasattr(model.config, "num_labels") else None
-            )
-            assert num_labels_in_model == len(data_labels), (
-                f"Number of labels in model ({num_labels_in_model}) "
-                f"does not match number of labels in data ({len(data_labels)})"
-            )
+            if hasattr(model.config, "num_labels"):
+                assert model.config.num_labels == len(data_labels), (
+                    f"Number of labels in model ({model.config.num_labels}) "
+                    f"does not match number of labels in data ({len(data_labels)})"
+                )
 
         # logger.info(
         #     f"Initializing metrics for stage={stage} with config: {pretty_print_dict(args.training_args.metric_args)}"
@@ -811,11 +813,8 @@ class DefaultTrainingFunctionality:
             return
 
         from ignite.engine import Events
-        from ignite.handlers import (
-            LRScheduler,
-            ParamScheduler,
-            ReduceLROnPlateauScheduler,
-        )
+        from ignite.handlers import (LRScheduler, ParamScheduler,
+                                     ReduceLROnPlateauScheduler)
         from torch.optim.lr_scheduler import ExponentialLR, MultiStepLR, StepLR
 
         for k, inner_sch in training_sch_manager.lr_schedulers.items():
@@ -1048,9 +1047,8 @@ class DefaultTrainingFunctionality:
 
         if args.training_args.resume_from_checkpoint:
             import torch
-            from torchfusion.core.training.utilities.general import (
-                find_resume_checkpoint,
-            )
+            from torchfusion.core.training.utilities.general import \
+                find_resume_checkpoint
 
             resume_checkpoint_path = find_resume_checkpoint(
                 args.training_args.resume_checkpoint_file,
@@ -1149,7 +1147,8 @@ class DefaultTrainingFunctionality:
         opt_manager: FusionOptimizerManager = None,
     ):
         from ignite.engine import Events
-        from torchfusion.core.training.utilities.progress_bar import FusionProgressBar
+        from torchfusion.core.training.utilities.progress_bar import \
+            FusionProgressBar
 
         # redirect tqdm output to logger
         tqdm_to_logger = TqdmToLogger(get_logger())  # main logger causes problems here
@@ -1492,7 +1491,8 @@ class DefaultTrainingFunctionality:
         import torch
         from ignite.engine import Events
         from ignite.handlers import Checkpoint
-        from torchfusion.core.training.utilities.general import find_test_checkpoint
+        from torchfusion.core.training.utilities.general import \
+            find_test_checkpoint
 
         # configure model checkpoint_state_dict
         model_checkpoint_config = args.training_args.model_checkpoint_config

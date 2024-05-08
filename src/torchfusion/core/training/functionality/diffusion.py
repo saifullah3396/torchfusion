@@ -6,7 +6,6 @@ import torch
 from ignite.contrib.handlers import TensorboardLogger
 from ignite.engine import Engine
 from torch.utils.data import DataLoader
-
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.training.functionality.default import DefaultTrainingFunctionality
@@ -14,7 +13,6 @@ from torchfusion.core.training.utilities.constants import TrainingStage
 
 if TYPE_CHECKING:
     import torch
-
     from torchfusion.core.models.fusion_model import FusionModel
 
 
@@ -58,7 +56,6 @@ class DiffusionTrainingFunctionality(DefaultTrainingFunctionality):
             import torch
             from ignite.utils import convert_tensor
             from torch.cuda.amp import autocast
-
             from torchfusion.core.training.utilities.constants import TrainingStage
 
             # ready model for evaluation
@@ -154,7 +151,7 @@ class DiffusionTrainingFunctionality(DefaultTrainingFunctionality):
         (
             training_engine,
             validation_engine,
-        ) = DefaultTrainingFunctionality.setup_training_engine(
+        ) = super().setup_training_engine(
             args=args,
             model=model,
             data_labels=data_labels,

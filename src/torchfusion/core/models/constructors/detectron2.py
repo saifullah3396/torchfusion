@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import copy
 from dataclasses import dataclass
 
-import timm
 import torch
 from detectron2.modeling import build_model
 from torchfusion.core.models.constructors.base import ModelConstructor
@@ -43,17 +41,17 @@ class Detectron2ModelConstructor(ModelConstructor):
         from detectron2.config import get_cfg
 
         assert (
-            "cfg_path" in kwargs
+            "cfg_path" in self.init_args
         ), "cfg_path must be provided for detectron2 model initialization."
 
         # instantiate detectron2 config
         cfg = get_cfg()
 
         # add vit config
-        if "add_vit_config" in kwargs and kwargs["add_vit_config"]:
+        if "add_vit_config" in self.init_args and self.init_args["add_vit_config"]:
             add_vit_config(cfg)
 
-        cfg.merge_from_file(kwargs["cfg_path"])
+        cfg.merge_from_file(self.init_args["cfg_path"])
 
         # instantiate model
         return build_model(cfg)

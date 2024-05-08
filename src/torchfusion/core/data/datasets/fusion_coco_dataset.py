@@ -213,6 +213,3 @@ class FusionCocoDataset(FusionDataset):
             sample["objects"] = objects
 
             yield idx, sample
-
-            if idx > 10:
-                break

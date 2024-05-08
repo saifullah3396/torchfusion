@@ -111,11 +111,16 @@ class PassThroughCollator:
     Data collator for converting data in the batch to a dictionary of pytorch tensors.
     """
 
+    return_batch_dict: bool = True
+
     def __call__(self, features):
-        batch = {}
-        for k in features[0].keys():
-            batch[k] = [sample[k] for sample in features]
-        return batch
+        if self.return_batch_dict:
+            batch = {}
+            for k in features[0].keys():
+                batch[k] = [sample[k] for sample in features]
+            return batch
+        else:
+            return features
 
 
 @dataclass

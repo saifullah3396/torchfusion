@@ -4,7 +4,6 @@ from dataclasses import dataclass
 
 import torch
 from diffusers import AutoencoderKL
-
 from torchfusion.core.models.constructors.base import ModelConstructor
 from torchfusion.core.models.tasks import ModelTasks
 
@@ -16,7 +15,7 @@ class DiffusersModelConstructor(ModelConstructor):
             ModelTasks.autoencoding,
         ], f"Task {self.model_task} not supported for DiffusersModelConstructor."
 
-    def _init_model(self) -> torch.Any:
+    def _init_model(self, **kwargs) -> torch.Any:
         if self.model_task == ModelTasks.autoencoding:
             initializer_class = AutoencoderKL
         else:

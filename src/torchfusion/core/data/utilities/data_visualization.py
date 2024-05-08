@@ -48,38 +48,60 @@ def show_images(batch, nmax=16, concatenate_images=True):
 
 
 def print_batch_info(batch, tokenizer: TorchFusionTokenizer = None):
-    tokenizer = (
-        tokenizer.tokenizer
-        if isinstance(tokenizer, HuggingfaceTokenizer)
-        else tokenizer
-    )
-
     logger.info("Batch information: ")
     if tokenizer is not None:
+        tokenizer = (
+            tokenizer.tokenizer
+            if isinstance(tokenizer, HuggingfaceTokenizer)
+            else tokenizer
+        )
         logger.info(f"Tokenizer: {tokenizer}")
 
-    for key, value in batch.items():
-        if tokenizer is not None and key in [DataKeys.TOKEN_IDS]:
-            logger.info(
-                f"Batch element={key}, shape={len(value)}, type={type(value[0])}\nExample: {value[0]}"
-            )
-            logger.info(f"Converted string={tokenizer.decode(token_ids=value[0])}")
-
-        if isinstance(value, (torch.Tensor, np.ndarray)):
-            logger.info(
-                f"Batch element={key}, shape={value.shape}, type={value.dtype}\nExample: {value[0]}"
-            )
-        elif isinstance(value, list):
-            if isinstance(value[0], (torch.Tensor, np.ndarray)):
-                logger.info(
-                    f"Batch element={key}, shape={value[0].shape}, type={value[0].dtype}\nExample: {value[0]}"
-                )
-            else:
+    if isinstance(batch, dict):
+        for key, value in batch.items():
+            if tokenizer is not None and key in [DataKeys.TOKEN_IDS]:
                 logger.info(
                     f"Batch element={key}, shape={len(value)}, type={type(value[0])}\nExample: {value[0]}"
                 )
-        else:
-            logger.info(f"Batch element={key}, type={type(value)}\nExample: {value}")
+                logger.info(f"Converted string={tokenizer.decode(token_ids=value[0])}")
+
+            if isinstance(value, (torch.Tensor, np.ndarray)):
+                logger.info(
+                    f"Batch element={key}, shape={value.shape}, type={value.dtype}\nExample: {value[0]}"
+                )
+            elif isinstance(value, list):
+                if isinstance(value[0], (torch.Tensor, np.ndarray)):
+                    logger.info(
+                        f"Batch element={key}, shape={value[0].shape}, type={value[0].dtype}\nExample: {value[0]}"
+                    )
+                else:
+                    logger.info(
+                        f"Batch element={key}, shape={len(value)}, type={type(value[0])}\nExample: {value[0]}"
+                    )
+            else:
+                logger.info(
+                    f"Batch element={key}, type={type(value)}\nExample: {value}"
+                )
+    elif isinstance(batch, list):
+        sample = batch[0]
+        for key, value in sample.items():
+            if isinstance(value, (torch.Tensor, np.ndarray)):
+                logger.info(
+                    f"Batch element={key}, shape={value.shape}, type={value.dtype}\nExample: {value[0]}"
+                )
+            elif isinstance(value, list):
+                if isinstance(value[0], (torch.Tensor, np.ndarray)):
+                    logger.info(
+                        f"Batch element={key}, shape={value[0].shape}, type={value[0].dtype}\nExample: {value[0]}"
+                    )
+                else:
+                    logger.info(
+                        f"Batch element={key}, shape={len(value)}, type={type(value[0])}\nExample: {value[0]}"
+                    )
+            else:
+                logger.info(
+                    f"Batch element={key}, type={type(value)}\nExample: {value}"
+                )
 
 
 def draw_instances(image, instances, labels):

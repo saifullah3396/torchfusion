@@ -7,23 +7,9 @@ from torchfusion.core.utilities.module_import import (
 _import_structure = {
     "image": [
         ModuleRegistryItem(
-            "FusionModelForImageClassification",
+            "FusionModelForImageObjectDetection",
             "fusion_model",
-            ModelTasks.image_classification,
-        ),
-    ],
-    "sequence": [
-        ModuleRegistryItem(
-            "FusionModelForSequenceClassification",
-            "fusion_model",
-            ModelTasks.sequence_classification,
-        ),
-    ],
-    "tokens": [
-        ModuleRegistryItem(
-            "FusionModelForTokenClassification",
-            "fusion_model",
-            ModelTasks.token_classification,
+            ModelTasks.object_detection,
         ),
     ],
 }

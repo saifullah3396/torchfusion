@@ -105,7 +105,6 @@ def detectron2_realtime_ransform_image_and_objects(sample, geometric_tf, mask_on
     )
     from detectron2.data.transforms import apply_transform_gens
     from detectron2.structures import BoxMode
-    from torchvision.transforms.functional import to_tensor
 
     # we always read image in RGB format in the dataset, when it reaches here the image is of numpay array with shape (h, w, c)
     # detectron2 needs image of shape (h, w, c) and in this place of transformation.
@@ -144,8 +143,11 @@ def detectron2_realtime_ransform_image_and_objects(sample, geometric_tf, mask_on
         sample["instances"] = filter_empty_instances(instances)
 
     # convert image to tensor and update in place
-    sample[DataKeys.IMAGE] = to_tensor(image)
-
+    sample[DataKeys.IMAGE] = (
+        torch.as_tensor(  # here image is kept as 0-255 as that is what is required in detectron2
+            np.ascontiguousarray(image.transpose(2, 0, 1))
+        )
+    )
     return sample
 
 

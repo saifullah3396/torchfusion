@@ -1,14 +1,14 @@
 import dataclasses
 import json
 from abc import abstractmethod
-from dataclasses import dataclass, is_dataclass
+from dataclasses import dataclass
 from typing import Optional
 
-import torch
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.utilities.containers import CollateFnDict
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.training.utilities.constants import TrainingStage
+from torchfusion.core.utilities.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -52,24 +52,20 @@ class FusionModelForObjectDetection(FusionModel):
             model_constructor=self.config.model_constructor,
             model_constructor_args=self.config.model_constructor_args,
         )
-
         return model
 
     def _training_step(self, engine, batch, tb_logger, **kwargs) -> None:
-        assert self._LABEL_KEY in batch, "Label must be passed for training"
-
-        # get data
-        input = self._prepare_input(engine, batch, tb_logger, **kwargs)
-        label = self._prepare_label(engine, batch, tb_logger, **kwargs)
+        assert self._torch_model.training
 
         # compute logits
-        losses = self._model_forward(input)
-
-        print("losses", losses)
+        losses = self._model_forward(batch)
 
         # return outputs
         if self.model_args.return_dict:
-            return losses
+            return {
+                DataKeys.LOSS: sum(losses.values()),
+                **losses,
+            }
         else:
             return list(losses.values())
 
@@ -82,71 +78,25 @@ class FusionModelForObjectDetection(FusionModel):
         stage: TrainingStage = TrainingStage.test,
         **kwargs,
     ) -> None:
-        assert self._LABEL_KEY in batch, "Label must be passed for evaluation"
+        assert not self.torch_model.training
 
-        # get data
-        input = self._prepare_input(engine, batch, tb_logger, **kwargs)
-        label = self._prepare_label(engine, batch, tb_logger, **kwargs)
+        outputs = self._model_forward(batch)
 
-        # compute logits
-        logits = self._model_forward(input)
-
-        # compute loss
-        loss = self.loss_fn_eval(logits, label)
-
-        # return outputs
-        if self.model_args.return_dict:
-            return {
-                DataKeys.LOSS: loss,
-                DataKeys.LOGITS: logits,
-                self._LABEL_KEY: label,
-            }
-        else:
-            return (loss, logits, label)
+        # convert list of dict to dict of list
+        outputs = {k: [dic[k] for dic in outputs] for k in outputs[0]}
+        return outputs
 
     def _predict_step(self, engine, batch, tb_logger, **kwargs) -> None:
-        # get data
-        input = self._prepare_input(engine, batch, tb_logger, **kwargs)
+        assert not self.torch_model.training
 
-        # compute logits
-        logits = self._model_forward(input)
+        outputs = self._model_forward(batch)
 
-        # return outputs
-        if self.model_args.return_dict:
-            return {
-                DataKeys.LOGITS: logits,
-            }
-        else:
-            return (logits,)
+        # convert list of dict to dict of list
+        outputs = {k: [dic[k] for dic in outputs] for k in outputs[0]}
+        return outputs
 
-    def _model_forward(self, input, return_logits=True):
-        if isinstance(input, dict):
-            # compute logits
-            output = self.torch_model(**input)
-        else:
-            output = self.torch_model(input)
-
-        # we assume first element is logits
-        if isinstance(output, torch.Tensor):  # usually timm returns a tensor directly
-            return output
-        elif isinstance(output, tuple):  # usually timm returns a tensor directly
-            if return_logits:
-                return output[0]
-            else:
-                return output
-        elif is_dataclass(output):  # usually huggingface returns a dataclass
-            if return_logits:
-                return getattr(output, "logits")
-            else:
-                return output
-
-    @abstractmethod
-    def _prepare_input(self, engine, batch, tb_logger, **kwargs):
-        pass
-
-    @abstractmethod
-    def _prepare_label(self, engine, batch, tb_logger, **kwargs):
-        pass
+    def _model_forward(self, batch):
+        return self.torch_model(batch)
 
     @abstractmethod
     def get_data_collators(
