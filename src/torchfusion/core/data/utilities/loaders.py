@@ -1,8 +1,6 @@
 import dataclasses
 import logging
 
-from datasets import DatasetInfo
-from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.data_modules.fusion_data_module import FusionDataModule
 from torchfusion.core.data.factory.data_augmentation import DataAugmentationFactory
 from torchfusion.core.data.factory.train_val_sampler import TrainValSamplerFactory
@@ -170,24 +168,4 @@ def load_datamodule_from_args(
     if rank == 0:
         idist.barrier()
 
-    # print features info
-    dataset_info = datamodule.get_dataset_info()
-    data_labels = None
-    if isinstance(dataset_info, DatasetInfo):
-        logger.debug(f"Dataset loaded with following features: {dataset_info.features}")
-        if DataKeys.LABEL in dataset_info.features:
-            from datasets.features import ClassLabel, Sequence
-
-            if isinstance(dataset_info.features[DataKeys.LABEL], ClassLabel):
-                data_labels = dataset_info.features[DataKeys.LABEL].names
-            elif isinstance(dataset_info.features[DataKeys.LABEL], Sequence):
-                data_labels = dataset_info.features[DataKeys.LABEL].feature.names
-    elif isinstance(dataset_info, dict) and "features" in dataset_info:
-        if DataKeys.LABEL in dataset_info["features"]:
-            data_labels = dataset_info["features"][DataKeys.LABEL]
-
-    logger.info(f"Data labels = {data_labels}")
-    if isinstance(data_labels, list):
-        logger.info(f"Number of labels = {len(data_labels)}")
-
-    return datamodule, data_labels
+    return datamodule

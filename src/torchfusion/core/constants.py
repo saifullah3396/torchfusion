@@ -58,7 +58,10 @@ class DataKeys:
     FONT = "font"
     TEXT = "text"
     PAGE_BBOXES = "page_bboxes"
-    COCO_OBJECTS = "objects"
+
+    # detection related
+    OBJECTS = "objects"
+    GT_INSTANCES = "instances"
 
 
 class MetricKeys:

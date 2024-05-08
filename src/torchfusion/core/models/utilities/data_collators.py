@@ -4,6 +4,7 @@ from typing import Optional
 
 import numpy as np
 import torch
+from detectron2.structures import Instances
 from torchfusion.core.data.text_utils.tokenizers.hf_tokenizer import (
     HuggingfaceTokenizer,
 )
@@ -59,11 +60,24 @@ def list_to_tensor(list_of_items, dtype=None):
 def feature_to_maybe_tensor(features, feature_key):
     try:
         if isinstance(features[0][feature_key], torch.Tensor):
-            return torch.stack([sample[feature_key] for sample in features])
+            tensor_list = [sample[feature_key] for sample in features]
+            tensor_shapes = [t.shape for t in tensor_list]
+            if tensor_shapes.count(tensor_shapes[0]) == len(
+                tensor_shapes
+            ):  # all tensors have equal shape, we make a batch tensor
+                return torch.stack(tensor_list)
+            else:  # otherwise we return a list of tensors, this is not tested!
+                return tensor_list
         elif isinstance(features[0][feature_key], np.ndarray):
-            return torch.from_numpy(
-                np.array([sample[feature_key] for sample in features])
-            )
+            array_list = [sample[feature_key] for sample in features]
+            array_shapes = [a.shape for a in array_list]
+            if array_shapes.count(array_shapes[0]) == len(
+                array_shapes
+            ):  # all tensors have equal shape, we make a batch tensor
+                return torch.from_numpy(np.array(array_list))
+            else:  # otherwise we return a list of tensors, this is not tested!
+                return [torch.from_numpy(a) for a in array_list]
+            return
         elif isinstance(features[0][feature_key], list):  # if its a list
             if isinstance(features[0][feature_key][0], torch.Tensor):  # list of tensors
                 return torch.stack([sample[feature_key] for sample in features])
@@ -80,7 +94,7 @@ def feature_to_maybe_tensor(features, feature_key):
                 return [sample[feature_key] for sample in features]
             else:
                 return torch.tensor([sample[feature_key] for sample in features])
-        elif isinstance(features[0][feature_key], str):
+        elif isinstance(features[0][feature_key], (str, Instances)):
             return [sample[feature_key] for sample in features]
         else:
             return torch.tensor([sample[feature_key] for sample in features])

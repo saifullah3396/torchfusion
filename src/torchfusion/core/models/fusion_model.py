@@ -12,6 +12,7 @@ from ignite.contrib.handlers.tensorboard_logger import TensorboardLogger
 from torch import nn
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torchfusion.core.args.args import FusionArguments
+from torchfusion.core.data.datasets.dataset_metadata import FusionDatasetMetaData
 from torchfusion.core.models.args.fusion_model_config import FusionModelConfig
 from torchfusion.core.models.utilities.ddp_model_proxy import ModuleProxyWrapper
 from torchfusion.core.models.utilities.general import batch_norm_to_group_norm
@@ -31,12 +32,14 @@ class FusionModel:
         self,
         args: FusionArguments,
         tb_logger: Optional[TensorboardLogger] = None,
+        dataset_metadata: Optional[FusionDatasetMetaData] = None,
     ):
         super().__init__()
 
         # initialize arguments
         self._args = args
         self._tb_logger = tb_logger
+        self._dataset_metadata = dataset_metadata
 
         # ema parameters
         self._ema_handler = None

@@ -5,25 +5,45 @@ import numpy as np
 import torch
 from matplotlib import pyplot as plt
 from torchfusion.core.constants import DataKeys
+from torchfusion.core.data.datasets.dataset_metadata import FusionDatasetMetaData
 from torchfusion.core.data.text_utils.tokenizers.base import TorchFusionTokenizer
 from torchfusion.core.data.text_utils.tokenizers.hf_tokenizer import (
     HuggingfaceTokenizer,
 )
 from torchfusion.core.utilities.logging import get_logger
 from torchvision.utils import make_grid
-from transformers import PreTrainedTokenizerBase
+
+logger = get_logger(__name__)
 
 
-def show_images(batch, nmax=16, show=True):
-    image_grid = make_grid((batch[:nmax]), nrow=4)
-    _, h, w = image_grid.shape
-    if show:
+def equal_sized_batch(images):
+    tensor_shapes = [x.shape for x in images]
+    if tensor_shapes.count(tensor_shapes[0]) == len(
+        tensor_shapes
+    ):  # all tensors have equal shape, we make a batch tensor
+        return True
+    return False
+
+
+def show_images(batch, nmax=16, concatenate_images=True):
+    if concatenate_images:
+        image_grid = make_grid((batch[:nmax]), nrow=4)
+        _, h, w = image_grid.shape
         fig, ax = plt.subplots(figsize=(10, 10 * h / w))
         ax.set_xticks([])
         ax.set_yticks([])
         ax.imshow(image_grid.permute(1, 2, 0))
         plt.show()
         plt.close(fig)
+    else:
+        for x in batch:
+            _, h, w = x.shape
+            fig, ax = plt.subplots(figsize=(10, 10 * h / w))
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.imshow(x.permute(1, 2, 0))
+            plt.show()
+            plt.close(fig)
     return image_grid
 
 
@@ -34,7 +54,6 @@ def print_batch_info(batch, tokenizer: TorchFusionTokenizer = None):
         else tokenizer
     )
 
-    logger = get_logger()
     logger.info("Batch information: ")
     if tokenizer is not None:
         logger.info(f"Tokenizer: {tokenizer}")
@@ -63,8 +82,31 @@ def print_batch_info(batch, tokenizer: TorchFusionTokenizer = None):
             logger.info(f"Batch element={key}, type={type(value)}\nExample: {value}")
 
 
-def show_batch(batch):
-    logger = get_logger()
+def draw_instances(image, instances, labels):
+    from detectron2.utils.visualizer import ColorMode, Visualizer
+
+    segmentations = instances.segmentation if instances.has("segmentation") else None
+    gt_boxes = instances.gt_boxes if instances.has("gt_boxes") else None
+    gt_classes = instances.gt_classes if instances.has("gt_classes") else None
+
+    # convert labels
+    gt_classes = [x.item() for x in gt_classes]
+
+    # assign random colors to each class
+    colors = {}
+    for label in labels:
+        colors[label] = tuple(np.random.randint(0, 256, 3))
+
+    v = Visualizer(
+        np.clip(image * 255.0, 0, 255),
+        scale=1.0,
+        instance_mode=ColorMode.SEGMENTATION,
+    )
+    result = v.overlay_instances(boxes=gt_boxes, masks=segmentations, labels=gt_classes)
+    return np.array(result.get_image())
+
+
+def show_batch(batch, dataset_metadata: FusionDatasetMetaData):
     draw_batch = []
     draw_batch_gt = []
     batch = [dict(zip(batch, t)) for t in zip(*batch.values())]
@@ -74,6 +116,8 @@ def show_batch(batch):
             "Showing only first 4 images in the batch as high-resolution images may take too much memory..."
         )
         batch = batch[:16]
+
+    data_labels = dataset_metadata.get_labels()
 
     for sample in batch:
         image = sample[DataKeys.IMAGE].permute(1, 2, 0).cpu().numpy()
@@ -151,12 +195,21 @@ def show_batch(batch):
                     #     thickness=1,
                     # )
                     last_box = box
+
+            if DataKeys.GT_INSTANCES in sample:
+                image = draw_instances(
+                    image, sample[DataKeys.GT_INSTANCES], data_labels
+                )
+
             draw_batch.append(torch.from_numpy(image).permute(2, 0, 1))
         except Exception as e:
             logger.warning(f"Exception in drawing boxes. Skipping... {e}")
 
     # draw images
     if len(draw_batch) > 0:
-        show_images(draw_batch, show=True)
+        show_images(draw_batch, concatenate_images=equal_sized_batch(draw_batch))
     if len(draw_batch_gt) > 0:
-        show_images(draw_batch_gt, show=True)
+        show_images(
+            draw_batch_gt,
+            concatenate_images=equal_sized_batch(draw_batch_gt),
+        )

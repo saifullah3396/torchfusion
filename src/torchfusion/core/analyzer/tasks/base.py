@@ -14,7 +14,9 @@ from torch.utils.data import Subset
 from torchfusion.core.analyzer.tasks.base_config import AnalyzerTaskConfig
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.data.utilities.containers import CollateFnDict
-from torchfusion.core.data.utilities.loaders import load_datamodule_from_args
+from torchfusion.core.data.utilities.loaders import (
+    load_datamodule_from_args,
+)
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.models.tasks import ModelTasks
 from torchfusion.core.models.utilities.data_collators import PassThroughCollator
@@ -24,10 +26,7 @@ from torchfusion.core.training.functionality.diffusion import (
 )
 from torchfusion.core.training.functionality.gan import GANTrainingFunctionality
 from torchfusion.core.training.utilities.constants import TrainingStage
-from torchfusion.core.training.utilities.general import (
-    initialize_torch,
-    setup_logging,
-)
+from torchfusion.core.training.utilities.general import initialize_torch, setup_logging
 from torchfusion.core.utilities.dataclasses.dacite_wrapper import from_dict
 from torchfusion.core.utilities.logging import get_logger
 
@@ -186,9 +185,12 @@ class AnalyzerTask(ABC):
         self._trainer_functionality = self._setup_trainer_functionality()
 
         # setup datamodule
-        self._datamodule, self._data_labels = load_datamodule_from_args(
+        self._datamodule = load_datamodule_from_args(
             self._args, stage=None, rank=self._rank
         )
+
+        # setup data labels
+        self._data_labels = self._datamodule.get_dataset_metadata().get_labels()
 
     def setup_dataloader(self, collate_fns: CollateFnDict):
         self._datamodule._collate_fns = collate_fns

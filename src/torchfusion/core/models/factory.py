@@ -4,9 +4,10 @@ Defines the factory for TrainValSampler class and its children.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Type
+from typing import TYPE_CHECKING, Optional, Type
 
 from torchfusion.core.args.args import FusionArguments
+from torchfusion.core.data.datasets.dataset_metadata import FusionDatasetMetaData
 from torchfusion.core.models.args.model_args import ModelArguments
 from torchfusion.core.utilities.module_import import ModuleLazyImporter
 
@@ -62,6 +63,7 @@ class ModelFactory:
         args: FusionArguments,
         checkpoint: Optional[str] = None,
         strict: bool = False,
+        dataset_metadata: Optional[FusionDatasetMetaData] = None,
         **model_kwargs,
     ) -> FusionModel:
         """
@@ -69,6 +71,8 @@ class ModelFactory:
         """
 
         model_class = ModelFactory.get_fusion_model_class(args.model_args)
-        fusion_model = model_class(args=args, **model_kwargs)
+        fusion_model = model_class(
+            args=args, dataset_metadata=dataset_metadata, **model_kwargs
+        )
         fusion_model.build_model(checkpoint=checkpoint, strict=strict)
         return fusion_model

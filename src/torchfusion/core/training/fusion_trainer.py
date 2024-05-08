@@ -9,8 +9,11 @@ import ignite.distributed as idist
 import torch
 from omegaconf import DictConfig, OmegaConf
 from torchfusion.core.args.args import FusionArguments
+from torchfusion.core.data.datasets.dataset_metadata import FusionDatasetMetaData
 from torchfusion.core.data.factory.batch_sampler import BatchSamplerFactory
-from torchfusion.core.data.utilities.loaders import load_datamodule_from_args
+from torchfusion.core.data.utilities.loaders import (
+    load_datamodule_from_args,
+)
 from torchfusion.core.data.utilities.transforms import load_transforms_from_config
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.models.tasks import ModelTasks
@@ -106,6 +109,7 @@ class FusionTrainer:
         setup_for_train: bool = True,
         checkpoint: Optional[str] = None,
         strict: bool = False,
+        dataset_metadata: Optional[FusionDatasetMetaData] = None,
     ) -> FusionModel:
         """
         Initializes the model for training.
@@ -120,6 +124,7 @@ class FusionTrainer:
             checkpoint=checkpoint,
             tb_logger=self._tb_logger,
             strict=strict,
+            dataset_metadata=dataset_metadata,
         )
 
         model.setup_model(setup_for_train=setup_for_train)
@@ -265,9 +270,12 @@ class FusionTrainer:
         self._trainer_functionality = self._setup_trainer_functionality()
 
         # setup datamodule
-        self._datamodule, self._data_labels = load_datamodule_from_args(
+        self._datamodule = load_datamodule_from_args(
             args=self._args, stage=TrainingStage.train, rank=self._rank
         )
+
+        # setup data labels
+        self._data_labels = self._datamodule.get_dataset_metadata().get_labels()
 
         # setup batch sampler if needed
         batch_sampler_wrapper = BatchSamplerFactory.create(
@@ -279,6 +287,7 @@ class FusionTrainer:
         self._model = self._setup_model(
             summarize=True,
             setup_for_train=True,
+            dataset_metadata=self._datamodule.get_dataset_metadata(),
         )
 
         # set collate fns
@@ -368,9 +377,12 @@ class FusionTrainer:
         if self._args.data_loader_args.use_val_set_for_test:
             # setup datamodule (since we need validation dataset, we load the complete datamodule here)
             # setting training stage since validation set is to be used which is loaded in the train stage
-            self._datamodule, self._data_labels = load_datamodule_from_args(
+            self._datamodule = load_datamodule_from_args(
                 args=self._args, stage=TrainingStage.train, rank=self._rank
             )
+
+            # setup data labels
+            self._data_labels = self._datamodule.get_dataset_metadata().get_labels()
 
             # setup model
             self._model = self._setup_model(
@@ -389,9 +401,13 @@ class FusionTrainer:
             )
         else:
             # setup datamodule (we only load the test dataset here)
-            self._datamodule, self._data_labels = load_datamodule_from_args(
+            self._datamodule = load_datamodule_from_args(
                 args=self._args, stage=TrainingStage.test, rank=self._rank
             )
+
+            # setup data labels
+            self._data_labels = self._datamodule.get_dataset_metadata().get_labels()
+
             # setup model
             self._model = self._setup_model(
                 summarize=True,

@@ -5,30 +5,24 @@ from typing import Type
 
 import hydra
 import ignite.distributed as idist
-import torch
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, OmegaConf
-from torch.utils.data import Subset
-from torchvision.transforms import Compose
-
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.constants import DataKeys
-from torchfusion.core.data import data_modules
 from torchfusion.core.data.data_augmentations.advanced import ImagePreprocess
 from torchfusion.core.data.data_augmentations.general import DictTransform
 from torchfusion.core.data.factory.batch_sampler import BatchSamplerFactory
-from torchfusion.core.data.utilities.containers import CollateFnDict, TransformsDict
+from torchfusion.core.data.utilities.containers import TransformsDict
 from torchfusion.core.data.utilities.loaders import load_datamodule_from_args
-from torchfusion.core.models.utilities.data_collators import BatchToTensorDataCollator
 from torchfusion.core.training.utilities.constants import TrainingStage
 from torchfusion.core.training.utilities.general import (
     initialize_torch,
     print_tf_from_loader,
-    print_transform,
     setup_logging,
 )
 from torchfusion.core.utilities.dataclasses.dacite_wrapper import from_dict
 from torchfusion.core.utilities.logging import get_logger
+from torchvision.transforms import Compose
 
 logger = get_logger()
 
@@ -142,7 +136,7 @@ def prepare_datasets(args: FusionArguments, hydra_config: OmegaConf):
     # custom_realtime_transforms = setup_custom_realtime_transforms()
 
     # setup datamodule
-    datamodule, data_labels = load_datamodule_from_args(
+    datamodule = load_datamodule_from_args(
         args,
         stage=None,
         # preprocess_transforms=custom_preprocess_transforms,

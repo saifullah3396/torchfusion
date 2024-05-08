@@ -13,6 +13,7 @@ from datadings.reader import MsgpackReader as MsgpackFileReader
 from datasets import DownloadConfig
 from torch.utils.data import BatchSampler, DataLoader, Dataset, Subset
 from torchfusion.core.constants import DataKeys
+from torchfusion.core.data.datasets.dataset_metadata import FusionDatasetMetaData
 from torchfusion.core.data.datasets.msgpack.dataset import (
     MsgpackBasedDataset,
     MsgpackBasedTorchDataset,
@@ -612,9 +613,9 @@ class FusionDataModule(ABC):
 
     def show_batch(self, batch):
         print_batch_info(batch, tokenizer=self.get_tokenizer_if_available())
-        show_batch(batch)
+        show_batch(batch, dataset_metadata=self.get_dataset_metadata())
 
-    def get_dataset_info(self):
+    def get_dataset_metadata(self):
         if self.train_dataset is not None:
             dataset = self.train_dataset._dataset
         elif self.test_dataset is not None:
@@ -630,4 +631,4 @@ class FusionDataModule(ABC):
                 "which returns relevant class/labels information does not have an info attribute."
             )
 
-        return dataset.info
+        return FusionDatasetMetaData.from_info(dataset.info)

@@ -41,6 +41,13 @@ class FusionModelForClassification(FusionModel):
             )
         )
 
+        if self._dataset_metadata is not None:
+            logger.info(
+                f"Dataset metadata is provided. Overriding the number of labels in the config. "
+                f"Labels in config = {self.config.num_labels}. Labels in metadata = {self._dataset_metadata.num_labels}"
+            )
+            self.config.num_labels = self._dataset_metadata.get_labels()
+
     @abstractmethod
     def _build_classification_model(
         self,
