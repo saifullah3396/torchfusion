@@ -5,11 +5,50 @@ import logging
 import os
 
 import pycocotools.mask as mask_util
+from detectron2.data import MetadataCatalog
 from detectron2.structures import BoxMode
 from detectron2.utils.file_io import PathManager
 from fvcore.common.timer import Timer
+from pycocotools.coco import COCO
 
 logger = logging.getLogger(__name__)
+
+
+def add_id_map_to_metadata(dataset_name):
+    meta = MetadataCatalog.get(dataset_name)
+
+    timer = Timer()
+    json_file = PathManager.get_local_path(meta.json_file)
+    with contextlib.redirect_stdout(io.StringIO()):
+        coco_api = COCO(json_file)
+    if timer.seconds() > 1:
+        logger.info(
+            "Loading {} takes {:.2f} seconds.".format(json_file, timer.seconds())
+        )
+
+    cat_ids = sorted(coco_api.getCatIds())
+    cats = coco_api.loadCats(cat_ids)
+    # The categories in a custom json file may not be sorted.
+    thing_classes = [c["name"] for c in sorted(cats, key=lambda x: x["id"])]
+    meta.thing_classes = thing_classes
+
+    # In COCO, certain category ids are artificially removed,
+    # and by convention they are always ignored.
+    # We deal with COCO's id issue and translate
+    # the category ids to contiguous ids in [0, 80).
+
+    # It works by looking at the "categories" field in the json, therefore
+    # if users' own json also have incontiguous ids, we'll
+    # apply this mapping as well but print a warning.
+    if not (min(cat_ids) == 1 and max(cat_ids) == len(cat_ids)):
+        if "coco" not in dataset_name:
+            logger.warning(
+                """
+                Category ids in annotations are not in [1, #categories]! We'll apply a mapping for you.
+                """
+            )
+    id_map = {v: i for i, v in enumerate(cat_ids)}
+    meta.thing_dataset_id_to_contiguous_id = id_map
 
 
 def load_coco_json(
@@ -18,7 +57,6 @@ def load_coco_json(
     """
     Taken from detectron: https://github.com/facebookresearch/detectron2/blob/main/detectron2/data/datasets/coco.py
     """
-    from pycocotools.coco import COCO
 
     timer = Timer()
     json_file = PathManager.get_local_path(json_file)

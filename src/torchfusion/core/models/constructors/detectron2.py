@@ -6,6 +6,9 @@ import torch
 from detectron2.modeling import build_model
 from torchfusion.core.models.constructors.base import ModelConstructor
 from torchfusion.core.models.tasks import ModelTasks
+from torchfusion.core.utilities.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 def add_vit_config(cfg):
@@ -52,6 +55,11 @@ class Detectron2ModelConstructor(ModelConstructor):
             add_vit_config(cfg)
 
         cfg.merge_from_file(self.init_args["cfg_path"])
+
+        if "vis_period" in kwargs:
+            cfg.VIS_PERIOD = kwargs["vis_period"]
+
+        logger.info("Building model with the following config: {}".format(cfg))
 
         # instantiate model
         return build_model(cfg)

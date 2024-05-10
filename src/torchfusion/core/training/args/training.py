@@ -2,7 +2,6 @@ from dataclasses import dataclass, field
 from typing import List, Mapping, Optional, Union
 
 from torchfusion.core.args.args_base import ClassInitializerArgs
-from torchfusion.core.models.args.kd_args import KnowledgeDistillationArguments
 from torchfusion.core.training.args.cutmix import CutmixupArguments
 from torchfusion.core.training.args.early_stopping import EarlyStoppingArguments
 from torchfusion.core.training.args.ema import ModelEmaArguments
@@ -72,6 +71,9 @@ class TrainingArguments:
 
     # whether to run eval on startup
     visualize_on_start: bool = False
+
+    # whether to run eval on startup
+    visualize_n_batches: int = 1
 
     # Minimum training epochs for eval
     min_train_epochs_for_best: Optional[int] = 1

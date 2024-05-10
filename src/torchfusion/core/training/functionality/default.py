@@ -317,7 +317,7 @@ class DefaultTrainingFunctionality:
         device: Optional[Union[str, torch.device]] = torch.device("cpu"),
         tb_logger: TensorboardLogger = None,
         keys_to_device: list = [],
-        put_batch_to_device: bool = True
+        put_batch_to_device: bool = True,
     ) -> Callable:
         from ignite.engine import Engine
 
@@ -374,7 +374,7 @@ class DefaultTrainingFunctionality:
         model: FusionModel,
         device: Optional[Union[str, torch.device]] = torch.device("cpu"),
         tb_logger: TensorboardLogger = None,
-        put_batch_to_device: bool = True
+        put_batch_to_device: bool = True,
     ) -> Callable:
         from ignite.engine import Engine
 
@@ -400,7 +400,9 @@ class DefaultTrainingFunctionality:
             with torch.no_grad():
                 if put_batch_to_device:
                     # put batch to device
-                    batch = convert_tensor(batch, device=device, non_blocking=non_blocking)
+                    batch = convert_tensor(
+                        batch, device=device, non_blocking=non_blocking
+                    )
 
                 # if fp16 is on
                 if args.training_args.with_amp_inference:
@@ -429,7 +431,7 @@ class DefaultTrainingFunctionality:
         output_dir: str,
         device: Optional[Union[str, torch.device]] = torch.device("cpu"),
         tb_logger: TensorboardLogger = None,
-        put_batch_to_device: bool = True
+        put_batch_to_device: bool = True,
     ) -> Callable:
         from ignite.engine import Engine
 
@@ -1133,6 +1135,7 @@ class DefaultTrainingFunctionality:
         # add loss as a running average metric
         for i, n in enumerate(args.training_args.outputs_to_metric):
             RunningAverage(
+                alpha=0.5,
                 output_transform=partial(output_transform, index=i, name=n),
                 epoch_bound=True,
             ).attach(engine, f"{stage}/{n}")
@@ -1318,7 +1321,9 @@ class DefaultTrainingFunctionality:
             model.update_ema_for_stage(stage=TrainingStage.visualization)
 
             visualization_engine.run(
-                val_dataloader, max_epochs=1, epoch_length=1
+                val_dataloader,
+                max_epochs=1,
+                epoch_length=args.training_args.visualize_n_batches,
             )  # only run for one batch
 
             # prepare model for training again
@@ -1699,7 +1704,7 @@ class DefaultTrainingFunctionality:
             val_dataloader=val_dataloader,
         )
 
-        return training_engine, validation_engine
+        return training_engine, validation_engine, visualization_engine
 
     @classmethod
     def setup_test_engine(

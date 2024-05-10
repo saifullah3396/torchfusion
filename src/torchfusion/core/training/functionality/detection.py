@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Callable, Mapping, Optional, Sequence, Un
 import torch
 from ignite.contrib.handlers import TensorboardLogger
 from ignite.engine import Engine, EventEnum
+from torch.utils.data import DataLoader
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.training.functionality.default import DefaultTrainingFunctionality
@@ -40,6 +41,55 @@ class OptimizerEvents(EventEnum):
 
 class ObjectDetectionTrainingFunctionality(DefaultTrainingFunctionality):
     @classmethod
+    def setup_training_engine(
+        cls,
+        args,
+        model,
+        opt_manager,
+        training_sch_manager,
+        train_dataloader,
+        val_dataloader,
+        output_dir,
+        tb_logger,
+        device,
+        do_val=True,
+        checkpoint_state_dict_extras={},
+        data_labels: Optional[Sequence[str]] = None,
+    ):
+        (
+            training_engine,
+            validation_engine,
+            visualization_engine,
+        ) = super().setup_training_engine(
+            args,
+            model,
+            opt_manager,
+            training_sch_manager,
+            train_dataloader,
+            val_dataloader,
+            output_dir,
+            tb_logger,
+            device,
+            do_val,
+            checkpoint_state_dict_extras,
+            data_labels,
+        )
+
+        assert (
+            validation_engine is None
+        ), "Validation engine is not needed for detection as Detectron2 evaluators are used."
+        cls.attach_detectron2_validator(
+            args=args,
+            model=model,
+            training_engine=training_engine,
+            train_dataloader=train_dataloader,
+            val_dataloader=val_dataloader,
+            output_dir=output_dir,
+        )
+
+        return training_engine, validation_engine, visualization_engine
+
+    @classmethod
     def initialize_training_engine(
         cls,
         args: FusionArguments,
@@ -70,16 +120,86 @@ class ObjectDetectionTrainingFunctionality(DefaultTrainingFunctionality):
         device: Optional[Union[str, torch.device]] = torch.device("cpu"),
         tb_logger: TensorboardLogger = None,
     ) -> Callable:
-        return super().initialize_validation_engine(
-            args,
-            model,
-            training_engine,
-            output_dir,
-            device,
-            tb_logger,
-            # for detection since we use detectron we let it handle the device assignment automatically
-            put_batch_to_device=False,
-        )
+        # for detection purposes we use detectron2 based evaluators which follow their own logic so validation
+        # engine is not needed
+        return None
+
+    @classmethod
+    def attach_detectron2_validator(
+        cls,
+        args: FusionArguments,
+        model: FusionModel,
+        training_engine: Engine,
+        train_dataloader: DataLoader,
+        val_dataloader: DataLoader,
+        output_dir: str,
+    ):
+        from ignite.engine import Events
+
+        def validate(engine):
+            # prepare model for validation
+            model.update_ema_for_stage(stage=TrainingStage.validation)
+
+            epoch = training_engine.state.epoch
+
+            import ignite.distributed as idist
+            from detectron2.evaluation import (
+                COCOEvaluator,
+                inference_on_dataset,
+                print_csv_format,
+            )
+
+            split = (
+                "test" if args.data_loader_args.use_test_set_for_val else "validation"
+            )
+            logger.info(
+                f"Running evaluation on the dataset: {args.data_args.dataset_name}, config: {args.data_args.dataset_config_name}, split: {split}"
+            )
+            dataset_name = f"{args.data_args.dataset_name}_{args.data_args.dataset_config_name}_{split}"
+            detectron2_evaluator = COCOEvaluator(dataset_name, output_dir=output_dir)
+            eval_results = inference_on_dataset(
+                model.torch_model, val_dataloader, detectron2_evaluator
+            )
+            if idist.get_rank() == 0:
+                assert isinstance(
+                    eval_results, dict
+                ), "Evaluator must return a dict on the main process. Got {} instead.".format(
+                    eval_results
+                )
+                logger.info(
+                    "Evaluation results for {} in csv format:".format(
+                        args.data_args.dataset_name
+                    )
+                )
+                print_csv_format(eval_results)
+                metrics_output = "\n".join(
+                    [f"\t{k}: {v}" for k, v in eval_results.items()]
+                )
+                logger.info(
+                    f"\nEpoch {epoch} - {TrainingStage.validation} metrics:\n {metrics_output}"
+                )
+
+            # prepare model for training again
+            model.update_ema_for_stage(stage=TrainingStage.train)
+
+        if args.training_args.eval_every_n_epochs >= 1:
+            cond = Events.EPOCH_COMPLETED(every=args.training_args.eval_every_n_epochs)
+            cond = cond | Events.COMPLETED
+            if args.training_args.eval_on_start:
+                cond = cond | Events.STARTED
+            training_engine.add_event_handler(cond, validate)
+        else:
+            steps_per_epoch = cls._get_steps_per_epoch(args, train_dataloader)
+            cond = Events.ITERATION_COMPLETED(
+                every=int(args.training_args.eval_every_n_epochs * steps_per_epoch)
+            )
+            cond = cond | Events.COMPLETED
+            if args.training_args.eval_on_start:
+                cond = cond | Events.STARTED
+            training_engine.add_event_handler(
+                cond,
+                validate,
+            )
 
     @classmethod
     def initialize_prediction_engine(

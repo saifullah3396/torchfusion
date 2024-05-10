@@ -174,6 +174,7 @@ class FusionTrainer:
         (
             training_engine,
             validation_engine,
+            visualization_engine,
         ) = self._trainer_functionality.setup_training_engine(
             args=self._args,
             model=self._model,
@@ -193,6 +194,10 @@ class FusionTrainer:
         if validation_engine is not None:
             validation_engine.logger = logger
             # validation_engine.logger.propagate = False
+
+        if visualization_engine is not None:
+            visualization_engine.logger = logger
+            # visualization_engine.logger.propagate = False
 
         logger.info(f"Configured Training Engine:")
         logger.info(f"\tTotal steps per epoch = {self.batches_per_epch}")

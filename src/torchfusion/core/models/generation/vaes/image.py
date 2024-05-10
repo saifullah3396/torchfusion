@@ -21,7 +21,6 @@ logger = get_logger(__name__)
 class FusionModelForVariationalImageAutoEncoding(FusionModelForVariationalAutoEncoding):
     @dataclass
     class Config(FusionModelForVariationalAutoEncoding.Config):
-        visualized_batches: int = 1
         unnormalize: bool = False
         kl_weight: float = 0.000001
 
@@ -109,10 +108,7 @@ class FusionModelForVariationalImageAutoEncoding(FusionModelForVariationalAutoEn
         global_step = (
             training_engine.state.iteration if training_engine is not None else 1
         )
-        if (
-            idist.get_rank() == 0
-            and engine.state.iteration <= self.config.visualized_batches
-        ):
+        if idist.get_rank() == 0:
             # this only saves first batch always if you want you can shuffle validation set and save random batches
             logger.info(f"Saving image batch {engine.state.iteration} to tensorboard")
             if self.config.unnormalize:

@@ -120,7 +120,7 @@ def draw_instances(image, instances, labels):
         colors[label] = tuple(np.random.randint(0, 256, 3))
 
     v = Visualizer(
-        np.clip(image * 255.0, 0, 255),
+        image,
         scale=1.0,
         instance_mode=ColorMode.SEGMENTATION,
     )

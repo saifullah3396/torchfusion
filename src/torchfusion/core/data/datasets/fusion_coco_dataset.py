@@ -14,7 +14,10 @@ from torchfusion.core.data.datasets.fusion_dataset import (
     FusionDataset,
     FusionDatasetConfig,
 )
-from torchfusion.core.data.utilities.coco_utils import load_coco_json
+from torchfusion.core.data.utilities.coco_utils import (
+    add_id_map_to_metadata,
+    load_coco_json,
+)
 
 # we do not use the logger from torchfusion, but the one from datasets here
 logger = datasets.logging.get_logger(__name__)
@@ -44,42 +47,39 @@ class FusionCocoDataset(FusionDataset):
             citation=self.config.citation,
         )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # register this dataset as coco instance to detectron2
+        from detectron2.data import DatasetCatalog
+        from detectron2.data.datasets import register_coco_instances
+
+        for split in [
+            datasets.Split.VALIDATION,
+            datasets.Split.TEST,
+            datasets.Split.TRAIN,
+        ]:
+            split = str(split)
+            coco_json_path = self._get_json_path(split)
+            image_path = self._get_image_dir(split)
+            if coco_json_path.exists():
+                # we register all our datasets the same as class name that is why we use class name here
+                register_name = f"{self.__class__.__name__}_{self.config.name}_{split}"
+                if register_name not in DatasetCatalog.list():
+                    register_coco_instances(
+                        register_name,
+                        {},
+                        coco_json_path,
+                        image_path,
+                    )
+
+                    add_id_map_to_metadata(register_name)
+
     def _get_image_dir(self, split):
         return f"{self.config.data_dir}/{split}"
 
     def _get_json_path(self, split):
         return f"{self.config.data_dir}/{split}.json"
-
-    def _dataset_features(self):
-        # we prepare coco style features as output
-        features = datasets.Features(
-            {
-                "image_id": datasets.Value("int64"),
-                DataKeys.IMAGE_FILE_PATH: datasets.features.Value("string"),
-                DataKeys.IMAGE_WIDTH: datasets.Value("int32"),
-                DataKeys.IMAGE_HEIGHT: datasets.Value("int32"),
-            }
-        )
-
-        features[DataKeys.IMAGE] = datasets.Image()
-
-        object_dict = {
-            "category_id": datasets.ClassLabel(
-                names=self.config.category_names,
-                num_classes=len(self.config.category_names),
-            ),
-            "image_id": datasets.Value("string"),
-            "id": datasets.Value("int64"),
-            "area": datasets.Value("int64"),
-            "bbox": datasets.Sequence(datasets.Value("float32"), length=4),
-            "bbox_mode": datasets.Value("int32"),
-            "segmentation": datasets.Sequence(
-                datasets.Sequence(datasets.Value("float32"))
-            ),
-            "iscrowd": datasets.Value("bool"),
-        }
-        features["objects"] = [object_dict]
-        return features
 
     def _dataset_features(self):
         features = datasets.Features(

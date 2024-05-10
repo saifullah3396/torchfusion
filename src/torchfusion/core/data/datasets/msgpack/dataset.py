@@ -9,7 +9,7 @@ from datasets.arrow_dataset import DatasetInfoMixin
 from datasets.info import DatasetInfo
 from datasets.splits import NamedSplit
 from datasets.utils import logging
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, Subset
 from torchfusion.core.constants import DataKeys
 
 if TYPE_CHECKING:
@@ -186,6 +186,12 @@ class TransformedDataset(Dataset):
     ):
         self._dataset = dataset
         self._transforms = transforms
+
+    def get_base_dataset(self):
+        if isinstance(self._dataset, Subset):
+            return self._dataset.dataset
+        else:
+            return self._dataset
 
     def __getitem__(self, index):
         sample = self._dataset[index]

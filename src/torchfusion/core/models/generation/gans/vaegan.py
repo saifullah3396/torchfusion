@@ -266,7 +266,7 @@ class FusionModelForVAEGAN(FusionModel):
 
         # step
         rank = idist.get_rank()
-        if rank == 0 and engine.state.iteration <= self.config.visualized_batches:
+        if rank == 0:
             # save images
             generated_samples = self.vae.decode(
                 torch.randn_like(posterior.sample())

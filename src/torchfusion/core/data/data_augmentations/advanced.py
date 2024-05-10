@@ -145,7 +145,7 @@ def detectron2_realtime_ransform_image_and_objects(sample, geometric_tf, mask_on
     # convert image to tensor and update in place
     sample[DataKeys.IMAGE] = (
         torch.as_tensor(  # here image is kept as 0-255 as that is what is required in detectron2
-            np.ascontiguousarray(image.transpose(2, 0, 1))
+            np.ascontiguousarray(image.astype("float32").transpose(2, 0, 1))
         )
     )
     return sample
