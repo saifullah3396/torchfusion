@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from torch.utils.data import Dataset
 from torchfusion.core.constants import DataKeys
+from torchfusion.core.data.datasets.dataset_metadata import \
+    FusionDatasetMetaData
 from torchfusion.core.utilities.logging import get_logger
 from torchvision.datasets import CIFAR10
 
@@ -41,7 +43,12 @@ class Cifar10TorchDataset(Dataset):
 
     @property
     def info(self):
-        return {"splits": ["train", "test"], "features": {DataKeys.LABEL: _NAMES}}
+        return FusionDatasetMetaData(
+            features={DataKeys.LABEL: _NAMES},
+            dataset_name=self.__class__.__name__,
+            config_name=self._config_name,
+            splits={split: len(self) for split in ["train", "test"]},
+        )
 
     def __getitem__(self, index):
         output = self._data[index]

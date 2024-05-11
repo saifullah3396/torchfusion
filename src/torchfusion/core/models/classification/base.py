@@ -10,10 +10,7 @@ from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.utilities.containers import CollateFnDict
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.models.utilities.knowledge_distillation import (
-    EnsembleKnowledgeTransferLoss,
-    GaussianLoss,
-    TemperatureScaledKLDivLoss,
-)
+    EnsembleKnowledgeTransferLoss, GaussianLoss, TemperatureScaledKLDivLoss)
 from torchfusion.core.training.utilities.constants import TrainingStage
 from torchfusion.core.utilities.logging import get_logger
 
@@ -44,9 +41,9 @@ class FusionModelForClassification(FusionModel):
         if self._dataset_metadata is not None:
             logger.info(
                 f"Dataset metadata is provided. Overriding the number of labels in the config. "
-                f"Labels in config = {self.config.num_labels}. Labels in metadata = {self._dataset_metadata.num_labels}"
+                f"Labels in config = {self.config.num_labels}. Labels in metadata = {len(self._dataset_metadata.get_labels())}"
             )
-            self.config.num_labels = self._dataset_metadata.get_labels()
+            self.config.num_labels = len(self._dataset_metadata.get_labels())
 
     @abstractmethod
     def _build_classification_model(

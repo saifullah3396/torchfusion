@@ -329,7 +329,7 @@ class FusionDataModule(ABC):
             available_splits = None
             if isinstance(self.train_dataset.info, dict):
                 available_splits = self.train_dataset.info["splits"]
-            elif isinstance(self.train_dataset.info, datasets.DatasetInfo):
+            elif isinstance(self.train_dataset.info, (datasets.DatasetInfo, FusionDatasetMetaData)):
                 available_splits = self.train_dataset.info.splits.keys()
             else:
                 raise ValueError(

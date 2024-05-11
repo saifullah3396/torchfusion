@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Optional
+from typing import Optional, Union
 
 from datasets import DatasetInfo
 from datasets.features import Features
@@ -13,10 +13,10 @@ logger = get_logger(__name__)
 class FusionDatasetMetaData:
     """This is similar to the DatasetInfo class in the datasets library. It is used to store metadata about a dataset."""
 
-    description: str = dataclasses.field(default_factory=str)
-    citation: str = dataclasses.field(default_factory=str)
-    homepage: str = dataclasses.field(default_factory=str)
-    license: str = dataclasses.field(default_factory=str)
+    description: Optional[str] = None
+    citation: Optional[str] = None
+    homepage: Optional[str] = None
+    license: Optional[str] = None
     features: Optional[Features] = None
     dataset_name: Optional[str] = None
     config_name: Optional[str] = None
@@ -45,6 +45,8 @@ class FusionDatasetMetaData:
                 data_labels = self.features[DataKeys.LABEL].names
             elif isinstance(self.features[DataKeys.LABEL], Sequence):
                 data_labels = self.features[DataKeys.LABEL].feature.names
+            elif isinstance(self.features[DataKeys.LABEL], list):
+                data_labels = self.features[DataKeys.LABEL]
 
         if DataKeys.OBJECTS in self.features:
             from datasets.features import ClassLabel, Sequence

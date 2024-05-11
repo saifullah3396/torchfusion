@@ -6,9 +6,9 @@ from collections import OrderedDict
 from io import StringIO
 from typing import Any, Callable, List, Optional, Union
 
-from ignite.contrib.handlers.tqdm_logger import ProgressBar, _OutputHandler
 from ignite.engine import Engine, Events
 from ignite.engine.events import CallableEventWithFilter, RemovableEventHandle
+from ignite.handlers.tqdm_logger import ProgressBar, _OutputHandler
 
 
 class TqdmLogFormatter(object):
