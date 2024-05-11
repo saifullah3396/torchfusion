@@ -14,19 +14,20 @@ from torch.utils.data import Subset
 from torchfusion.core.analyzer.tasks.base_config import AnalyzerTaskConfig
 from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.data.utilities.containers import CollateFnDict
-from torchfusion.core.data.utilities.loaders import (
-    load_datamodule_from_args,
-)
+from torchfusion.core.data.utilities.loaders import load_datamodule_from_args
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.models.tasks import ModelTasks
-from torchfusion.core.models.utilities.data_collators import PassThroughCollator
-from torchfusion.core.training.functionality.default import DefaultTrainingFunctionality
-from torchfusion.core.training.functionality.diffusion import (
-    DiffusionTrainingFunctionality,
-)
-from torchfusion.core.training.functionality.gan import GANTrainingFunctionality
+from torchfusion.core.models.utilities.data_collators import \
+    PassThroughCollator
+from torchfusion.core.training.functionality.default import \
+    DefaultTrainingFunctionality
+from torchfusion.core.training.functionality.diffusion import \
+    DiffusionTrainingFunctionality
+from torchfusion.core.training.functionality.gan import \
+    GANTrainingFunctionality
 from torchfusion.core.training.utilities.constants import TrainingStage
-from torchfusion.core.training.utilities.general import initialize_torch, setup_logging
+from torchfusion.core.training.utilities.general import (initialize_torch,
+                                                         setup_logging)
 from torchfusion.core.utilities.dataclasses.dacite_wrapper import from_dict
 from torchfusion.core.utilities.logging import get_logger
 
@@ -122,7 +123,7 @@ class AnalyzerTask(ABC):
 
     def _setup_prediction_engine(self, model, keys_to_device: list = []):
         # setup training engine
-        test_engine = self._trainer_functionality.setup_prediction_engine(
+        pred_engine = self._trainer_functionality.setup_prediction_engine(
             args=self._args,
             model=model,
             test_dataloader=self._data_loader,
@@ -131,9 +132,9 @@ class AnalyzerTask(ABC):
             device=self._device,
             keys_to_device=keys_to_device,
         )
-        test_engine.logger = get_logger()
+        pred_engine.logger = get_logger()
 
-        return test_engine
+        return pred_engine
 
     def _setup_model(
         self,

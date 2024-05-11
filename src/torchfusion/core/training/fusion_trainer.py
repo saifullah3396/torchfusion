@@ -9,28 +9,29 @@ import ignite.distributed as idist
 import torch
 from omegaconf import DictConfig, OmegaConf
 from torchfusion.core.args.args import FusionArguments
-from torchfusion.core.data.datasets.dataset_metadata import FusionDatasetMetaData
+from torchfusion.core.data.datasets.dataset_metadata import \
+    FusionDatasetMetaData
 from torchfusion.core.data.factory.batch_sampler import BatchSamplerFactory
 from torchfusion.core.data.utilities.loaders import load_datamodule_from_args
-from torchfusion.core.data.utilities.transforms import load_transforms_from_config
+from torchfusion.core.data.utilities.transforms import \
+    load_transforms_from_config
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.models.tasks import ModelTasks
-from torchfusion.core.training.functionality.default import DefaultTrainingFunctionality
-from torchfusion.core.training.functionality.detection import (
-    ObjectDetectionTrainingFunctionality,
-)
-from torchfusion.core.training.functionality.diffusion import (
-    DiffusionTrainingFunctionality,
-)
-from torchfusion.core.training.functionality.gan import GANTrainingFunctionality
+from torchfusion.core.training.functionality.default import \
+    DefaultTrainingFunctionality
+from torchfusion.core.training.functionality.detection import \
+    ObjectDetectionTrainingFunctionality
+from torchfusion.core.training.functionality.diffusion import \
+    DiffusionTrainingFunctionality
+from torchfusion.core.training.functionality.gan import \
+    GANTrainingFunctionality
 from torchfusion.core.training.fusion_opt_manager import FusionOptimizerManager
-from torchfusion.core.training.fusion_sch_manager import FusionSchedulersManager
+from torchfusion.core.training.fusion_sch_manager import \
+    FusionSchedulersManager
 from torchfusion.core.training.utilities.constants import TrainingStage
-from torchfusion.core.training.utilities.general import (
-    initialize_torch,
-    print_tf_from_loader,
-    setup_logging,
-)
+from torchfusion.core.training.utilities.general import (initialize_torch,
+                                                         print_tf_from_loader,
+                                                         setup_logging)
 from torchfusion.core.utilities.dataclasses.dacite_wrapper import from_dict
 from torchfusion.core.utilities.logging import get_logger
 
@@ -186,7 +187,7 @@ class FusionTrainer:
             tb_logger=self._tb_logger,
             device=self._device,
             do_val=self._args.general_args.do_val,
-            data_labels=self._data_labels,
+            data_labels=self._datamodule.get_dataset_metadata().get_labels(),
         )
         training_engine.logger = logger
         # training_engine.logger.propagate = False
@@ -224,7 +225,7 @@ class FusionTrainer:
             tb_logger=self._tb_logger,
             device=self._device,
             checkpoint_type=checkpoint_type,
-            data_labels=self._data_labels,
+            data_labels=self._datamodule.get_dataset_metadata().get_labels(),
         )
         test_engine.logger = logger
 
@@ -281,9 +282,6 @@ class FusionTrainer:
         self._datamodule = load_datamodule_from_args(
             args=self._args, stage=TrainingStage.train, rank=self._rank
         )
-
-        # setup data labels
-        self._data_labels = self._datamodule.get_dataset_metadata().get_labels()
 
         # setup batch sampler if needed
         batch_sampler_wrapper = BatchSamplerFactory.create(
@@ -358,7 +356,8 @@ class FusionTrainer:
 
         # run training
         if self._args.model_args.model_task == ModelTasks.object_detection:
-            from detectron2.utils.events import EventStorage, TensorboardXWriter
+            from detectron2.utils.events import (EventStorage,
+                                                 TensorboardXWriter)
             from ignite.engine import Events
 
             writers = [
@@ -433,13 +432,11 @@ class FusionTrainer:
                 args=self._args, stage=TrainingStage.train, rank=self._rank
             )
 
-            # setup data labels
-            self._data_labels = self._datamodule.get_dataset_metadata().get_labels()
-
             # setup model
             self._model = self._setup_model(
                 summarize=True,
                 setup_for_train=False,
+                dataset_metadata=self._datamodule.get_dataset_metadata(),
             )
 
             # set collate fns
@@ -457,13 +454,11 @@ class FusionTrainer:
                 args=self._args, stage=TrainingStage.test, rank=self._rank
             )
 
-            # setup data labels
-            self._data_labels = self._datamodule.get_dataset_metadata().get_labels()
-
             # setup model
             self._model = self._setup_model(
                 summarize=True,
                 setup_for_train=False,
+                dataset_metadata=self._datamodule.get_dataset_metadata(),
             )
 
             # set collate fns

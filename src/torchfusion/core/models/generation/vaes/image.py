@@ -7,13 +7,15 @@ import torch
 import torchvision
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.utilities.containers import CollateFnDict
-from torchfusion.core.models.constructors.diffusers import DiffusersModelConstructor
-from torchfusion.core.models.constructors.factory import ModelConstructorFactory
+from torchfusion.core.models.constructors.diffusers import \
+    DiffusersModelConstructor
+from torchfusion.core.models.constructors.factory import \
+    ModelConstructorFactory
 from torchfusion.core.models.constructors.fusion import FusionModelConstructor
-from torchfusion.core.models.generation.vaes.base import (
-    FusionModelForVariationalAutoEncoding,
-)
+from torchfusion.core.models.generation.vaes.base import \
+    FusionModelForVariationalAutoEncoding
 from torchfusion.core.training.utilities.constants import TrainingStage
+from torchfusion.core.utilities.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -148,9 +150,8 @@ class FusionModelForVariationalImageAutoEncoding(FusionModelForVariationalAutoEn
     ) -> CollateFnDict:
         import torch
         from torchfusion.core.data.utilities.containers import CollateFnDict
-        from torchfusion.core.models.utilities.data_collators import (
-            BatchToTensorDataCollator,
-        )
+        from torchfusion.core.models.utilities.data_collators import \
+            BatchToTensorDataCollator
 
         if data_key_type_map is None:
             data_key_type_map = {
