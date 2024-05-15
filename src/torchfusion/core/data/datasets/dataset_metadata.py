@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Optional, Union
+from typing import Optional
 
 from datasets import DatasetInfo
 from datasets.features import Features
@@ -37,7 +37,6 @@ class FusionDatasetMetaData:
 
     def get_labels(self):
         data_labels = None
-        logger.debug(f"Dataset loaded with following features: {self.features}")
         if DataKeys.LABEL in self.features:
             from datasets.features import ClassLabel, Sequence
 
@@ -58,8 +57,4 @@ class FusionDatasetMetaData:
                 data_labels = catogory_id.names
             else:
                 raise ValueError(f"Unsupported category_id type: {type(catogory_id)}")
-
-        logger.info(f"Data labels = {data_labels}")
-        if isinstance(data_labels, list):
-            logger.info(f"Number of labels = {len(data_labels)}")
         return data_labels

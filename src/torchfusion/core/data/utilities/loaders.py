@@ -168,4 +168,11 @@ def load_datamodule_from_args(
     if rank == 0:
         idist.barrier()
 
+    metadata = datamodule.get_dataset_metadata()
+    logger.debug(f"Dataset loaded with following features: {metadata.features}")
+    data_labels = metadata.get_labels()
+    logger.info(f"Data labels = {data_labels}")
+    if isinstance(data_labels, list):
+        logger.info(f"Number of labels = {len(data_labels)}")
+
     return datamodule
