@@ -15,7 +15,7 @@ eval_on_start: true
 gradient_accumulation_steps: 1
 log_gpu_stats: False
 log_to_tb: true
-logging_steps: 100
+logging_steps: 1000
 eval_every_n_epochs: 1
 max_epochs: 100
 max_grad_norm: 1.0
