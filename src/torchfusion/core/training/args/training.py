@@ -46,7 +46,10 @@ class TrainingArguments:
     warmup_steps: Optional[int] = None
 
     # N update steps to log on
-    logging_steps: int = 10
+    logging_steps: int = 100
+
+    # pbar update refresh
+    pbar_update_refresh: int = 10
 
     # Whether to use AMP for training
     with_amp: bool = False
@@ -86,6 +89,9 @@ class TrainingArguments:
 
     # Whether to log gpu stats
     log_gpu_stats: Optional[bool] = False
+
+    # Whether to do profiling
+    profile_time: Optional[bool] = False
 
     # Whether to log outputs to tensorboard
     log_to_tb: Optional[bool] = True

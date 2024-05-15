@@ -3,8 +3,17 @@ from __future__ import annotations
 import math
 from functools import partial
 from pathlib import Path
-from typing import (TYPE_CHECKING, Any, Callable, Mapping, Optional, Sequence,
-                    Tuple, Union, cast)
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    cast,
+)
 
 import torch
 from ignite.contrib.handlers import TensorboardLogger
@@ -16,8 +25,9 @@ from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.training.fusion_opt_manager import FusionOptimizerManager
 from torchfusion.core.training.metrics.factory import MetricsFactory
-from torchfusion.core.training.sch.schedulers.warmup import \
-    create_lr_scheduler_with_warmup
+from torchfusion.core.training.sch.schedulers.warmup import (
+    create_lr_scheduler_with_warmup,
+)
 from torchfusion.core.training.utilities.constants import TrainingStage
 from torchfusion.core.training.utilities.general import empty_cuda_cache
 from torchfusion.core.training.utilities.progress_bar import TqdmToLogger
@@ -26,8 +36,7 @@ from torchfusion.core.utilities.logging import get_logger
 if TYPE_CHECKING:
     import torch
     from torchfusion.core.models.fusion_model import FusionModel
-    from torchfusion.core.training.fusion_sch_manager import \
-        FusionSchedulersManager
+    from torchfusion.core.training.fusion_sch_manager import FusionSchedulersManager
 
 logger = get_logger(__name__)
 
@@ -284,8 +293,7 @@ class DefaultTrainingFunctionality:
             import torch
             from ignite.utils import convert_tensor
             from torch.cuda.amp import autocast
-            from torchfusion.core.training.utilities.constants import \
-                TrainingStage
+            from torchfusion.core.training.utilities.constants import TrainingStage
 
             # ready model for evaluation
             model.torch_model.eval()
@@ -390,8 +398,7 @@ class DefaultTrainingFunctionality:
 
             import torch
             from ignite.utils import convert_tensor
-            from torchfusion.core.training.utilities.constants import \
-                TrainingStage
+            from torchfusion.core.training.utilities.constants import TrainingStage
 
             # ready model for evaluation
             model.torch_model.eval()
@@ -572,6 +579,20 @@ class DefaultTrainingFunctionality:
                     every=args.training_args.logging_steps
                 ),
             )
+
+    @classmethod
+    def configure_time_profiler(cls, args: FusionArguments, training_engine: Engine):
+        # add gpu stats callback if required
+        if args.training_args.profile_time:
+            logger.info("Attaching BasicTimeProfiler() to training engine.")
+            from ignite.handlers import BasicTimeProfiler
+
+            profiler = BasicTimeProfiler()
+            profiler.attach(training_engine)
+
+            @training_engine.on(Events.EPOCH_COMPLETED)
+            def log_intermediate_results():
+                profiler.print_results(profiler.get_results())
 
     @classmethod
     def configure_model_ema_callback(
@@ -815,8 +836,11 @@ class DefaultTrainingFunctionality:
             return
 
         from ignite.engine import Events
-        from ignite.handlers import (LRScheduler, ParamScheduler,
-                                     ReduceLROnPlateauScheduler)
+        from ignite.handlers import (
+            LRScheduler,
+            ParamScheduler,
+            ReduceLROnPlateauScheduler,
+        )
         from torch.optim.lr_scheduler import ExponentialLR, MultiStepLR, StepLR
 
         for k, inner_sch in training_sch_manager.lr_schedulers.items():
@@ -1049,8 +1073,9 @@ class DefaultTrainingFunctionality:
 
         if args.training_args.resume_from_checkpoint:
             import torch
-            from torchfusion.core.training.utilities.general import \
-                find_resume_checkpoint
+            from torchfusion.core.training.utilities.general import (
+                find_resume_checkpoint,
+            )
 
             resume_checkpoint_path = find_resume_checkpoint(
                 args.training_args.resume_checkpoint_file,
@@ -1150,8 +1175,7 @@ class DefaultTrainingFunctionality:
         opt_manager: FusionOptimizerManager = None,
     ):
         from ignite.engine import Events
-        from torchfusion.core.training.utilities.progress_bar import \
-            FusionProgressBar
+        from torchfusion.core.training.utilities.progress_bar import FusionProgressBar
 
         # redirect tqdm output to logger
         tqdm_to_logger = TqdmToLogger(get_logger())  # main logger causes problems here
@@ -1169,7 +1193,7 @@ class DefaultTrainingFunctionality:
                 optimizers=opt_manager.optimizers,
                 optimizer_params=["lr"],
                 event_name=Events.ITERATION_COMPLETED(
-                    every=args.training_args.logging_steps,
+                    every=args.training_args.pbar_update_refresh,
                 ),
             )
 
@@ -1222,7 +1246,7 @@ class DefaultTrainingFunctionality:
             ).attach(
                 engine,
                 event_name=Events.ITERATION_COMPLETED(
-                    every=args.training_args.logging_steps
+                    every=args.training_args.pbar_update_refresh
                 ),
             )
         elif stage == TrainingStage.test:
@@ -1233,7 +1257,7 @@ class DefaultTrainingFunctionality:
             ).attach(
                 engine,
                 event_name=Events.ITERATION_COMPLETED(
-                    every=args.training_args.logging_steps
+                    every=args.training_args.pbar_update_refresh
                 ),
             )
 
@@ -1379,6 +1403,7 @@ class DefaultTrainingFunctionality:
         cls.configure_nan_callback(args=args, training_engine=training_engine)
         cls.configure_cuda_cache_callback(args=args, training_engine=training_engine)
         cls.configure_gpu_stats_callback(args=args, training_engine=training_engine)
+        cls.configure_time_profiler(args=args, training_engine=training_engine)
         cls.configure_model_ema_callback(
             args=args, training_engine=training_engine, model=model
         )
@@ -1496,8 +1521,7 @@ class DefaultTrainingFunctionality:
         import torch
         from ignite.engine import Events
         from ignite.handlers import Checkpoint
-        from torchfusion.core.training.utilities.general import \
-            find_test_checkpoint
+        from torchfusion.core.training.utilities.general import find_test_checkpoint
 
         # configure model checkpoint_state_dict
         model_checkpoint_config = args.training_args.model_checkpoint_config

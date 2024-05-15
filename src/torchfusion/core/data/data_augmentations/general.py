@@ -7,9 +7,8 @@ from typing import TYPE_CHECKING, List, Union
 import numpy as np
 import PIL
 import torch
-from torchvision import transforms
-
 from torchfusion.core.data.data_augmentations.base import DataAugmentation
+from torchvision import transforms
 
 if TYPE_CHECKING:
     from numpy.typing import ArrayLike
@@ -104,7 +103,7 @@ class GrayScaleToRGB(DataAugmentation):
     """
 
     def __call__(self, image: torch.Tensor):
-        if image.shape[0] == 1:
+        if len(image.shape) == 2 or image.shape[0] == 1:
             return image.repeat(3, 1, 1)
         else:
             return image
