@@ -6,6 +6,7 @@ from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.utilities.containers import CollateFnDict
 from torchfusion.core.models.classification.base import FusionModelForClassification
 from torchfusion.core.models.constructors.factory import ModelConstructorFactory
+from torchfusion.core.models.constructors.fusion import FusionModelConstructor
 from torchfusion.core.models.constructors.transformers import (
     TransformersModelConstructor,
 )
@@ -59,7 +60,7 @@ class FusionModelForTokenClassification(FusionModelForClassification):
         )
         assert isinstance(
             model_constructor,
-            (TransformersModelConstructor),
+            (TransformersModelConstructor, FusionModelConstructor),
         ), (
             f"Model constructor must be of type TransformersModelConstructor. "
             f"Got {type(model_constructor)}"

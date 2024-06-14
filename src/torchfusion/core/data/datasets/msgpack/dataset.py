@@ -10,7 +10,6 @@ from datasets.info import DatasetInfo
 from datasets.splits import NamedSplit
 from datasets.utils import logging
 from torch.utils.data import Dataset, Subset
-from torchfusion.core.constants import DataKeys
 
 if TYPE_CHECKING:
     from datasets.info import DatasetInfo  # noqa: F401
@@ -199,9 +198,6 @@ class TransformedDataset(Dataset):
         # apply transforms
         if self._transforms is not None:
             sample = self._transforms(sample)
-
-        # assign sample index
-        sample[DataKeys.INDEX] = index
 
         return sample
 

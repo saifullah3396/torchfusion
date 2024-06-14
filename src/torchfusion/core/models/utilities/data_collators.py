@@ -92,6 +92,10 @@ def feature_to_maybe_tensor(features, feature_key):
                 features[0][feature_key][0], str
             ):  # for strings we just let it pass. This could be for example a list of words
                 return [sample[feature_key] for sample in features]
+            elif (
+                None in features[0][feature_key]
+            ):  # for strings we just let it pass. This could be for example a list of words
+                return [sample[feature_key] for sample in features]
             else:
                 return torch.tensor([sample[feature_key] for sample in features])
         elif isinstance(features[0][feature_key], (str, Instances)):
@@ -154,7 +158,7 @@ class BatchToTensorDataCollator:
 
         if self.data_key_type_map is not None:
             for k, dtype in self.data_key_type_map.items():
-                if k in batch:
+                if k in batch and isinstance(batch[k], torch.Tensor):
                     batch[k] = batch[k].to(dtype)
         return batch
 

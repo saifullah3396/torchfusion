@@ -24,6 +24,7 @@ class DataKeys:
     WORD_CONFS = "word_confs"
     WORD_IMAGES = "word_images"
     WORD_BBOXES = "word_bboxes"
+    WORD_BBOXES_SEGMENT_LEVEL = "word_bboxes_segment_level"
     WORD_ANGLES = "word_angles"
     TOKENS = "tokens"
     TOKEN_IDS = "input_ids"

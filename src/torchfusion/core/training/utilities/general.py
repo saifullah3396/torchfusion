@@ -64,8 +64,6 @@ def concatenate_list_dict_to_dict(list_dict):
 
 
 def initialize_torch(args: FusionArguments, seed: int = 0, deterministic: bool = False):
-    pass
-
     import os
 
     import ignite.distributed as idist

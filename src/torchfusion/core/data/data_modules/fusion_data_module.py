@@ -13,23 +13,26 @@ from datadings.reader import MsgpackReader as MsgpackFileReader
 from datasets import DownloadConfig
 from torch.utils.data import BatchSampler, DataLoader, Dataset, Subset
 from torchfusion.core.constants import DataKeys
-from torchfusion.core.data.datasets.dataset_metadata import \
-    FusionDatasetMetaData
+from torchfusion.core.data.datasets.dataset_metadata import FusionDatasetMetaData
 from torchfusion.core.data.datasets.msgpack.dataset import (
-    MsgpackBasedDataset, MsgpackBasedTorchDataset, TransformedDataset)
+    MsgpackBasedDataset,
+    MsgpackBasedTorchDataset,
+    TransformedDataset,
+)
 from torchfusion.core.data.factory.dataset import DatasetFactory
-from torchfusion.core.data.text_utils.tokenizers.factory import \
-    TokenizerFactory
+from torchfusion.core.data.text_utils.tokenizers.factory import TokenizerFactory
 from torchfusion.core.data.train_val_samplers.base import TrainValSampler
-from torchfusion.core.data.utilities.containers import (CollateFnDict,
-                                                        TransformsDict)
+from torchfusion.core.data.utilities.containers import CollateFnDict, TransformsDict
 from torchfusion.core.data.utilities.data_visualization import (
-    print_batch_info, show_batch)
-from torchfusion.core.data.utilities.dataset_stats import \
-    load_or_precalc_dataset_stats
+    print_batch_info,
+    show_batch,
+)
+from torchfusion.core.data.utilities.dataset_stats import load_or_precalc_dataset_stats
 from torchfusion.core.training.utilities.constants import TrainingStage
-from torchfusion.core.training.utilities.general import (pretty_print_dict,
-                                                         print_transforms)
+from torchfusion.core.training.utilities.general import (
+    pretty_print_dict,
+    print_transforms,
+)
 from torchfusion.core.utilities.logging import get_logger
 from torchfusion.core.utilities.module_import import ModuleLazyImporter
 
@@ -329,7 +332,9 @@ class FusionDataModule(ABC):
             available_splits = None
             if isinstance(self.train_dataset.info, dict):
                 available_splits = self.train_dataset.info["splits"]
-            elif isinstance(self.train_dataset.info, (datasets.DatasetInfo, FusionDatasetMetaData)):
+            elif isinstance(
+                self.train_dataset.info, (datasets.DatasetInfo, FusionDatasetMetaData)
+            ):
                 available_splits = self.train_dataset.info.splits.keys()
             else:
                 raise ValueError(
@@ -598,6 +603,52 @@ class FusionDataModule(ABC):
             dataloader_num_workers=dataloader_num_workers,
             pin_memory=pin_memory,
             dataloader_init_fn=dataloader_init_fn,
+        )
+
+    def test_dataloader_indices(
+        self,
+        start_idx: int,
+        end_idx: int,
+        per_device_eval_batch_size: int,
+        dataloader_num_workers: int = 4,
+        pin_memory: bool = True,
+    ) -> DataLoader:
+        from copy import deepcopy
+
+        test_dataset = deepcopy(self.test_dataset)
+        test_dataset._dataset = Subset(
+            test_dataset._dataset,
+            range(start_idx, end_idx),
+        )
+        return self.setup_test_dataloader(
+            test_dataset,
+            per_device_eval_batch_size=per_device_eval_batch_size,
+            dataloader_num_workers=dataloader_num_workers,
+            pin_memory=pin_memory,
+        )
+
+    def test_dataloader_equally_spaced_samples(
+        self,
+        n_samples: int,
+        per_device_eval_batch_size: int,
+        dataloader_num_workers: int = 4,
+        pin_memory: bool = True,
+    ) -> DataLoader:
+        from copy import deepcopy
+
+        test_dataset = deepcopy(self.test_dataset)
+        if n_samples < len(test_dataset):
+            test_dataset._dataset = Subset(
+                test_dataset._dataset,
+                list(range(0, len(test_dataset), len(test_dataset) // n_samples))[
+                    :n_samples
+                ],
+            )
+        return self.setup_test_dataloader(
+            test_dataset,
+            per_device_eval_batch_size=per_device_eval_batch_size,
+            dataloader_num_workers=dataloader_num_workers,
+            pin_memory=pin_memory,
         )
 
     def get_dataloader(self, stage: TrainingStage):

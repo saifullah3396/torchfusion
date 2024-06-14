@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import itertools
 import os
 from dataclasses import dataclass, field
 from typing import List, Optional, Union
 
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.text_utils.tokenizers.base import TorchFusionTokenizer
-from torchfusion.core.data.text_utils.utilities import remove_keys, rename_key
+from torchfusion.core.data.text_utils.utilities import rename_key
 from torchfusion.core.utilities.logging import get_logger
 from transformers import AutoTokenizer
 
@@ -28,8 +27,15 @@ class HuggingfaceTokenizer(TorchFusionTokenizer):
     padding_side: str = "right"
     pad_max_length: int = 512
     keys_to_add_on_overflow: Optional[List[str]] = field(
-        default_factory=lambda: [DataKeys.IMAGE_FILE_PATH, DataKeys.IMAGE]
+        default_factory=lambda: [
+            DataKeys.IMAGE_FILE_PATH,
+            DataKeys.IMAGE,
+            DataKeys.WORDS,
+            DataKeys.WORD_BBOXES,
+            DataKeys.WORD_BBOXES_SEGMENT_LEVEL,
+        ]
     )
+    segment_level_layout: bool = False
     overflow_sampling: str = "return_all"
 
     def __post_init__(self):
@@ -91,13 +97,18 @@ class HuggingfaceTokenizer(TorchFusionTokenizer):
         )
 
         if "layoutlm" in self.model_name:
-            assert DataKeys.WORD_BBOXES in sample, (
-                f"Word Bboxes key {DataKeys.WORD_BBOXES} not found in sample. "
-                f"Tokenized input must be provided with the key {DataKeys.WORD_BBOXES}"
+            word_bboxes_key = (
+                DataKeys.WORD_BBOXES_SEGMENT_LEVEL
+                if self.segment_level_layout
+                else DataKeys.WORD_BBOXES
+            )
+            assert word_bboxes_key in sample, (
+                f"Word bboxes key {word_bboxes_key} not found in sample. "
+                f"Tokenized input must be provided with the key {word_bboxes_key}"
             )
 
             fixed_kwargs.pop("is_split_into_words")
-            fixed_kwargs["boxes"] = sample[DataKeys.WORD_BBOXES]
+            fixed_kwargs["boxes"] = sample[word_bboxes_key]
 
             if DataKeys.LABEL in sample:
                 logger = get_logger()

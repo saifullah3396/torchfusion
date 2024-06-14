@@ -27,7 +27,6 @@ class FusionNERDatasetConfig(FusionDatasetConfig):
     ner_labels: dict = dataclasses.field(default_factory=lambda: {"IOB": []})
     ner_scheme: str = "IOB"
     tokenizer_config: Optional[dict] = None
-    segment_level_layout: bool = False
 
     def create_config_id(
         self,
@@ -121,8 +120,16 @@ class FusionNERDataset(FusionDataset):
     def _dataset_features(self):
         return datasets.Features(
             {
+                DataKeys.INDEX: datasets.Value(dtype="int32"),
                 DataKeys.IMAGE: Image(decode=True),
                 DataKeys.IMAGE_FILE_PATH: datasets.features.Value("string"),
+                DataKeys.WORDS: datasets.Sequence(datasets.Value(dtype="string")),
+                DataKeys.WORD_BBOXES: datasets.Sequence(
+                    datasets.Sequence(datasets.Value("float32"), length=4)
+                ),
+                DataKeys.WORD_BBOXES_SEGMENT_LEVEL: datasets.Sequence(
+                    datasets.Sequence(datasets.Value("float32"), length=4)
+                ),
                 DataKeys.TOKEN_IDS: datasets.Sequence(datasets.Value(dtype="int32")),
                 DataKeys.TOKEN_BBOXES: datasets.Sequence(
                     datasets.Sequence(datasets.Value("float32"), length=4)
@@ -136,6 +143,8 @@ class FusionNERDataset(FusionDataset):
                         num_classes=len(self.ner_labels),
                     ),
                 ),
+                DataKeys.OVERFLOW_MAPPING: datasets.Value(dtype="uint8"),
+                DataKeys.WORD_IDS: datasets.Sequence(datasets.Value(dtype="uint8")),
             }
         )
 
