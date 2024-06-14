@@ -3,8 +3,6 @@ from __future__ import annotations
 import importlib
 from dataclasses import dataclass
 
-from torchfusion.core.utilities.general import str_to_underscored_lower
-
 
 @dataclass
 class ModuleRegistryItem:

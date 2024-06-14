@@ -36,6 +36,8 @@ def add_vit_config(cfg):
 @dataclass
 class Detectron2ModelConstructor(ModelConstructor):
     def __post_init__(self):
+        from .detectron2_backbones import *  # noqa: F401,F403
+
         assert self.model_task in [
             ModelTasks.object_detection,
         ], f"Task {self.model_task} not supported for Detectron2ModelConstructor."
