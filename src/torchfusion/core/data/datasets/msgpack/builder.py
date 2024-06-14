@@ -40,12 +40,11 @@ from datasets.utils.py_utils import (
 from datasets.utils.sharding import _number_of_shards_in_gen_kwargs, _split_gen_kwargs
 from multiprocess import Pool
 from torch.utils.data import Dataset
-from tqdm.contrib.concurrent import thread_map
-
 from torchfusion.core.data.datasets.download_manager import FusionDownloadManager
 from torchfusion.core.data.datasets.msgpack.dataset import MsgpackBasedDataset
 from torchfusion.core.data.datasets.msgpack.msgpack_reader import MsgpackReader
 from torchfusion.core.data.datasets.msgpack.msgpack_writer import MsgpackWriter
+from tqdm.contrib.concurrent import thread_map
 
 if TYPE_CHECKING:
     from datasets.splits import Split, SplitInfo  # noqa: F401
@@ -651,7 +650,7 @@ class MsgpackBasedBuilder(datasets.GeneratorBasedBuilder):
             finally:
                 yield job_id, False, num_examples_progress_update
                 num_shards = shard_id + 1
-                num_examples, num_bytes = writer.finalize()
+                num_bytes, num_examples = writer.finalize()
                 writer.close()
                 shard_lengths.append(num_examples)
                 total_num_examples += num_examples
