@@ -15,6 +15,7 @@ class DataKeys:
     RECONS = "reconstruction"
     OCR_FILE_PATH = "ocr_file_path"
     LABEL = "label"
+    LABEL_COLORS = "label_colors"
     PRED = "pred"
     CAPTION = "caption"
     WORDS = "words"
@@ -59,6 +60,7 @@ class DataKeys:
     FONT = "font"
     TEXT = "text"
     PAGE_BBOXES = "page_bboxes"
+    UUID = "uuid"
 
     # detection related
     OBJECTS = "objects"

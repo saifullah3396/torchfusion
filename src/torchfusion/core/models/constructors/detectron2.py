@@ -36,7 +36,7 @@ def add_vit_config(cfg):
 @dataclass
 class Detectron2ModelConstructor(ModelConstructor):
     def __post_init__(self):
-        from .detectron2_backbones import *  # noqa: F401,F403
+        from .detectron2_backbones import dit  # noqa
 
         assert self.model_task in [
             ModelTasks.object_detection,

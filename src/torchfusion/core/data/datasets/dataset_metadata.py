@@ -1,12 +1,19 @@
 import dataclasses
+from collections import OrderedDict
 from typing import Optional
 
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 from datasets import DatasetInfo
 from datasets.features import Features
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.utilities.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+def get_labels_color_map(n, name="tab20"):
+    return plt.get_cmap(name, n)
 
 
 @dataclasses.dataclass
@@ -58,3 +65,51 @@ class FusionDatasetMetaData:
             else:
                 raise ValueError(f"Unsupported category_id type: {type(catogory_id)}")
         return data_labels
+
+    def generate_label_colors(self):
+        # get dataset entity labels
+        labels = self.get_labels()
+
+        # get cmap
+        cmap = get_labels_color_map(len(labels))
+
+        # generate label colors
+        labels_colors = {
+            label: mpl.colors.rgb2hex(cmap(idx), keep_alpha=False)
+            for idx, label in enumerate(labels)
+        }
+        return labels_colors
+
+    def generate_ner_label_colors(self):
+        # get dataset entity labels
+        labels = self.get_labels()
+
+        # get all labels without bio tagging
+        total_entities = set()
+        for label in labels:
+            total_entities.add(label.split("-")[-1])
+        total_entities = list(total_entities)
+
+        # get cmap
+        cmap = get_labels_color_map(len(total_entities))
+
+        # generate label colors
+        labels_colors = OrderedDict()
+        for label in labels:
+            base_label = label.split("-")[-1]
+            color_index = total_entities.index(base_label)
+            color = cmap(color_index)
+
+            # if it is I just slightly reduce color brightness
+            if label.startswith("B"):
+                color = [c * 0.8 for c in color]
+            labels_colors[label] = mpl.colors.rgb2hex(color, keep_alpha=False)
+        return labels_colors
+
+    def get_labels_with_colors(self):
+        labels = self.get_labels()
+        # check if any label starts with B- or I- tags
+        if any([label.startswith("B-") or label.startswith("I-") for label in labels]):
+            return self.generate_ner_label_colors()
+        else:
+            return self.generate_label_colors()
