@@ -13,19 +13,25 @@ from seqeval.metrics import (
 def modify_labels(class_labels, preds, targets):
     # convert tensor to list
     preds = preds.detach().cpu().tolist()
-    true_preds = [
-        [class_labels[p] for (p, l) in zip(prediction, target) if l != -100]
+    preds = [
+        [
+            class_labels[pred_label]
+            for (pred_label, target_label) in zip(prediction, target)
+            if target_label != -100
+        ]
         for prediction, target in zip(preds, targets)
     ]
 
     # convert tensor to list
     targets = targets.detach().cpu().tolist()
-    true_targets = [
-        [class_labels[l] for (p, l) in zip(prediction, target) if l != -100]
-        for prediction, target in zip(preds, targets)
+
+    # remove -100 labels from targets
+    targets = [
+        [class_labels[target_label] for target_label in target if target_label != -100]
+        for target in targets
     ]
 
-    return true_preds, true_targets
+    return preds, targets
 
 
 def create_seqeval_metric(
@@ -44,8 +50,7 @@ def create_seqeval_metric(
 
         def wrap(preds, targets):  # reversed targets and preds
             preds, targets = modify_labels(class_labels, preds, targets)
-
-            return f1_score(targets, preds)
+            return f1_score(targets, preds, scheme="IOB2")
 
         return EpochMetric(wrap, output_transform=output_transform)
 
@@ -54,7 +59,7 @@ def create_seqeval_metric(
         def wrap(preds, targets):  # reversed targets and preds
             preds, targets = modify_labels(class_labels, preds, targets)
 
-            return precision_score(targets, preds)
+            return precision_score(targets, preds, scheme="IOB2")
 
         return EpochMetric(wrap, output_transform=output_transform)
 
@@ -63,7 +68,7 @@ def create_seqeval_metric(
         def wrap(preds, targets):  # reversed targets and preds
             preds, targets = modify_labels(class_labels, preds, targets)
 
-            return recall_score(targets, preds)
+            return recall_score(targets, preds, scheme="IOB2")
 
         return EpochMetric(wrap, output_transform=output_transform)
 
@@ -72,6 +77,6 @@ def create_seqeval_metric(
         def wrap(preds, targets):  # reversed targets and preds
             preds, targets = modify_labels(class_labels, preds, targets)
 
-            return classification_report(targets, preds)
+            return classification_report(targets, preds, scheme="IOB2")
 
         return EpochMetric(wrap, output_transform=output_transform)
