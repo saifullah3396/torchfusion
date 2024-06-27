@@ -9,29 +9,28 @@ import ignite.distributed as idist
 import torch
 from omegaconf import DictConfig, OmegaConf
 from torchfusion.core.args.args import FusionArguments
-from torchfusion.core.data.datasets.dataset_metadata import \
-    FusionDatasetMetaData
+from torchfusion.core.data.datasets.dataset_metadata import FusionDatasetMetaData
 from torchfusion.core.data.factory.batch_sampler import BatchSamplerFactory
 from torchfusion.core.data.utilities.loaders import load_datamodule_from_args
-from torchfusion.core.data.utilities.transforms import \
-    load_transforms_from_config
+from torchfusion.core.data.utilities.transforms import load_transforms_from_config
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.models.tasks import ModelTasks
-from torchfusion.core.training.functionality.default import \
-    DefaultTrainingFunctionality
-from torchfusion.core.training.functionality.detection import \
-    ObjectDetectionTrainingFunctionality
-from torchfusion.core.training.functionality.diffusion import \
-    DiffusionTrainingFunctionality
-from torchfusion.core.training.functionality.gan import \
-    GANTrainingFunctionality
+from torchfusion.core.training.functionality.default import DefaultTrainingFunctionality
+from torchfusion.core.training.functionality.detection import (
+    ObjectDetectionTrainingFunctionality,
+)
+from torchfusion.core.training.functionality.diffusion import (
+    DiffusionTrainingFunctionality,
+)
+from torchfusion.core.training.functionality.gan import GANTrainingFunctionality
 from torchfusion.core.training.fusion_opt_manager import FusionOptimizerManager
-from torchfusion.core.training.fusion_sch_manager import \
-    FusionSchedulersManager
+from torchfusion.core.training.fusion_sch_manager import FusionSchedulersManager
 from torchfusion.core.training.utilities.constants import TrainingStage
-from torchfusion.core.training.utilities.general import (initialize_torch,
-                                                         print_tf_from_loader,
-                                                         setup_logging)
+from torchfusion.core.training.utilities.general import (
+    initialize_torch,
+    print_tf_from_loader,
+    setup_logging,
+)
 from torchfusion.core.utilities.dataclasses.dacite_wrapper import from_dict
 from torchfusion.core.utilities.logging import get_logger
 
@@ -356,8 +355,7 @@ class FusionTrainer:
 
         # run training
         if self._args.model_args.model_task == ModelTasks.object_detection:
-            from detectron2.utils.events import (EventStorage,
-                                                 TensorboardXWriter)
+            from detectron2.utils.events import EventStorage, TensorboardXWriter
             from ignite.engine import Events
 
             writers = [
