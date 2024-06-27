@@ -85,9 +85,18 @@ def feature_to_maybe_tensor(features, feature_key):
                 features[0][feature_key][0], list
             ):  # list of lists, convert to tensor we assume all lists are of the same length and have numbers, this will break for other cases
                 # possible use case [[1,2,3,4],[5,6,7,8],[9,10,11,12]]
-                return torch.stack(
-                    [torch.tensor(sample[feature_key]) for sample in features]
-                )
+                # see if all tensors have same size
+                size_check_fail = False
+                for sample in features:
+                    if len(sample[feature_key]) != len(features[0][feature_key]):
+                        size_check_fail = True
+                        break
+                if size_check_fail:
+                    return [torch.tensor(sample[feature_key]) for sample in features]
+                else:
+                    return torch.stack(
+                        [torch.tensor(sample[feature_key]) for sample in features]
+                    )
             elif isinstance(
                 features[0][feature_key][0], str
             ):  # for strings we just let it pass. This could be for example a list of words
@@ -97,7 +106,16 @@ def feature_to_maybe_tensor(features, feature_key):
             ):  # for strings we just let it pass. This could be for example a list of words
                 return [sample[feature_key] for sample in features]
             else:
-                return torch.tensor([sample[feature_key] for sample in features])
+                # see if all tensors have same size
+                size_check_fail = False
+                for sample in features:
+                    if len(sample[feature_key]) != len(features[0][feature_key]):
+                        size_check_fail = True
+                        break
+                if size_check_fail:
+                    return [sample[feature_key] for sample in features]
+                else:
+                    return torch.tensor([sample[feature_key] for sample in features])
         elif isinstance(features[0][feature_key], (str, Instances)):
             return [sample[feature_key] for sample in features]
         else:
