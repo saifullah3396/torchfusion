@@ -5,6 +5,7 @@ from typing import Optional
 
 import datasets
 import numpy as np
+import pandas as pd
 from datasets.features import Features, Image
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.datasets.features import FusionClassLabel
@@ -19,6 +20,71 @@ _NER_LABELS_PER_SCHEME = {
     "IOB": []
 }
 
+BBOX_THRESHOLD_FACTOR = 0.4
+
+
+def get_sorted_indices(df: pd.DataFrame) -> pd.DataFrame:
+    # Function to determine if two words are on the same line
+    def is_same_line(word1, word2):
+        return abs(word1["cy"] - word2["cy"]) <= word1["bbox_threshold"]
+
+    # Sort by y0 (top to bottom) and then by x0 (left to right)
+    df = df.sort_values(by=["cy", "cx"]).reset_index(drop=True)
+
+    # Group words into lines
+    lines = []
+    current_line = []
+    for i in range(len(df)):
+        if i == 0:
+            current_line.append(df.iloc[i])
+        else:
+            prev_word = df.iloc[i - 1]
+            current_word = df.iloc[i]
+            if is_same_line(prev_word, current_word):
+                current_line.append(current_word)
+            else:
+                lines.append(current_line)
+                current_line = [current_word]
+
+    # Add the last line
+    if current_line:
+        lines.append(current_line)
+
+    # Sort each line by x0 (left to right)
+    sorted_lines = [pd.DataFrame(line).sort_values(by="cx") for line in lines]
+
+    # Combine sorted lines into a single DataFrame
+    sorted_df = pd.concat(sorted_lines).reset_index(drop=True)
+
+    # Get the sorted indices
+    sorted_indices = [int(x) for x in sorted_df["index"].tolist()]
+
+    return sorted_indices
+
+
+def sort_boxes_in_reading_order(sample) -> dict:
+    word_coords = []
+    for idx, word_bbox in enumerate(sample["word_bboxes"]):
+        word_coords.append(
+            {
+                "index": idx,
+                "cx": word_bbox[0],
+                "cy": word_bbox[1],
+                "bbox_threshold": (word_bbox[3] - word_bbox[1]) * BBOX_THRESHOLD_FACTOR,
+            }
+        )
+    df = pd.DataFrame(word_coords)
+    sorted_indces = get_sorted_indices(df)
+    for key, value in sample.items():
+        if key in [
+            DataKeys.WORDS,
+            DataKeys.WORD_LABELS,
+            DataKeys.WORD_BBOXES,
+            DataKeys.WORD_BBOXES_SEGMENT_LEVEL,
+        ]:
+            sample[key] = [value[i] for i in sorted_indces]
+    return sample
+
 
 @dataclasses.dataclass
 class FusionNERDatasetConfig(FusionDatasetConfig):
@@ -27,6 +93,7 @@ class FusionNERDatasetConfig(FusionDatasetConfig):
     ner_labels: dict = dataclasses.field(default_factory=lambda: {"IOB": []})
     ner_scheme: str = "IOB"
     tokenizer_config: Optional[dict] = None
+    apply_reading_order_correction: bool = False
 
     def create_config_id(
         self,
@@ -104,10 +171,15 @@ class FusionNERDataset(FusionDataset):
         return bbox
 
     def _preprocess_dataset(self, data, batch_size=100):
+        # apply reading order sorting here
+        if self.config.apply_reading_order_correction:
+            data = data.apply(sort_boxes_in_reading_order, axis=1)
+
         batch_tokenized_data = []
         batches = data.groupby(np.arange(len(data)) // batch_size)
         for _, g in batches:
             batch_tokenized_data.extend(self.tokenizer(g.to_dict("list")))
+
         return batch_tokenized_data
 
     def _update_ner_labels(self, data):
@@ -124,6 +196,12 @@ class FusionNERDataset(FusionDataset):
                 DataKeys.IMAGE: Image(decode=True),
                 DataKeys.IMAGE_FILE_PATH: datasets.features.Value("string"),
                 DataKeys.WORDS: datasets.Sequence(datasets.Value(dtype="string")),
+                DataKeys.WORD_LABELS: datasets.Sequence(
+                    FusionClassLabel(
+                        names=self.ner_labels,
+                        num_classes=len(self.ner_labels),
+                    )
+                ),
                 DataKeys.WORD_BBOXES: datasets.Sequence(
                     datasets.Sequence(datasets.Value("float32"), length=4)
                 ),
