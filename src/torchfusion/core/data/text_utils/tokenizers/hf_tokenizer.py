@@ -31,11 +31,13 @@ class HuggingfaceTokenizer(TorchFusionTokenizer):
             DataKeys.IMAGE_FILE_PATH,
             DataKeys.IMAGE,
             DataKeys.WORDS,
+            DataKeys.WORD_LABELS,
             DataKeys.WORD_BBOXES,
             DataKeys.WORD_BBOXES_SEGMENT_LEVEL,
         ]
     )
     segment_level_layout: bool = False
+    only_label_first_subword: bool = True
     overflow_sampling: str = "return_all"
 
     def __post_init__(self):
@@ -48,16 +50,6 @@ class HuggingfaceTokenizer(TorchFusionTokenizer):
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.model_name, **self.init_kwargs
         )
-
-        self.tokenizer_output_keys = [
-            DataKeys.TOKEN_IDS,
-            DataKeys.ATTENTION_MASKS,
-            DataKeys.TOKEN_TYPE_IDS,
-            DataKeys.TOKEN_BBOXES,
-            DataKeys.LABEL,
-            DataKeys.OVERFLOW_MAPPING,
-            DataKeys.WORD_IDS,
-        ]
 
         # warned about labels once
         self.warned_labels = False
@@ -110,12 +102,12 @@ class HuggingfaceTokenizer(TorchFusionTokenizer):
             fixed_kwargs.pop("is_split_into_words")
             fixed_kwargs["boxes"] = sample[word_bboxes_key]
 
-            if DataKeys.LABEL in sample:
+            if DataKeys.WORD_LABELS in sample:
                 logger = get_logger()
 
                 # check if labels is a squence of labels
-                if isinstance(sample[DataKeys.LABEL][0], list):
-                    fixed_kwargs["word_labels"] = sample[DataKeys.LABEL]
+                if isinstance(sample[DataKeys.WORD_LABELS][0], list):
+                    fixed_kwargs["word_labels"] = sample[DataKeys.WORD_LABELS]
                 else:
                     if not self.warned_labels:
                         logger.warning(
@@ -205,6 +197,41 @@ class HuggingfaceTokenizer(TorchFusionTokenizer):
 
         return tokenized_samples_list
 
+    def sanitize_labels(self, tokenized_samples):
+        if (
+            not self.only_label_first_subword
+            or DataKeys.LABEL not in tokenized_samples[0]
+        ):
+            return
+        for sample in tokenized_samples:
+            # sanity check for labels and word ids. The total number of labels must be equal to the number of words as
+            # we by default only assign label to the first word but there is bug in transformers which messes up for some
+            # text and assigns multiple subwords the labels resulting in a mismatch
+
+            def generate_word_ids_to_index_map(word_ids):
+                # find all indices
+                return {
+                    idx: word_ids[idx]
+                    for idx in range(1, len(word_ids))  # (1, sequence_length)
+                    if word_ids[idx] != None and word_ids[idx] != word_ids[idx - 1]
+                }
+
+            word_ids_to_index_map = generate_word_ids_to_index_map(
+                sample[DataKeys.WORD_IDS]
+            )
+            all_word_ids = [x for x in sample[DataKeys.WORD_IDS] if x is not None]
+            total_words = max(all_word_ids) - min(all_word_ids) + 1
+
+            for idx in range(len(sample[DataKeys.LABEL])):
+                # print("idx", idx)
+                if idx in list(word_ids_to_index_map.keys()):
+                    sample[DataKeys.LABEL][idx] = sample[DataKeys.WORD_LABELS][
+                        word_ids_to_index_map[idx]
+                    ]
+                else:
+                    sample[DataKeys.LABEL][idx] = -100
+            assert len([x for x in sample[DataKeys.LABEL] if x != -100]) == total_words
+
     def __call__(self, samples: Union[dict, List[dict]], return_dict=False):
         # tokenize the samples
         tokenized_samples = self._process_samples(samples)
@@ -213,6 +240,9 @@ class HuggingfaceTokenizer(TorchFusionTokenizer):
         tokenized_samples_list = self._process_sample_overflow(
             tokenized_samples, samples
         )
+
+        # santize labels
+        self.sanitize_labels(tokenized_samples_list)
 
         # pad the samples
         if self.padding_required:
