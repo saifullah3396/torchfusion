@@ -163,37 +163,44 @@ def show_batch(batch, dataset_metadata: FusionDatasetMetaData):
             )
 
         try:
-            if DataKeys.WORDS in sample and DataKeys.WORD_BBOXES in sample:
-                for word, box in zip(
-                    sample[DataKeys.WORDS], sample[DataKeys.WORD_BBOXES]
-                ):  # each box is [x1,y1,x2,y2] normalized
-                    p1 = (int(box[0] * w), int(box[1] * h))
-                    p2 = (int(box[2] * w), int(box[3] * h))
-                    cv2.rectangle(image, p1, p2, (255, 0, 0), 1)
-                    cv2.putText(
-                        image,
-                        text=word,
-                        org=p1,
-                        fontFace=cv2.FONT_HERSHEY_PLAIN,
-                        fontScale=1,
-                        color=(0, 0, 255),
-                        thickness=1,
-                    )
+            # if DataKeys.WORDS in sample and DataKeys.WORD_BBOXES in sample:
+            #     prev_bbox_center = None
+            # for word, box in zip(
+            #     sample[DataKeys.WORDS], sample[DataKeys.WORD_BBOXES]
+            # ):  # each box is [x1,y1,x2,y2] normalized
+            #     p1 = (int(box[0] * w), int(box[1] * h))
+            #     p2 = (int(box[2] * w), int(box[3] * h))
+            #     print(p1, p2)
+            #     cv2.rectangle(image, p1, p2, (255, 0, 0), 1)
+            #     cv2.putText(
+            #         image,
+            #         text=word,
+            #         org=p1,
+            #         fontFace=cv2.FONT_HERSHEY_PLAIN,
+            #         fontScale=1,
+            #         color=(0, 0, 255),
+            #         thickness=1,
+            #     )
+
+            # if prev_bbox_center is not None:
+            #     bbox_center = (p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2
+            #     print(prev_bbox_center, bbox_center)
+            #     cv2.arrowedLine(
+            #         image, prev_bbox_center, bbox_center, (255, 0, 0), 2
+            #     )
+            # prev_bbox_center = (p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2
 
             if DataKeys.TOKEN_IDS in sample and DataKeys.TOKEN_BBOXES in sample:
                 logger.info("Drawing boxes with only first token element on image...")
                 last_box = None
-                # find offset
-                is_prefix = sample[DataKeys.TOKEN_BBOXES][:, 1] < 0
-                num_prefix = is_prefix.sum(-1)
-
-                for tokens, box in zip(
+                last_bbox_center = None
+                for _, box in zip(
                     sample[DataKeys.TOKEN_IDS], sample[DataKeys.TOKEN_BBOXES]
                 ):  # each box is [x1,y1,x2,y2] normalized
                     if last_box is not None and all(last_box == box):
                         continue
 
-                    if box[0] < 0 or box[1] < 0 or box[2] < 0 or box[3] < 0:
+                    if box[0] <= 0 or box[1] <= 0 or box[2] <= 0 or box[3] <= 0:
                         continue
 
                     normalize = True
@@ -207,6 +214,17 @@ def show_batch(batch, dataset_metadata: FusionDatasetMetaData):
                         p1 = (int(box[0] * w), int(box[1] * h))
                         p2 = (int(box[2] * w), int(box[3] * h))
                     cv2.rectangle(image, p1, p2, (255, 0, 0), 1)
+                    if last_bbox_center is not None:
+                        bbox_center = (p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2
+                        cv2.arrowedLine(
+                            image,
+                            tuple(int(x) for x in last_bbox_center),
+                            tuple(int(x) for x in bbox_center),
+                            (255, 0, 0),
+                            1,
+                            tipLength=0.01,
+                        )
+                    last_bbox_center = (p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2
                     # cv2.putText(
                     #     image,
                     #     text=str(tokens),
