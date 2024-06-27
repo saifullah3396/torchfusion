@@ -95,6 +95,7 @@ class MetricsFactory:
                 MetricKeys.PRECISION,
                 MetricKeys.RECALL,
                 MetricKeys.F1,
+                MetricKeys.CLASSIFICATION_REPORT,
             ]:
                 raise ValueError(
                     f"Metric {metric_name} not supported for model task {model_task}"
