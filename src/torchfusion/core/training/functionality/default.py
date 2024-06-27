@@ -3,17 +3,8 @@ from __future__ import annotations
 import math
 from functools import partial
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import (TYPE_CHECKING, Any, Callable, Mapping, Optional, Sequence,
+                    Tuple, Union, cast)
 
 import torch
 from ignite.contrib.handlers import TensorboardLogger
@@ -25,18 +16,20 @@ from torchfusion.core.args.args import FusionArguments
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.training.fusion_opt_manager import FusionOptimizerManager
 from torchfusion.core.training.metrics.factory import MetricsFactory
-from torchfusion.core.training.sch.schedulers.warmup import (
-    create_lr_scheduler_with_warmup,
-)
+from torchfusion.core.training.sch.schedulers.warmup import \
+    create_lr_scheduler_with_warmup
 from torchfusion.core.training.utilities.constants import TrainingStage
 from torchfusion.core.training.utilities.general import empty_cuda_cache
+from torchfusion.core.training.utilities.output_saver_handler import \
+    ModelForwardDiskSaver
 from torchfusion.core.training.utilities.progress_bar import TqdmToLogger
 from torchfusion.core.utilities.logging import get_logger
 
 if TYPE_CHECKING:
     import torch
     from torchfusion.core.models.fusion_model import FusionModel
-    from torchfusion.core.training.fusion_sch_manager import FusionSchedulersManager
+    from torchfusion.core.training.fusion_sch_manager import \
+        FusionSchedulersManager
 
 logger = get_logger(__name__)
 
@@ -293,7 +286,8 @@ class DefaultTrainingFunctionality:
             import torch
             from ignite.utils import convert_tensor
             from torch.cuda.amp import autocast
-            from torchfusion.core.training.utilities.constants import TrainingStage
+            from torchfusion.core.training.utilities.constants import \
+                TrainingStage
 
             # ready model for evaluation
             model.torch_model.eval()
@@ -398,7 +392,8 @@ class DefaultTrainingFunctionality:
 
             import torch
             from ignite.utils import convert_tensor
-            from torchfusion.core.training.utilities.constants import TrainingStage
+            from torchfusion.core.training.utilities.constants import \
+                TrainingStage
 
             # ready model for evaluation
             model.torch_model.eval()
@@ -836,11 +831,8 @@ class DefaultTrainingFunctionality:
             return
 
         from ignite.engine import Events
-        from ignite.handlers import (
-            LRScheduler,
-            ParamScheduler,
-            ReduceLROnPlateauScheduler,
-        )
+        from ignite.handlers import (LRScheduler, ParamScheduler,
+                                     ReduceLROnPlateauScheduler)
         from torch.optim.lr_scheduler import ExponentialLR, MultiStepLR, StepLR
 
         for k, inner_sch in training_sch_manager.lr_schedulers.items():
@@ -1073,9 +1065,8 @@ class DefaultTrainingFunctionality:
 
         if args.training_args.resume_from_checkpoint:
             import torch
-            from torchfusion.core.training.utilities.general import (
-                find_resume_checkpoint,
-            )
+            from torchfusion.core.training.utilities.general import \
+                find_resume_checkpoint
 
             resume_checkpoint_path = find_resume_checkpoint(
                 args.training_args.resume_checkpoint_file,
@@ -1175,7 +1166,8 @@ class DefaultTrainingFunctionality:
         opt_manager: FusionOptimizerManager = None,
     ):
         from ignite.engine import Events
-        from torchfusion.core.training.utilities.progress_bar import FusionProgressBar
+        from torchfusion.core.training.utilities.progress_bar import \
+            FusionProgressBar
 
         # redirect tqdm output to logger
         tqdm_to_logger = TqdmToLogger(get_logger())  # main logger causes problems here
@@ -1504,6 +1496,21 @@ class DefaultTrainingFunctionality:
             )
 
     @classmethod
+    def configure_model_forward_disk_saver(
+        cls,
+        engine,
+        output_dir: str,
+        checkpoint_file: str,
+    ):
+        engine.add_event_handler(
+            Events.ITERATION_COMPLETED,
+            ModelForwardDiskSaver(
+                output_dir=output_dir,
+                checkpoint_file=checkpoint_file,
+            ),
+        )
+
+    @classmethod
     def configure_test_engine(
         cls,
         args: FusionArguments,
@@ -1512,7 +1519,6 @@ class DefaultTrainingFunctionality:
         output_dir: str,
         tb_logger: Optional[TensorboardLogger] = None,
         checkpoint_type: str = "last",
-        load_checkpoint: bool = True,
         data_labels: Optional[Sequence[str]] = None,
     ) -> None:
         from pathlib import Path
@@ -1521,30 +1527,30 @@ class DefaultTrainingFunctionality:
         import torch
         from ignite.engine import Events
         from ignite.handlers import Checkpoint
-        from torchfusion.core.training.utilities.general import find_test_checkpoint
+        from torchfusion.core.training.utilities.general import \
+            find_test_checkpoint
 
         # configure model checkpoint_state_dict
         model_checkpoint_config = args.training_args.model_checkpoint_config
         checkpoint_dir = Path(output_dir) / model_checkpoint_config.dir
-        if load_checkpoint:
-            if checkpoint_type in ["last", "ema"]:
-                checkpoint = find_test_checkpoint(
-                    args.training_args.test_checkpoint_file,
-                    checkpoint_dir,
-                    load_best=False,
-                )
-            if checkpoint_type == "best":
-                checkpoint = find_test_checkpoint(
-                    args.training_args.test_checkpoint_file,
-                    checkpoint_dir,
-                    load_best=True,
-                )
-            if checkpoint is not None:
-                checkpoint_state_dict = model.get_checkpoint_state_dict()
-                test_checkpoint = torch.load(checkpoint, map_location="cpu")
-                Checkpoint.load_objects(
-                    to_load=checkpoint_state_dict, checkpoint=test_checkpoint
-                )
+        if checkpoint_type in ["last", "ema"]:
+            checkpoint_file = find_test_checkpoint(
+                args.training_args.test_checkpoint_file,
+                checkpoint_dir,
+                load_best=False,
+            )
+        if checkpoint_type == "best":
+            checkpoint_file = find_test_checkpoint(
+                args.training_args.test_checkpoint_file,
+                checkpoint_dir,
+                load_best=True,
+            )
+        if checkpoint_file is not None:
+            checkpoint_state_dict = model.get_checkpoint_state_dict()
+            test_checkpoint = torch.load(checkpoint_file, map_location="cpu")
+            Checkpoint.load_objects(
+                to_load=checkpoint_state_dict, checkpoint=test_checkpoint
+            )
 
         if checkpoint_type == "ema":
             model.activate_ema = True
@@ -1567,6 +1573,10 @@ class DefaultTrainingFunctionality:
         cls.configure_running_avg_logging(
             args=args, engine=test_engine, stage=TrainingStage.test
         )
+        if args.training_args.save_model_forward_outputs:
+            cls.configure_model_forward_disk_saver(
+                engine=test_engine, output_dir=output_dir, checkpoint_file=checkpoint_file
+            )
 
         if idist.get_rank() == 0:
 

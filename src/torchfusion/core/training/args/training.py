@@ -177,6 +177,9 @@ class TrainingArguments:
         ]
     )
 
+    # save model forward outputs on test
+    save_model_forward_outputs: bool = False
+
     # test run
     test_run: bool = field(
         default=False,
