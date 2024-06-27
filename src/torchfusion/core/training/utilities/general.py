@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from typing import TYPE_CHECKING, Tuple
 
 import ignite.distributed as idist
@@ -156,6 +157,10 @@ def setup_logging(
             FusionTensorboardLogger,
         )
 
+        # remove all existing event files in the directory
+        for file in os.listdir(output_dir):
+            if file.startswith("events"):
+                os.remove(os.path.join(output_dir, file))
         tb_logger = FusionTensorboardLogger(log_dir=output_dir)
 
     return output_dir, tb_logger
