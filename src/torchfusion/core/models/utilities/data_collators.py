@@ -5,6 +5,7 @@ from typing import Optional
 import numpy as np
 import torch
 from detectron2.structures import Instances
+from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.text_utils.tokenizers.hf_tokenizer import (
     HuggingfaceTokenizer,
 )
@@ -152,7 +153,7 @@ class BatchToTensorDataCollator:
     """
 
     allowed_keys: Optional[list] = None
-    data_key_type_map: Optional[list] = None
+    data_key_type_map: Optional[dict] = None
 
     def __call__(self, features):
         batch = {}
