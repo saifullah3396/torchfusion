@@ -169,7 +169,9 @@ class BatchToTensorDataCollator:
         for k in keys:
             if self.allowed_keys is not None and k not in self.allowed_keys:
                 continue
-
+            if k in [DataKeys.WORD_IDS]:
+                for sample in features:
+                    sample[k] = [x if x is not None else -100 for x in sample[k]]
             batch[k] = feature_to_maybe_tensor(features, feature_key=k)
 
         if len(batch.keys()) == 0:
