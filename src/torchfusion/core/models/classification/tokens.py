@@ -26,6 +26,7 @@ class FusionModelForTokenClassification(FusionModelForClassification):
         use_bbox: bool = True
         use_image: bool = True
         input_is_tokenized: bool = True
+        input_stride: int = 0
 
     def _prepare_input(self, engine, batch, tb_logger, **kwargs):
         assert (
@@ -120,15 +121,29 @@ class FusionModelForTokenClassification(FusionModelForClassification):
         # compute logits
         hf_output = self._model_forward({**input, "labels": label})
 
+        # here we check if the input is strided or not. With strided input tokenization, the first "number of stride"
+        # tokens are to be ignored for evaluation as they will be repeated tokens from the previous part of the documnet
+        # first we check if there are overflowing samples in the batch and if so for these tokens first N stride tokens
+        # are to be ignored for evaluation
+        for sample_idx, word_ids in enumerate(batch[DataKeys.WORD_IDS]):
+            if word_ids[word_ids != -100].min() > 0:
+                label[sample_idx][: self.config.input_stride] = -100
+
         # return outputs
         if self.model_args.return_dict:
             return {
                 DataKeys.LOSS: hf_output.loss,
                 DataKeys.LOGITS: hf_output.logits,
+                DataKeys.PRED: hf_output.logits.argmax(dim=-1),
                 self._LABEL_KEY: label,
             }
         else:
-            return (hf_output.loss, hf_output.logits, label)
+            return (
+                hf_output.loss,
+                hf_output.logits,
+                hf_output.logits.argmax(dim=-1),
+                label,
+            )
 
     def _predict_step(self, engine, batch, tb_logger, **kwargs) -> None:
         # get data
@@ -141,9 +156,13 @@ class FusionModelForTokenClassification(FusionModelForClassification):
         if self.model_args.return_dict:
             return {
                 DataKeys.LOGITS: hf_output.logits,
+                DataKeys.LOGITS: hf_output.logits,
             }
         else:
-            return (hf_output.logits,)
+            return (
+                hf_output.logits,
+                hf_output.logits.argmax(dim=-1),
+            )
 
     def _model_forward(self, input):
         if isinstance(input, dict):
@@ -166,12 +185,14 @@ class FusionModelForTokenClassification(FusionModelForClassification):
                 DataKeys.TOKEN_IDS: torch.long,
                 DataKeys.TOKEN_TYPE_IDS: torch.long,
                 DataKeys.ATTENTION_MASKS: torch.long,
+                DataKeys.WORD_IDS: torch.long,
                 self._LABEL_KEY: torch.long,
             }
         else:
             data_key_type_map[DataKeys.TOKEN_IDS] = torch.long
             data_key_type_map[DataKeys.TOKEN_TYPE_IDS] = torch.long
             data_key_type_map[DataKeys.ATTENTION_MASKS] = torch.long
+            data_key_type_map[DataKeys.WORD_IDS] = torch.long
             data_key_type_map[self._LABEL_KEY] = torch.long
 
         if self.model_args.model_config.use_bbox:
