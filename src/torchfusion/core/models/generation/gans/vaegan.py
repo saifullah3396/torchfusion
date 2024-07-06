@@ -38,7 +38,7 @@ class FusionModelForVAEGAN(FusionModel):
     def _build_autoencoder(
         self,
         checkpoint: Optional[str] = None,
-        strict: bool = False,
+        strict: Optional[bool] = None,
         model_constructor: Optional[dict] = None,
         model_constructor_args: Optional[dict] = None,
     ):
@@ -71,7 +71,7 @@ class FusionModelForVAEGAN(FusionModel):
     def _build_model(
         self,
         checkpoint: Optional[str] = None,
-        strict: bool = False,
+        strict: Optional[bool] = None,
     ):
         vae = self._build_autoencoder(
             checkpoint=checkpoint,

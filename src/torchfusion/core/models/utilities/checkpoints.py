@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import ignite.distributed as idist
 import torch
 from fsspec.core import url_to_fs
 from fsspec.implementations.local import AbstractFileSystem
 from torch import nn
-
 from torchfusion.core.utilities.logging import get_logger
 
 DEFAULT_STATE_DICT_KEY = "state_dict"

@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 
+import cv2
 import numpy as np
 import PIL
 import torch
@@ -14,8 +15,7 @@ from timm.data import create_transform
 from torchfusion.core.args.args_base import ClassInitializerArgs
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.data_augmentations.transforms import SquarePad
-from torchfusion.core.data.factory.data_augmentation import \
-    DataAugmentationFactory
+from torchfusion.core.data.factory.data_augmentation import DataAugmentationFactory
 from torchfusion.core.utilities.logging import get_logger
 from torchvision import transforms
 
@@ -100,8 +100,10 @@ def detectron2_preprocess_transform_image_and_objects(sample, geometric_tf):
 
 def detectron2_realtime_ransform_image_and_objects(sample, geometric_tf, mask_on):
     from detectron2.data.detection_utils import (
-        annotations_to_instances, filter_empty_instances,
-        transform_instance_annotations)
+        annotations_to_instances,
+        filter_empty_instances,
+        transform_instance_annotations,
+    )
     from detectron2.data.transforms import apply_transform_gens
     from detectron2.structures import BoxMode
 
@@ -164,6 +166,19 @@ class PILNumpyResize:
 
 
 @dataclass
+class Cv2Resize:
+    rescale_size: Optional[List[int]] = None
+
+    def __call__(self, image) -> Any:
+        if isinstance(image, PIL.Image.Image):
+            return PIL.Image.fromarray(cv2.resize(np.array(image), self.rescale_size))
+        elif isinstance(image, np.ndarray):
+            return PIL.Image.fromarray(cv2.resize(np.array(image), self.rescale_size))
+        else:
+            raise NotImplementedError()
+
+
+@dataclass
 class PILEncode:
     encode_format: str = "PNG"
 
@@ -218,6 +233,7 @@ class ImagePreprocess(DataAugmentation):
 
     square_pad: bool = False
     rescale_size: Optional[List[int]] = None
+    resize_pil_or_cv2: str = "PIL"
     encode_image: bool = False
     encode_format: str = "PNG"
 
@@ -234,7 +250,10 @@ class ImagePreprocess(DataAugmentation):
 
         # apply rescaling if required
         if self.rescale_size is not None:
-            aug.append(PILNumpyResize(rescale_size=self.rescale_size))
+            if self.resize_pil_or_cv2 == "PIL":
+                aug.append(PILNumpyResize(rescale_size=self.rescale_size))
+            else:
+                aug.append(Cv2Resize(rescale_size=self.rescale_size))
 
         # apply encoding if required
         if self.encode_image:

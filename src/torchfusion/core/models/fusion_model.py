@@ -79,7 +79,7 @@ class FusionModel:
     def _build_model(
         self,
         checkpoint: Optional[str] = None,
-        strict: bool = False,
+        strict: Optional[bool] = None,
     ):
         pass
 
@@ -117,10 +117,8 @@ class FusionModel:
     def build_model(
         self,
         checkpoint: Optional[str] = None,
-        strict: bool = False,
+        strict: Optional[bool] = None,
     ):
-        pass
-
         # models sometimes download pretrained checkpoints when initializing. Only download it on rank 0
         if idist.get_rank() > 0:  # stop all ranks > 0
             idist.barrier()

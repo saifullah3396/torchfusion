@@ -3,7 +3,6 @@ from dataclasses import dataclass, is_dataclass
 from typing import Optional
 
 import torch
-
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.utilities.containers import CollateFnDict
 from torchfusion.core.models.fusion_model import FusionModel
@@ -19,7 +18,7 @@ class FusionModelForAutoEncoding(FusionModel):
     def _build_autoencoder(
         self,
         checkpoint: Optional[str] = None,
-        strict: bool = False,
+        strict: Optional[bool] = None,
         model_constructor: Optional[dict] = None,
         model_constructor_args: Optional[dict] = None,
     ):
@@ -28,7 +27,7 @@ class FusionModelForAutoEncoding(FusionModel):
     def _build_model(
         self,
         checkpoint: Optional[str] = None,
-        strict: bool = False,
+        strict: Optional[bool] = None,
     ):
         model = self._build_autoencoder(
             checkpoint=checkpoint,

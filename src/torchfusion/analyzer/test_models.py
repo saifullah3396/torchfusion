@@ -7,13 +7,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional, Type
 
-import torch
-from ignite import metrics
 from torch.utils.data import Subset
-
 from torchfusion.core.analyzer.tasks.base import AnalyzerTask
 from torchfusion.core.analyzer.tasks.base_config import AnalyzerTaskConfig
-from torchfusion.core.constants import DataKeys, MetricKeys
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.training.utilities.constants import TrainingStage
 from torchfusion.core.training.utilities.tb_logger import FusionTensorboardLogger
@@ -36,7 +32,7 @@ class TestModels(AnalyzerTask):
         stage: TrainingStage = TrainingStage.train,
         dataset_features: Optional[dict] = None,
         checkpoint: Optional[str] = None,
-        strict: bool = False,
+        strict: Optional[bool] = None,
         wrapper_class: Type[FusionModel] = FusionModel,
     ) -> FusionModel:
         """

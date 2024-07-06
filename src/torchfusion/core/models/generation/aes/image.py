@@ -25,7 +25,7 @@ class FusionModelForImageAutoEncoding(FusionModelForAutoEncoding):
     def _build_autoencoder(
         self,
         checkpoint: Optional[str] = None,
-        strict: bool = False,
+        strict: Optional[bool] = None,
         model_constructor: Optional[dict] = None,
         model_constructor_args: Optional[dict] = None,
     ):

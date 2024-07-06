@@ -17,17 +17,14 @@ from torchfusion.core.data.utilities.containers import CollateFnDict
 from torchfusion.core.data.utilities.loaders import load_datamodule_from_args
 from torchfusion.core.models.fusion_model import FusionModel
 from torchfusion.core.models.tasks import ModelTasks
-from torchfusion.core.models.utilities.data_collators import \
-    PassThroughCollator
-from torchfusion.core.training.functionality.default import \
-    DefaultTrainingFunctionality
-from torchfusion.core.training.functionality.diffusion import \
-    DiffusionTrainingFunctionality
-from torchfusion.core.training.functionality.gan import \
-    GANTrainingFunctionality
+from torchfusion.core.models.utilities.data_collators import PassThroughCollator
+from torchfusion.core.training.functionality.default import DefaultTrainingFunctionality
+from torchfusion.core.training.functionality.diffusion import (
+    DiffusionTrainingFunctionality,
+)
+from torchfusion.core.training.functionality.gan import GANTrainingFunctionality
 from torchfusion.core.training.utilities.constants import TrainingStage
-from torchfusion.core.training.utilities.general import (initialize_torch,
-                                                         setup_logging)
+from torchfusion.core.training.utilities.general import initialize_torch, setup_logging
 from torchfusion.core.utilities.dataclasses.dacite_wrapper import from_dict
 from torchfusion.core.utilities.logging import get_logger
 
@@ -142,7 +139,7 @@ class AnalyzerTask(ABC):
         setup_for_train: bool = True,
         dataset_features: Optional[dict] = None,
         checkpoint: Optional[str] = None,
-        strict: bool = False,
+        strict: Optional[bool] = None,
     ) -> FusionModel:
         """
         Initializes the model for training.

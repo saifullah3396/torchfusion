@@ -53,7 +53,7 @@ class ModelFactory:
         if model_class is None:
             raise ValueError(
                 f"Model [{model_args.model_task}/{model_args.name}] "
-                "is not supported."
+                f"is not supported. Supported Models = {models_in_task}"
             )
         model_class = model_class()
         return model_class
@@ -62,7 +62,7 @@ class ModelFactory:
     def create_fusion_model(
         args: FusionArguments,
         checkpoint: Optional[str] = None,
-        strict: bool = False,
+        strict: Optional[bool] = None,
         dataset_metadata: Optional[FusionDatasetMetaData] = None,
         **model_kwargs,
     ) -> FusionModel:

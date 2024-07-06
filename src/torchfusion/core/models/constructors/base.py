@@ -21,6 +21,9 @@ class ModelConstructor:
         default=None,
         metadata={"help": "Checkpoint file name to load the model weights from."},
     )
+    load_checkpoint_strict: bool = field(
+        default=False, metadata={"help": "Whether to load the model weights strictly."}
+    )
     checkpoint_state_dict_key: str = field(
         default="state_dict",
         metadata={"help": "The state dict key for checkpoint"},
@@ -45,18 +48,21 @@ class ModelConstructor:
         ), "Model name must be provided for the model constructor."
 
     @abstractmethod
-    def _init_model(self, *args: Any, **kwkwargsds: Any) -> Any:
+    def _init_model(self, *args: Any, **kwargs: Any) -> Any:
         pass
 
     def __call__(
         self,
         checkpoint: Optional[str] = None,
-        strict: bool = False,
+        strict: Optional[bool] = None,
         **kwargs: Any,
     ) -> Any:
         model = self._init_model(**kwargs)
         if checkpoint is None:
             checkpoint = self.checkpoint
+
+        if strict is None:
+            strict = self.load_checkpoint_strict
 
         if checkpoint is not None:
             setup_checkpoint(

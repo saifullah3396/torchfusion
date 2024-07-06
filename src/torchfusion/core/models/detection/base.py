@@ -36,7 +36,7 @@ class FusionModelForObjectDetection(FusionModel):
     def _build_detection_model(
         self,
         checkpoint: Optional[str] = None,
-        strict: bool = False,
+        strict: Optional[bool] = None,
         model_constructor: Optional[dict] = None,
         model_constructor_args: Optional[dict] = None,
         **kwargs,
@@ -60,7 +60,7 @@ class FusionModelForObjectDetection(FusionModel):
     def _build_model(
         self,
         checkpoint: Optional[str] = None,
-        strict: bool = False,
+        strict: Optional[bool] = None,
     ):
         # we build this mainly around detectron2 as it provides all the necessary resources
         model = self._build_detection_model(

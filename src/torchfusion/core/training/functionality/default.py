@@ -1575,7 +1575,9 @@ class DefaultTrainingFunctionality:
         )
         if args.training_args.save_model_forward_outputs:
             cls.configure_model_forward_disk_saver(
-                engine=test_engine, output_dir=output_dir, checkpoint_file=checkpoint_file
+                engine=test_engine,
+                output_dir=output_dir,
+                checkpoint_file=checkpoint_file,
             )
 
         if idist.get_rank() == 0:
@@ -1600,6 +1602,8 @@ class DefaultTrainingFunctionality:
             cls.configure_test_tb_logger(
                 args=args, test_engine=test_engine, model=model, tb_logger=tb_logger
             )
+
+        return checkpoint_file
 
     @classmethod
     def configure_prediction_engine(
@@ -1758,7 +1762,7 @@ class DefaultTrainingFunctionality:
         )
 
         # configure training and validation engines
-        cls.configure_test_engine(
+        checkpoint_file = cls.configure_test_engine(
             args=args,
             test_engine=test_engine,
             model=model,
@@ -1768,7 +1772,7 @@ class DefaultTrainingFunctionality:
             data_labels=data_labels,
         )
 
-        return test_engine
+        return test_engine, checkpoint_file is not None
 
     @classmethod
     def setup_prediction_engine(

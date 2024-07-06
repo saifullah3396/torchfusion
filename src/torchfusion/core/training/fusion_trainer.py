@@ -109,7 +109,7 @@ class FusionTrainer:
         summarize: bool = False,
         setup_for_train: bool = True,
         checkpoint: Optional[str] = None,
-        strict: bool = False,
+        strict: Optional[bool] = None,
         dataset_metadata: Optional[FusionDatasetMetaData] = None,
     ) -> FusionModel:
         """
@@ -123,9 +123,9 @@ class FusionTrainer:
         model = ModelFactory.create_fusion_model(
             self._args,
             checkpoint=checkpoint,
-            tb_logger=self._tb_logger,
             strict=strict,
             dataset_metadata=dataset_metadata,
+            tb_logger=self._tb_logger,
         )
 
         model.setup_model(setup_for_train=setup_for_train)
@@ -216,7 +216,7 @@ class FusionTrainer:
 
     def _setup_test_engine(self, checkpoint_type: str = "last"):
         # setup training engine
-        test_engine = self._trainer_functionality.setup_test_engine(
+        test_engine, checkpoint_found = self._trainer_functionality.setup_test_engine(
             args=self._args,
             model=self._model,
             test_dataloader=self._test_dataloader,
@@ -228,7 +228,7 @@ class FusionTrainer:
         )
         test_engine.logger = logger
 
-        return test_engine
+        return test_engine, checkpoint_found
 
     def _setup_opt_manager(self):
         opt_manager = FusionOptimizerManager(self._args, self._model, self)
@@ -482,7 +482,12 @@ class FusionTrainer:
                 continue
 
             # setup training engine
-            self._test_engine = self._setup_test_engine(checkpoint_type)
+            self._test_engine, checkpoint_found = self._setup_test_engine(
+                checkpoint_type
+            )
+
+            if checkpoint_type == "best" and not checkpoint_found:
+                continue
 
             # run tests
             self._test_engine.run(self._test_dataloader)

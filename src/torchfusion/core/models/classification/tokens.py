@@ -50,7 +50,7 @@ class FusionModelForTokenClassification(FusionModelForClassification):
     def _build_classification_model(
         self,
         checkpoint: Optional[str] = None,
-        strict: bool = False,
+        strict: Optional[bool] = None,
         model_constructor: Optional[dict] = None,
         model_constructor_args: Optional[dict] = None,
         num_labels: Optional[int] = None,
@@ -73,7 +73,7 @@ class FusionModelForTokenClassification(FusionModelForClassification):
     def _build_model(
         self,
         checkpoint: Optional[str] = None,
-        strict: bool = False,
+        strict: Optional[bool] = None,
     ):
         return self._build_classification_model(
             checkpoint=checkpoint,

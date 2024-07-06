@@ -1,6 +1,9 @@
 from torchfusion.core.models.constructors.detectron2 import Detectron2ModelConstructor
 from torchfusion.core.models.constructors.diffusers import DiffusersModelConstructor
-from torchfusion.core.models.constructors.fusion import FusionModelConstructor
+from torchfusion.core.models.constructors.fusion import (
+    FusionModelConstructor,
+    FusionModelWithBackboneConstructor,
+)
 from torchfusion.core.models.constructors.timm import TimmModelConstructor
 from torchfusion.core.models.constructors.torchvision import TorchvisionModelConstructor
 from torchfusion.core.models.constructors.transformers import (
@@ -14,6 +17,8 @@ class ModelConstructorFactory:
     def create(name: str, kwargs: dict):
         if name == "fusion_model":
             model_constructor_class = FusionModelConstructor
+        elif name == "fusion_model_with_backbone":
+            model_constructor_class = FusionModelWithBackboneConstructor
         elif name == "transformers":
             model_constructor_class = TransformersModelConstructor
         elif name == "torchvision":

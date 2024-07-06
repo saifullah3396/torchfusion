@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from operator import is_
 
 import torch
 from dacite import Optional
@@ -32,7 +31,7 @@ class FusionModelForSequenceClassification(FusionModelForClassification):
     def _build_classification_model(
         self,
         checkpoint: Optional[str] = None,
-        strict: bool = False,
+        strict: Optional[bool] = None,
         model_constructor: Optional[dict] = None,
         model_constructor_args: Optional[dict] = None,
         num_labels: Optional[int] = None,

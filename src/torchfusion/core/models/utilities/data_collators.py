@@ -162,9 +162,8 @@ class BatchToTensorDataCollator:
                 features[idx] = {k: [dic[k] for dic in feature] for k in feature[0]}
 
         # by default we make sure to always include INDEX in tensor collation as it is useful for storing data
-        if DataKeys.INDEX not in self.allowed_keys:
+        if self.allowed_keys is not None and DataKeys.INDEX not in self.allowed_keys:
             self.allowed_keys.append(DataKeys.INDEX)
-            self.data_key_type_map[DataKeys.INDEX] = torch.long
 
         keys = features[0].keys()
         for k in keys:
@@ -183,6 +182,7 @@ class BatchToTensorDataCollator:
             )
 
         if self.data_key_type_map is not None:
+            self.data_key_type_map[DataKeys.INDEX] = torch.long
             for k, dtype in self.data_key_type_map.items():
                 if k in batch and isinstance(batch[k], torch.Tensor):
                     batch[k] = batch[k].to(dtype)

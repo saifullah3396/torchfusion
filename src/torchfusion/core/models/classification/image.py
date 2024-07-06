@@ -6,7 +6,6 @@ from typing import Optional
 from torchfusion.core.constants import DataKeys
 from torchfusion.core.data.utilities.containers import CollateFnDict
 from torchfusion.core.models.classification.base import FusionModelForClassification
-from torchfusion.core.models.constructors.base import ModelConstructor
 from torchfusion.core.models.constructors.factory import ModelConstructorFactory
 from torchfusion.core.models.constructors.fusion import FusionModelConstructor
 from torchfusion.core.models.constructors.timm import TimmModelConstructor
@@ -34,7 +33,7 @@ class FusionModelForImageClassification(FusionModelForClassification):
     def _build_classification_model(
         self,
         checkpoint: Optional[str] = None,
-        strict: bool = False,
+        strict: Optional[bool] = None,
         model_constructor: Optional[dict] = None,
         model_constructor_args: Optional[dict] = None,
         num_labels: Optional[int] = None,
@@ -70,7 +69,6 @@ class FusionModelForImageClassification(FusionModelForClassification):
         data_key_type_map: Optional[dict] = None,
     ) -> CollateFnDict:
         import torch
-
         from torchfusion.core.data.utilities.containers import CollateFnDict
         from torchfusion.core.models.utilities.data_collators import (
             BatchToTensorDataCollator,
